@@ -1,0 +1,50 @@
+{
+  "name": "lazui",
+  "version": "0.0.1-a",
+  "description": "Single page apps and lazy loading sites with minimal JavaScript or client build processes.",
+  "main": "lazui.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anywhichway/lazui.git"
+  },
+  "keywords": [
+    "htmx",
+    "vue",
+    "turbo",
+    "lighterHTML",
+    "stimulus",
+    "knockout",
+    "riot"
+  ],
+  "author": "Simon Y. Blackwell",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/anywhichway/lazui/issues"
+  },
+  "homepage": "https://github.com/anywhichway/lazui#readme",
+  "dependencies": {
+    "@whatwg-node/server": "^0.9.14",
+    "highlight.js": "^11.8.0",
+    "hono": "^3.7.2",
+    "itty-router": "^4.0.23",
+    "json5": "^2.2.3",
+    "markdown-it": "^13.0.2",
+    "markdown-it-anchor": "^8.6.7",
+    "node-html-parser": "^6.1.10",
+    "socket.io": "^4.7.2",
+    "terser": "^5.22.0"
+  },
+  "devDependencies": {
+    "terser-webpack-plugin": "^5.3.9",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
