@@ -140,7 +140,9 @@ const dateTime = (clients) => {
 
 app.get('/datetime', sse(dateTime));
 
+
 app.get("*", async (req) => {
+    if(req.URL.pathname==="/") req.url.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
         try {
             const data = await fs.readFile(process.cwd() + req.URL.pathname),
@@ -151,7 +153,7 @@ app.get("*", async (req) => {
             // move meta, link, title tags to head (leave style and template in body)
             [...(body.querySelectorAll("meta,link,title")||[])].forEach((el) => head.appendChild(el));
             // convert all links that specify a sever to external links
-            [...(body.querySelectorAll('a[href^="http"]')||[])].forEach((el) => el.hasAttribute("target") || el.setAttribute("target","_blank"));
+            if(req.URL.pathname!=="/README.md") [...(body.querySelectorAll('a[href^="http"]')||[])].forEach((el) => el.hasAttribute("target") || el.setAttribute("target","_blank"));
             if(!req.headers.has("Accept-Include")) //req.URL.pathname.endsWith("/lazui.md")
             {
                 const head = markedDOM.querySelector("head");

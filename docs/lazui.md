@@ -1,6 +1,6 @@
 <script src='/lazui.js' autofocus data-lz:usejson="/json5.js" data-lz:userouter="/hono/hono.js" data-lz:options="{importName:'Hono',isClass:true,allowRemote:true}"></script>
 <title>lazui Documentation</title>
-<a href="./index.md">lazui</a>
+<a href="../index.md">lazui</a>
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
 <lz-toc></lz-toc>
 

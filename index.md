@@ -1,6 +1,6 @@
 <script src='/lazui.js' autofocus></script>
 <title>lazui: Web UI's with less work</title>
-<div data-lz:src="./header.html"></div>
+<div data-lz:src="./docs/header.html"></div>
 
 Short for &quot;lazy UI&quot;. Single page apps and lazy loading sites with minimal JavaScript or client build processes.
 
@@ -80,7 +80,7 @@ render(document.currentScript, html`<div onclick=${clicked}>Click Me! Count: ${c
 - Works well with [Markdown](./lazui.md/#working-with-markdown)
 - As few or as many dynamically loaded attribute directives as you wish
     - pre-built directives:
-        - `lz:state`, `lz:usestate` for [state](./lazui.md#using-state),
+        - `lz:state`, `lz:usestate` for [state](docs/lazui.md#using-state),
         - `lz:src` and `lz:mode` for [loading content](./lazui#loading-content), including [single page components](./lazui#single-page-components).
         - `lz:url` for use with [client side routing](./lazui#client-side-routing),
         - `lz:on` for [handling events](./lazui#handling-events),
@@ -106,4 +106,4 @@ render(document.currentScript, html`<div onclick=${clicked}>Click Me! Count: ${c
         - accepts interpolations, DOM nodes, and strings as content
 - [Chose an attribute name space]() with or without the `data-` prefix, e.g. `data-lz:src`, `lz:src`, or even `myname:src`.
 - No virtual DOM. The dependency tracker targets just those nodes that need updates.
-- A [basic server](./lazui.md#basic-server) with markdown processing, automatic minification, server side events and web sockets already implemented.
+- A [basic server](docs/lazui.md#basic-server) with markdown processing, automatic minification, server side events and web sockets already implemented.

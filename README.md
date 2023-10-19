@@ -67,36 +67,36 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
     - `beforebegin`, `afterBegin`, `beforeEnd`, `afterEnd`, `inner`,
       `outer`, `firstChild`, `lastChild`, `_body`, `_top`
     - CSS targets for multiple location updates
-- Works well with [Markdown](./lazui.md/#working-with-markdown)
+- Works well with [Markdown](https://lazui.org/docs/lazui.md/#working-with-markdown)
 - As few or as many dynamically loaded attribute directives as you wish
     - pre-built directives:
-        - `lz:state`, `lz:usestate` for [state](./lazui.md#using-state),
-        - `lz:src` and `lz:mode` for [loading content](./lazui#loading-content), including [single page components](./lazui#single-page-components).
-        - `lz:url` for use with [client side routing](./lazui#client-side-routing),
-        - `lz:on` for [handling events](./lazui#handling-events),
-        - `lz:foreach`, `lz:if`, `lz:show`, `lz:showsource` for [content control](./lazui#content-control),
-        - `lz:dataset` for element [dataset management](./lazui#dataset-management),
-        - `lz:style`, `lz:aria` for [styling and accessibility](./lazui#styling-and-accessibility),
-        - `lz:tagname` for [custom elements](./lazui#creating-custom-elements),
-        - `lz:usejson` for [configuring the JSON parser](./lazui#configuring-the-json-parser),
+        - `lz:state`, `lz:usestate` for [state](https://lazui.org/docs/lazui.md#using-state),
+        - `lz:src` and `lz:mode` for [loading content](https://lazui.org/docs/lazui.md#loading-content), including [single page components](https://lazui.org/docs/lazui.md#single-page-components).
+        - `lz:url` for use with [client side routing](https://lazui.org/docs/lazui.md#client-side-routing),
+        - `lz:on` for [handling events](https://lazui.org/docs/lazui.md#handling-events),
+        - `lz:foreach`, `lz:if`, `lz:show`, `lz:showsource` for [content control](https://lazui.org/docs/lazui.md#content-control),
+        - `lz:dataset` for element [dataset management](https://lazui.org/docs/lazui.md#dataset-management),
+        - `lz:style`, `lz:aria` for [styling and accessibility](https://lazui.org/docs/lazui.md#styling-and-accessibility),
+        - `lz:tagname` for [custom elements](https://lazui.org/docs/lazui.md#creating-custom-elements),
+        - `lz:usejson` for [configuring the JSON parser](https://lazui.org/docs/lazui.md#configuring-the-json-parser),
         - `lz:controller` for loading a custom controller
-    - custom directives, e.g. [lz:mycustomdirective](./lazui#creating-custom-attribute-directives)
+    - custom directives, e.g. [lz:mycustomdirective](https://lazui.org/docs/lazui.md#creating-custom-attribute-directives)
 - As few or as many dynamically loaded controllers as you wish
     - [pre-built controllers](pre-built-controllers)
-        - [router](./lazui#treating-elements-as-files)
-        - [form](./lazui#form), [input](./lazui#input), [select](./lazui#select), [textarea](./lazui#textarea) for form processing
-        - [chart](./lazui#charts) for pie charts, guages, etc.
-        - [ws](./lazui#web-sockets), [sse](./lazui#server-sent-events), [pubsub](./lazui#pubsub) for websockets, server sent events, and pubsub
-    - [custom controllers](./lazui#defining-custom-controllers)
+        - [router](https://lazui.org/docs/lazui.md#treating-elements-as-files)
+        - [form](https://lazui.org/docs/lazui.md#form), [input](https://lazui.org/docs/lazui.md#input), [select](https://lazui.org/docs/lazui.md#select), [textarea](https://lazui.org/docs/lazui.md#textarea) for form processing
+        - [chart](https://lazui.org/docs/lazui.md#charts) for pie charts, guages, etc.
+        - [ws](https://lazui.org/docs/lazui.md#web-sockets), [sse](https://lazui.org/docs/lazui.md#server-sent-events), [pubsub](https://lazui.org/docs/lazui.md#pubsub) for websockets, server sent events, and pubsub
+    - [custom controllers](https://lazui.org/docs/lazui.md#defining-custom-controllers)
 - `html` template literal and `render` functions for string interpolation and rendering
-    - [html](./lazui#html) template literals can return raw HTML or a document fragment
-    - Powerful [render](./lazui#render) function
+    - [html](https://lazui.org/docs/lazui.md#html) template literals can return raw HTML or a document fragment
+    - Powerful [render](https://lazui.org/docs/lazui.md#render) function
         - accepts a `where` argument to specify where to render the content
         - a `state` argument to specify the state to use
         - accepts interpolations, DOM nodes, and strings as content
 - [Chose an attribute name space]() with or without the `data-` prefix, e.g. `data-lz:src`, `lz:src`, or even `myname:src`.
 - No virtual DOM. The dependency tracker targets just those nodes that need updates.
-- A [basic server](./lazui.md#basic-server) with markdown processing, automatic minification, server side events and web sockets already implemented.
+- A [basic server](https://lazui.org/docs/lazui.md#basic-server) with markdown processing, automatic minification, server side events and web sockets already implemented.
 
 
 ## Change History (Reverse Chronological Order)
