@@ -6,8 +6,9 @@ io.__sockets__ ||= new WeakMap()
 const init = async ({el,root,options,lazui})=> {
     const {target,subscribe=true,template} = options,
         {render,prefix,replaceBetween} = lazui,
-        url = new URL(import.meta.url),
-        src = url.search.slice(1);
+        url = new URL(import.meta.url);
+    let src = url.search.slice(1);
+    if(window.location.protocol==="https:") src = src.replace("ws:","wss:");
     if(!io.__sockets__.has(el)) {
         const socket = io(src,{transports: ['websocket']});
         io.__sockets__.set(el,socket);
