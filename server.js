@@ -199,11 +199,11 @@ app.get('*', () => error(404))
 const ittyServer = createServerAdapter(
     (req, env) => app
         .handle(req, env.res)
-        .then(json)
-        .then((response) => {
+        //.then(json)
+       // .then((response) => {
             //response.headers.set("Cache-Control","max-age=31536000");
-            return response;
-        })
+          //  return response;
+        //})
         .catch(error)
 )
 
