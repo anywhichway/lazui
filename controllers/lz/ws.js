@@ -9,7 +9,7 @@ const init = async ({el,root,options,lazui})=> {
         url = new URL(import.meta.url),
         src = url.search.slice(1);
     if(!io.__sockets__.has(el)) {
-        const socket = io(src);
+        const socket = io(src,{transports: ['websocket']});
         io.__sockets__.set(el,socket);
         socket.onAny(async (event,message) => {
             const channel = el.querySelector("#"+event);
