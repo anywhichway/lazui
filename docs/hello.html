@@ -1,0 +1,5 @@
+<input name="name" type="text" data-lz:controller="/controllers/input.js" data-lz:config='{state:"mystate",placeholder:"name"}'><span id="name-error"></span>
+<button data-lz:on="click call:closest.greet">Submit</button>
+<select data-lz:controller="/controllers/select.js" data-lz:config='{state:"mystate",options:["red","green","blue"],property:"favoriteColor"}'></select>
+<div>${favoriteColor}</div>
+<span data-lz:export="greeting" data-lz:aria='{"arial-label":"greeting"}'></span>

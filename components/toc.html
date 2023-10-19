@@ -1,0 +1,148 @@
+<style>
+    .toc {
+        overflow-wrap: break-word;
+    }
+    .toc ul {
+        margin-left: 5px;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        list-style: none; /* This removes the list styling which are provided by default */
+        padding-left: 5px; /* Removes the front padding */
+    }
+    .toc ul li a {
+        text-decoration: none; /* Removes the underline from the link tags */
+        font-size: 80%
+    }
+    .toc ul li {
+        margin-left: 0px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        padding: 2px; /* Adds a little space around each <li> tag */
+        line-height: 80%
+    }
+</style>
+<div id="header" style="font-weight:bold;margin-top:0px">
+    &nbsp;<span id="toggle-button" style="display:none;float:right;font-weight:bold;margin-top:0px">&lt;&lt;</span>
+</div>
+<div class="toc" style="border:1px solid grey;margin-right:5px;border-radius:5px;overflow-x:hidden;overflow-y:auto;background:whitesmoke">
+</div>
+<script>
+    function generateLinkMarkup(contentElement) {
+        const headings = [...contentElement.querySelectorAll('h2, h3, h4')];
+        const parsedHeadings = headings.map(heading => {
+            return {
+                title: heading.innerText,
+                depth: parseInt(heading.nodeName.replace(/\D/g,'')),
+                id: heading.getAttribute('id')
+            }
+        });
+        let html = "";
+        for(let i=0;i<parsedHeadings.length;i++) {
+            const heading = parsedHeadings[i];
+            if(i>0) {
+                if(heading.depth>parsedHeadings[i-1].depth) {
+                    html+="<ul>"
+                } else if(heading.depth<parsedHeadings[i-1].depth) {
+                    html+="</ul>"
+                }
+                html += `<li><a href="#${heading.id}">${heading.title}</a></li>`;
+            } else {
+                html += `<li><a href="#${heading.id}">${heading.title}</a></li>`;
+            }
+        }
+        return `<ul>${html}</ul>`;
+    }
+    self.connected = function() {
+        this.setAttribute("style","position:fixed;top:2em;left:10px;max-height:97%;height:97%;opacity:1;background:white")
+        const toc = this.shadowRoot.querySelector(".toc");
+        if(!toc) return;
+        toc.innerHTML = generateLinkMarkup(document.body);
+        document.body.style = "overflow:hidden;height:100%;max-height:100%;margin-top:0px"
+        const content = document.createElement("div");
+        content.setAttribute("style","float:right;padding-top:0px;max-height:100vh;overflow:auto;opacity:1");
+        const children = [...this.parentElement.children];
+        content.append(...children.slice(children.indexOf(this)+1));
+        //fixed.append(content);
+        this.after(content);
+        let touchstartX = 0,
+            touchendX = 0,
+            touchstartY = 0,
+            touchendY = 0,
+            x = 0,
+            y = 0;
+        const toggle = this.shadowRoot,
+            header = this.shadowRoot.getElementById("header");
+        this.shadowRoot.getElementById("toggle-button").style.setProperty("display","inline");
+        function handleGesture({event,right,left}={}) {
+            if (left && touchendX < touchstartX && Math.abs(touchstartY-touchendY)<100 && Math.abs(touchstartX-touchendX)>75) { left(); }
+            else if (right && touchendX > touchstartX && touchstartX<150) { right(); }
+        }
+        let opened;
+        function handleTOC(open) {
+            const previous = opened;
+            if(open===undefined) open = opened = !opened
+            else opened = open;
+            if(opened) {
+                toc.style.setProperty("max-width","");
+                toc.style.setProperty("overflow-y","auto");
+                toc.style.setProperty("max-height","calc(100% - 8em)");
+                toc.style.setProperty("height","calc(100% - 8em)");
+                header.style.setProperty("display","initial");
+                content.style.setProperty("margin-left",toc.clientWidth+10);
+                content.style.setProperty("max-width",`calc(100% - ${toc.clientWidth+40}px)`);
+            } else {
+                toc.style.setProperty("max-width","10px");
+                toc.style.setProperty("overflow-y","hidden");
+                toc.style.setProperty("max-height","97%");
+                toc.style.setProperty("height","97%");
+                header.style.display = "none";
+                content.style.setProperty("margin-left","");
+                content.style.setProperty("max-width",`calc(100% - ${48}px)`);
+            }
+            if(opened && previous!=undefined) {
+                setTimeout(()=> {
+                    content.scrollTo({top:y});
+                },250);
+            } else if(!opened) {
+                setTimeout(()=> {
+                    content.scrollTo({top:y-45});
+                },250);
+            }
+        }
+        content.style.setProperty("margin-left",toc.clientWidth+10);
+        content.style.setProperty("max-width",`calc(100% - ${toc.clientWidth+40}px)`);
+        toc.style.setProperty("max-width","7px");
+        handleTOC(true);
+        toc.addEventListener('touchstart', event => {
+            touchstartX = event.changedTouches[0].screenX
+        });
+        toc.addEventListener('touchend', event => {
+            touchendX = event.changedTouches[0].screenX
+            handleGesture({left:()=>handleTOC(false),right:()=>handleTOC(true)})
+        });
+        content.addEventListener("scroll",(event) => {
+            y = content.scrollTop;
+        });
+        content.addEventListener('touchstart', event => {
+            touchstartX = event.changedTouches[0].screenX
+            touchstartY = event.changedTouches[0].screenY
+        });
+        content.addEventListener('touchend', event => {
+            touchendX = event.changedTouches[0].screenX;
+            touchendY = event.changedTouches[0].screenY;
+            handleGesture({right:()=>handleTOC(true),left:()=>event.preventDefault()});
+        });
+        toggle.addEventListener("click",(event) => {
+            event.stopImmediatePropagation();
+            if(event.target.tagName==="A") {
+                handleTOC(true);
+                history.replaceState({tocHREF:window.location.href}, "");
+            }
+            else if(event.target.id==="toggle-button") handleTOC(false);
+            else if(!opened) handleTOC(true);
+        });
+        window.addEventListener("popstate", (event) => {
+            if(event.state?.tocHREF) window.location = event.state.tocHREF;
+        });
+    }
+</script>

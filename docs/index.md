@@ -1,8 +1,11 @@
-# lazui
+<script src='/lazui.js' autofocus></script>
+<title>lazui: Web UI's with less work</title>
+<div data-lz:src="./header.html"></div>
 
-Single page apps and lazy loading sites with minimal JavaScript or client build processes.
+Short for &quot;lazy UI&quot;. Single page apps and lazy loading sites with minimal JavaScript or client build processes.
 
-`lazui` is pronounced "lazy", as in "Lazy loading ... " or "Get lazui ... do less ... deliver more!"
+`lazui` is pronounced &quot;lazy&quot;, as in &quot;Lazy loading &period;&period;&period;&quot; or &quot;Get lazui &period;&period;&period; do less
+&period;&period;&period; deliver more!&quot;
 
 # introduction
 
@@ -31,16 +34,14 @@ There are great features in the above libraries, you should not have to choose j
 
 ## for HTML
 
-```html
+<div data-lz:showsource:inner="beforeBegin">
 <template id="#goodbye">
     Goodbye ${userName}
 </template>
 <div data-lz:src="#goodbye" data-lz:state='{"userName":"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}
 </div>
-```
-
-See the main site for a live example: [https://lazui.org](https://lazui.org)
+</div>
 
 ## for JavaScript
 
@@ -58,7 +59,16 @@ render(document.currentScript,
 </script>
 ```
 
-See the main site for a live example: [https://lazui.org](https://lazui.org)
+<script>
+const {render,html} = lazui;
+let count = 0;
+const clicked = (event) => {
+    count++;
+    event.target.innerText = `Click count: ${count}`;
+};
+render(document.currentScript, html`<div onclick=${clicked}>Click Me! Count: ${count}</div>`,{where:"afterEnd"});
+</script>
+
 
 # all the things
 
@@ -97,9 +107,3 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 - [Chose an attribute name space]() with or without the `data-` prefix, e.g. `data-lz:src`, `lz:src`, or even `myname:src`.
 - No virtual DOM. The dependency tracker targets just those nodes that need updates.
 - A [basic server](./lazui.md#basic-server) with markdown processing, automatic minification, server side events and web sockets already implemented.
-
-
-## Change History (Reverse Chronological Order)
-
-2023-10-19 v0.0.1-a Initial Release.
-
