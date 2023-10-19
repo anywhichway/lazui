@@ -2,7 +2,7 @@ const imports = {
 
 }
 
-const init = async ({el,root,lazui},config)=> {
+const init = async ({el,root,lazui,options})=> {
     let {
         state,
         value,
@@ -62,8 +62,8 @@ const init = async ({el,root,lazui},config)=> {
         titleProperty,
         trigger = "input",
         property = el.getAttribute("name")
-    } = config;
-    if (state) state = lazui.getState(state,root,true);
+    } = options;
+    if (state) state = lazui.getState(state,{root,throws:true});
     if (value == null && property) value = state[property];
     if(!value && defaultValueProperty) value = state[defaultValueProperty];
     if(!defaultValue && defaultValueProperty) defaultValue = state[defaultValueProperty];

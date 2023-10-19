@@ -16,7 +16,7 @@ const parseState = (text,JSON) => {
 const usestate = async({el,attribute,root,lazui,recurse})  => {;
     const {render,getState,JSON} = lazui,
         {id=el.id,observe,json} = parseState(attribute.value,JSON),
-        state = getState(id,root);
+        state = getState(id,{root});
     if(!state && id) throw new Error(`Can't find state: ${id}`);
     let content = "";
     if(el.hasAttribute(`data-lz:src`)) {

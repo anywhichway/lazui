@@ -2,7 +2,7 @@ const imports = {
 
 }
 
-const init = async ({el,root,lazui},config)=> {
+const init = async ({el,root,lazui,options})=> {
     const {getState,observeNodes} = lazui;
     let {
         state,
@@ -24,8 +24,8 @@ const init = async ({el,root,lazui},config)=> {
         multipleProperty,
         requiredProperty,
         disabledProperty,
-    } = config;
-    if (state) state = getState(state, root, true);
+    } = options;
+    if (state) state = getState(state, {root, throws:true});
     observeNodes({nodes:[el],observe:["value"],root,state}, () => {
         if (typeof options === "string") options = state[options];
         if (optionsCaption) options.unshift(optionsCaption);

@@ -2,11 +2,11 @@ const imports = {
 
 }
 
-const init = async ({el,root,lazui}, {target,subscribe=true,template})=> {
-    const {render,prefix,replaceBetween,JSON} = lazui,
+const init = async ({el,root,lazui,options})=> {
+    const {target,subscribe=true,template} = options,
+        {render,prefix,replaceBetween,JSON} = lazui,
         url = new URL(import.meta.url),
-        src = url.search.slice(1),
-        options = JSON.parse(el.getAttribute(`${prefix}:options`) || el.getAttribute("options") || "{}");
+        src = url.search.slice(1);
     await import(new URL(src,document.baseURI).href).then(async (module) => {
         el.addEventListener("message",async (event) => {
             let value = event.data||event.detail;

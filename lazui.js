@@ -235,13 +235,25 @@
             });
         return proxy;
     }
-    const getState = (idOrEl, root = document,throws) => {
+    const getState = (idOrEl, {root = document,options={},throws}={}) => {
+        const {storage,stringify} = options;
         if (!isObject(idOrEl) || !(idOrEl instanceof HTMLElement)) idOrEl = getTop(root).getElementById(idOrEl);
-        const state = __STATES__.get(idOrEl)
-        if (!state && throws) throw new Error(`Can't find state: ${idOrEl.id}`);
-        return state;
+        let _state = __STATES__.get(idOrEl);
+        if (!_state) {
+            if(storage) {
+                let state = globalThis[storage].getItem(idOrEl.id);
+                if(state) {
+                    state = activate(stringify ? JSON.parse(state) : state,idOrEl);
+                    __STATES__.set(idOrEl, {state,storage});
+                    return state;
+                }
+            }
+            if(throws) throw new Error(`Can't find state: ${idOrEl.id}`);
+        }
+        return _state?.state;
     }
-    const setState = (idOrEl,state, root = document) => {
+    const setState = (idOrEl,state, {root = document,options={}}) => {
+        let {storage,stringify} = options;
         let el = idOrEl;
         if(typeof idOrEl === "string") {
             el = getTop(root).getElementById(el);
@@ -252,9 +264,15 @@
                 else root.append(el);
             }
         }
+        if(!storage) {
+            const _state = (getState(el)||{});
+            storage = _state.storage;
+            stringify = _state.stringify;
+        }
+        if(storage) globalThis[storage].setItem(el.id,stringify ? JSON.stringify(state) : state);
         //if (!isObject(el) || el.constructor.name!=="HTMLTemplateElement") throw new TypeError(`${idOrEl} is not a valid HTMLTemplateElement or element id`);
         state = activate(state,el);
-        __STATES__.set(el, state);
+        __STATES__.set(el, {state,storage,stringify});
         el.state = state;
         return state;
     }
@@ -534,12 +552,22 @@
         }
     }
 
+    const getOptions = ({el,handler,root}) => {
+        let options = handler!=="usejson" && handler!=="options" && el.hasAttribute(`${__PREFIX__}:options`) ? (__JSON__.parse(el.getAttribute(`${__PREFIX__}:options`))[handler])||{} : {};
+        if(typeof options==="string" && options[0]==="#") {
+            const el = root.getElementById(options);
+            options = __JSON__.parse(el.innerHTML);
+        }
+        return options;
+    }
+
     const handleDirective = async (attr,{state,window=globalThis,document=globalThis.document,root=document,recurse}={}) => {
         const {name,value} = attr,
             parts = name.substring(5).split(":"); // data-foo:bar
         if(parts.length>1) {
             let [namespace,handler,...args] = parts;
-            const stateProxy = statesProxy(getStates(attr.ownerElement,state ? [state] : undefined));
+            const stateProxy = statesProxy(getStates(attr.ownerElement,state ? [state] : undefined)),
+                options = getOptions({el:attr.ownerElement,handler,root});
             if(__DIRECTIVES__[namespace] && __DIRECTIVES__[namespace][handler]) {
                 await __DIRECTIVES__[namespace][handler]({
                     namespace,
@@ -548,6 +576,7 @@
                     attribute: attr,
                     rawValue: value,
                     args,
+                    options,
                     state:stateProxy,
                     root,
                     window,
@@ -570,6 +599,7 @@
                                 attribute: attr,
                                 rawValue: value,
                                 args,
+                                options,
                                 state:stateProxy,
                                 root,
                                 window,

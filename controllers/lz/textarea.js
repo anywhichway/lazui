@@ -2,7 +2,7 @@ const imports = {
 
 }
 
-const init = async ({el},config)=> {
+const init = async ({el,options})=> {
     let {
         state,
         value,
@@ -26,7 +26,7 @@ const init = async ({el},config)=> {
         minlengthProperty,
         trigger = "input",
         property = el.getAttribute("name")
-    } = config;
+    } = options;
     if (state) state = init.getState(state);
     if (value == null && property) value = state[property];
     if(!required && requiredProperty) required = state[requiredProperty];

@@ -1,4 +1,4 @@
-<script src='/lazui.js' autofocus data-lz:usejson="/json5.js" data-lz:userouter="/hono/hono.js" data-lz:options="{importName:'Hono',isClass:true,allowRemote:true}"></script>
+<script src='/lazui.js' autofocus data-lz:usejson="/json5.js" data-lz:userouter="/hono/hono.js" data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}"></script>
 <title>lazui Documentation</title>
 <a href="../index.md">lazui</a>
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
@@ -120,7 +120,7 @@ Being able to insert a date and time or do inline math may be useful, but you wi
 The `data-lz:state` attribute can be used to define a model. The value of the attribute is the name of the state/model. 
 The state is defined as a JSON object inside a template element or loaded from a file:
 
-<template data-lz:state="person" data-lz:showsource="beforeBegin">
+<template data-lz:state="person" data-lz:options="{state:{storage:'localStorage',stringify:true}}" data-lz:showsource="beforeBegin">
 {
     name: "John",
     age: 30
@@ -763,7 +763,7 @@ For convenience, elements enhanced with a `pubsub` controller have `subscribe`an
 JavaScript and also respond to `subscribe` and `unsubscribe` events.
 
 <div data-lz:showsource:inner="beforeBegin">
-<div id="pubsub-example" data-lz:controller="/controllers/lz/pubsub?/docs/hello-pubsub.js" data-lz:options="{channel:'#joe',target:'beforeEnd'}">
+<div id="pubsub-example" data-lz:controller="/controllers/lz/pubsub?/docs/hello-pubsub.js" data-lz:options="{controller:{channel:'#joe',target:'beforeEnd',subscribe:true}}">
   <template><div>${message}</div></template>
 </div>
 <div>Joe's Messages

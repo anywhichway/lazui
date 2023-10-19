@@ -1,5 +1,5 @@
 
-const loadController = ({el,attribute,state,root,lazui}) => {
+const loadController = ({el,attribute,state,options,root,lazui}) => {
     const {JSON,prefix,activateHandlers} = lazui,
         url = new URL(attribute.value,document.baseURI);
     if(!url.pathname.endsWith(".js")) url.pathname += ".js";
@@ -19,13 +19,13 @@ const loadController = ({el,attribute,state,root,lazui}) => {
             }
         }
         if(el.init) {
-            el.init({el,state,root,lazui},JSON.parse(el.getAttribute(`${prefix}\\:config`)||"{}"))
+            el.init({el,state,root,options,lazui})
         }
     });
 }
-async function controller({el,attribute,state,root,lazui})  {
+async function controller({el,attribute,state,root,options,lazui})  {
     if(el.hasAttribute("data-lz:src")) return;
-    loadController({el,attribute,state,root,lazui});
+    loadController({el,attribute,state,options,root,lazui});
 }
 
 export {controller,loadController}

@@ -3,8 +3,9 @@ const imports = {
 }
 
 io.__sockets__ ||= new WeakMap()
-const init = async ({el,root,lazui}, {target,subscribe=true,template})=> {
-    const {render,prefix,replaceBetween} = lazui,
+const init = async ({el,root,options,lazui})=> {
+    const {target,subscribe=true,template} = options,
+        {render,prefix,replaceBetween} = lazui,
         url = new URL(import.meta.url),
         src = url.search.slice(1);
     if(!io.__sockets__.has(el)) {

@@ -7,7 +7,7 @@ function src({el,attribute,root,state,lazui}) {
         return;
     }
     if(el.hasAttribute(`${prefix}:usestate`)) {
-        state = getState(el.getAttribute(`${prefix}:usestate`),root);
+        state = getState(el.getAttribute(`${prefix}:usestate`),{root});
     } else if(el.hasAttribute(`${prefix}:state`)) {
         state = el.state;
     }
