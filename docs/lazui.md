@@ -127,6 +127,7 @@ The state is defined as a JSON object inside a template element or loaded from a
 }
 </template>
 
+
 or
     
 ```html
@@ -822,7 +823,10 @@ JavaScript and also respond to `subscribe` and `unsubscribe` events.
 For convenience, elements enhanced with `lz:ws` have `publish` and `subscribe` methods added that can be called from
 JavaScript and also respond to `publish` and `subscribe` events.
 
-<div data-lz:controller="/controllers/lz/ws.js?ws://localhost:3000" data-lz:showsource="beforeBegin" data-lz:target="beforeEnd">
+*Note*: The directive will automatically detect and adjust for connecting with a secure protocol, i.e. `wss`, if the
+page hosting it is served over `https`.
+
+<div data-lz:controller="/controllers/lz/ws.js" data-lz:showsource="beforeBegin" data-lz:target="beforeEnd">
   <template><div>${(new Date()).toLocaleTimeString()}: ${message}</div></template>
   <div>Peter
     <div id="peter"></div>
