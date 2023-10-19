@@ -142,7 +142,7 @@ app.get('/datetime', sse(dateTime));
 
 
 app.get("*", async (req) => {
-    if(req.URL.pathname==="/") req.url.pathname = "/index.md";
+    if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
         try {
             const data = await fs.readFile(process.cwd() + req.URL.pathname),
