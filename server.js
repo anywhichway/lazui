@@ -203,8 +203,9 @@ const ittyServer = createServerAdapter(
         .handle(req, env.res)
         .then((response) => {
             if(!response.headersSent) {
-                return json(response); // do not remove, will get error if json not processed
+                //return json(response); // do not remove, will get error if json not processed
             }
+            return response;
         })
         .catch(error)
 )
