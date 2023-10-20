@@ -115,7 +115,7 @@ app.get('/highlight-js/*', (req) => {
 
 // middleware for producing server side event generators
 const sse = (eventGenerator,clients=[]) => async (req,res) => {
-    Object.entries({
+    const entries = Object.entries({
         'Content-Type': 'text/event-stream',
         'Connection': 'keep-alive',
         'Cache-Control': 'no-cache'
@@ -132,14 +132,14 @@ const sse = (eventGenerator,clients=[]) => async (req,res) => {
 const dateTime = (clients) => {
     if(!dateTime.interval) {
         dateTime.interval = setInterval(() => {
-            clients.forEach(res => res.write(`data: ${new Date()}\n\n`))
+            clients.forEach(res => res.write(`data: ${new Date()}\n\n`));
         },1000);
     }
     clients[clients.length-1].write(`data: ${new Date()}\n\n`);
 }
 
-app.get('/datetime', sse(dateTime));
 
+app.get('/datetime',sse(dateTime));
 
 app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
@@ -151,7 +151,7 @@ app.get("*", async (req) => {
                 head = markedDOM.querySelector("head"),
                 body = markedDOM.querySelector("body");
             // move meta, link, title tags to head (leave style and template in body)
-            [...(body.querySelectorAll("meta,link,title")||[])].forEach((el) => head.appendChild(el));
+            [...(body.querySelectorAll('meta,link,title,script[src*="/lazui.js"]')||[])].forEach((el) => head.appendChild(el));
             // convert all links that specify a sever to external links
             if(req.URL.pathname!=="/README.md") [...(body.querySelectorAll('a[href^="http"]')||[])].forEach((el) => el.hasAttribute("target") || el.setAttribute("target","_blank"));
             if(!req.headers.has("Accept-Include")) //req.URL.pathname.endsWith("/lazui.md")
@@ -201,11 +201,11 @@ app.get('*', () => error(404))
 const ittyServer = createServerAdapter(
     (req, env) => app
         .handle(req, env.res)
-        //.then(json)
-       // .then((response) => {
-            //response.headers.set("Cache-Control","max-age=31536000");
-          //  return response;
-        //})
+        .then((response) => {
+            if(!response.headersSent) {
+                return json(response); // do not remove, will get error if json not processed
+            }
+        })
         .catch(error)
 )
 

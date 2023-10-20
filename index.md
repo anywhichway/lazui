@@ -34,13 +34,20 @@ There are great features in the above libraries, you should not have to choose j
 
 ## for HTML
 
-<div data-lz:showsource:inner="beforeBegin">
+```html
 <template id="goodbye">
     Goodbye ${userName}
 </template>
 <div data-lz:src="#goodbye" data-lz:state='{"userName":"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
-    Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}
+    Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
+```
+
+<template id="goodbye">
+    Goodbye ${userName}!
+</template>
+<div data-lz:src="#goodbye" data-lz:state='{"userName":"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
+    Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 
 ## for JavaScript
@@ -66,7 +73,7 @@ const clicked = (event) => {
     count++;
     event.target.innerText = `Click count: ${count}`;
 };
-render(document.currentScript, html`<div onclick=${clicked}>Click Me! Count: ${count}</div>`,{where:"afterEnd"});
+render(document.currentScript, html`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
 </script>
 
 
