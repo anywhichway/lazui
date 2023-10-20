@@ -77,6 +77,10 @@
             let c = arg1.req ? arg1 : {req:arg1},
                 next = typeof arg2 === "function" ? arg2 : typeof arg3 === "function" ? arg3 : null;
             const url = c.req.URL = new URL(c.req.url, document.baseURI);
+            if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
+                const el = document.getElementById(url.hash.slice(1));
+                return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
+            }
             let node,
                 isLocal;
             if(isLocal = c.req.url.startsWith(document.location.origin)) {
@@ -283,7 +287,7 @@
             if(window.globalState) states.push(window.globalState);
             return states;
         }
-        if(node.hasAttribute(attrName)) {
+        if(node.nodeType===Node.ELEMENT_NODE && node.hasAttribute(attrName)) {
             const state = getState(node.getAttribute(attrName))
             if(state) states.push(state);
             else console.log(`Can't find state: ${node.getAttribute(attrName)} in ${node.outerHTML}`);
@@ -291,7 +295,7 @@
             states.push(node.state);
         }
         //if(states.includes(undefined)) debugger;
-        getStates(node.parentElement,states,attrName);
+        getStates(node.parentNode,states,attrName);
         return states;
     }
 
@@ -303,7 +307,8 @@
                 const value = target[property];
                 if(value!==undefined) return value;
                 for(const state of states) {
-                    if(property in state) return state[property];
+                    const value = state[property];
+                    if(value!==undefined) return value;
                 }
                 //return exported[this] || globalThis[property];
             },
@@ -661,7 +666,7 @@
         walk(content,(node) => {
             if(node.nodeType===Node.ATTRIBUTE_NODE) {
                 const attrName = `${__PREFIX__}:usestate`,
-                    stateProxy = statesProxy(getStates(node.ownerElement,[state]));
+                    stateProxy = statesProxy(getStates(node.ownerElement,state ? [state] : undefined));
                 if(node.value.includes("${")) {
                     observeNodes({nodes:[node],observe:["*"],root,string:node.value,state:stateProxy},() => {
                         const value = interpolate(node.value,stateProxy,root);
@@ -673,9 +678,9 @@
                 if (node.name.startsWith(__PREFIX__)) handleDirective(node,{state:stateProxy,root,recurse});
                 return;
             }
-            if(node.nodeType===Node.TEXT_NODE && node.data.includes("${") && node.parentElement.constructor.name!=="HTMLTemplateElement") {
+            if(node.nodeType===Node.TEXT_NODE && node.data.includes("${") && node.parentElement?.constructor.name!=="HTMLTemplateElement") {
                 const attrName = `${__PREFIX__}:usestate`,
-                    stateProxy = statesProxy(getStates(node.parentElement,[state])),
+                    stateProxy = statesProxy(getStates(node,state ? [state] : undefined)),
                     observation = {nodes:[node],observe:["*"],root,string:node.data,recurse,state:stateProxy};
                 observeNodes(observation,() => {
                     const interpolated = interpolate(node.data,stateProxy,root,node.parentElement?.tagName==="SCRIPT").toDocumentFragment();

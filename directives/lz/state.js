@@ -11,8 +11,8 @@ const state = async({el,attribute,root,options,window,document,lazui,args}) => {
     }
     if(!state) state = getState(el.id,{root,options});
     if(!state) {
-        if(el.hasAttribute('data-lz:src')) {
-            const text = await fetch(el.getAttribute('data-lz:src')).then((response) => response.text());
+        if(options.src) { //el.hasAttribute('data-lz:src')
+            const text = await fetch(options.src).then((response) => response.text()); //el.getAttribute('data-lz:src')
             state = JSON.parse(text);
         } else {
             state = JSON.parse(el.innerText||el.innerHTML)

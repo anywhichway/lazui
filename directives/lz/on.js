@@ -72,18 +72,37 @@ async function on({el,attribute,state,root,lazui})  {
                 if (!(trigger.delay || trigger.every) || (trigger.delay && event.detail.timeout) || (trigger.every && event.detail.interval)) {
                     if (trigger.once) triggers.splice(triggers.indexOf(trigger), 1);
                     if (trigger.dispatch==="load" || event.type==="load") {
+                        event.stopImmediatePropagation();
                         const src = el.getAttribute(`${prefix}:src`);
-                        router.fetch(new Request(src)).then(async (response) => {
+                        let request;
+                        try {
+                            const json = JSON.parse(src),
+                                mode = json.mode;
+                            if(mode==="document") delete json.mode;
+                            request = new Request(json.url,json);
+                            if(mode==="document") {
+                                Object.defineProperty(request,"mode",{value:mode});
+                            }
+                        } catch {
+                            request = new Request(src);
+                        }
+                        router.fetch(request).then(async (response) => {
                             const string = replaceBetween(await response.text(), "`", "`", (text) => "`" + text.replaceAll(/</g, "&lt;") + "`"),
                                 where = el.getAttribute(`${prefix}:target`) || el.getAttribute("target") || undefined,
+                                mode = el.getAttribute(`${prefix}:mode`),
                                 controller = el.attributes[`${prefix}:controller`];
-                            if (state) {
-                                let content = document.createDocumentFragment();
-                                const div = document.createElement("div");
-                                div.innerHTML = string;
-                                while (div.firstChild) content.appendChild(div.firstChild);
-                                content = render(el, content, {state, root: el, where: null});
-                                update({node: el, content, state, root: el, where, recurse: 1});
+                            if (state || mode==="frame" || el.state) {
+                                let content = mode==="frame" ? string : document.createDocumentFragment();
+                                if(mode==="frame") {
+                                    update({node:el, content:string, state, root:el, where, recurse: 1});
+                                } else {
+                                    content.state = el.state;
+                                    const div = document.createElement("div");
+                                    div.innerHTML = string;
+                                    while(div.firstChild) content.appendChild(div.firstChild);
+                                    content = render(el,content,{state, root:el, where:null});
+                                    update({node:el, content, state, root:el, where, recurse: 1});
+                                }
                                 //if(controller) loadController({el,attribute:controller,state,root,lazui})
                             } else {
                                 render(el, string, {state, root: el, where, recurse: 1});

@@ -316,7 +316,7 @@ will be executed.
         (document.currentScript||currentScript).insertAdjacentText("afterEnd","This was inserted by a script")
     </script>
 </template>
-<div data-lz:src="./element.html" data-lz:mode="open"></div>
+<div data-lz:src="/element.html" data-lz:mode="open"></div>
 </div>
 
 **Note**: `data-lz:mode="closed"` is not supported.
