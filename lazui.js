@@ -340,8 +340,11 @@
         else event = attribute.name.slice(2);
         if(attribute.name.includes(":")) attribute.ownerElement.addEventListener(event,value);
         else {
-            attribute.ownerElement[value.name] = value;
-            attribute.value = `event.target.${value.name}(event)`;
+            if(typeof value !=="function") value = (new Function("return "+value)()).bind(attribute.ownerElement);
+            else attribute.ownerElement[value.name] = value;
+            attribute.ownerElement.addEventListener(event,value);
+            attribute.ownerElement.removeAttribute(attribute.name);
+            //attribute.value = `event.target.${value.name}(event)`;
         }
     }
 
@@ -670,10 +673,13 @@
                 if(node.value.includes("${")) {
                     observeNodes({nodes:[node],observe:["*"],root,string:node.value,state:stateProxy},() => {
                         const value = interpolate(node.value,stateProxy,root);
-                        if(typeof value.values[0] === "function" && (node.name.startsWith("on") || node.name.includes("on:"))) handleOnAttribute(node,value.values[0]);
+                        if(node.name.startsWith("on") || node.name.includes("on:")) handleOnAttribute(node,value.values[0]);
                         else if(isHook(value)) handleHook(node,value);
-                        else node.value = value.values[0].toString();
+                        else if(value.values[0]) node.value = value.values[0].toString();
+                        //else if(node.name.startsWith("on")) node.ownerElement.removeAttribute(node.name);
                     });
+                } else if(node.name.startsWith("on")) {
+                    handleOnAttribute(node,node.ownerElement[node.name] || node.value)
                 }
                 if (node.name.startsWith(__PREFIX__)) handleDirective(node,{state:stateProxy,root,recurse});
                 return;

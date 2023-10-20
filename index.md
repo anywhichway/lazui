@@ -1,4 +1,8 @@
-<script src='/lazui.js' autofocus data-lz:usejson="/json5.js" data-lz:userouter="/hono/hono.js" data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}"></script>
+<script src='/lazui.js' autofocus 
+    data-lz:usejson="/json5.js" 
+    data-lz:userouter="/hono/hono.js" 
+    data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}">
+</script>
 <title>lazui: Web UI's with less work</title>
 <div data-lz:src="./docs/header.html"></div>
 

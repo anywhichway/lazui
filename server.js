@@ -159,7 +159,6 @@ app.get("*", async (req) => {
                 const head = markedDOM.querySelector("head");
                 head.innerHTML += `<meta name="viewport" content="width=device-width, initial-scale=1" />
                         <meta charset="UTF-8">
-                        <meta http-equiv="Content-Security-Policy" content="object-src 'none'">
                         <link rel="preconnect" href="https://esm.sh">
                         <link rel='stylesheet' href='/highlight-js/styles/default.css'>
                         <script src='/highlight-js/highlight.min.js'></script>
@@ -185,8 +184,17 @@ app.get("*", async (req) => {
                             highlight();
                         </script>`;
             }
-            //return html(render(markedDOM));
-            return html(`<!DOCTYPE html>${markedDOM}`)
+            const response = html(`<!DOCTYPE html>${markedDOM}`);
+                /*srcs = [...markedDOM.querySelectorAll("script[src]")].reduce((origins,el) =>  {
+                    const src = el.getAttribute("src");
+                    if(src.startsWith("http")) {
+                        const url = new URL(src);
+                        if(!origins.includes(url.origin)) origins.push(url.origin);
+                    }
+                    return origins;
+                },["'sha256-hV/amTgKaqeJqgtj354GSG/NjspCsrQ9jUzigpgEGJc='","'sha256-FXcDLxqRQh4J/uxqh/XXTaJj/q03NxRUCxCdvKN9Bzc='"]).join(" ");
+            if(srcs) response.headers.append("Content-Security-Policy","script-src " + srcs);*/
+            return response;
         } catch(e) {
             console.log(e);
             throw e;
@@ -204,6 +212,8 @@ const ittyServer = createServerAdapter(
         .then((response) => {
             if(!response.headersSent) {
                 //return json(response); // do not remove, will get error if json not processed
+                response.headers.append("Content-Security-Policy","object-src 'none'");
+                response.headers.append("Content-Security-Policy",`default-src 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com ${req.URL.origin} ${req.URL.origin.replace(req.URL.protocol,"ws:")}`);
             }
             return response;
         })
