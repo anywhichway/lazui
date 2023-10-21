@@ -1,4 +1,4 @@
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.10-a'  autofocus 
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a'  autofocus 
     data-lz:usejson="https://esm.sh/json5" 
     data-lz:userouter="https://esm.sh/hono"
     data-lz:usehighlight="https://esm.sh/highlight.js"
@@ -110,7 +110,9 @@ short, you can be lazy about your JSON.
 
 The attribute takes as its value a URL pointing to the parser. [JSON5](https://json5.org/) is a good choice.
 
-<div data-lz:usejson="/json5.js" data-lz:showsource="beforeBegin"></div>
+```html
+<div data-lz:usejson="/json5.js"></div>
+```
 
 or
 
@@ -756,7 +758,7 @@ Three types of pushed content are supported:
 
 #### PubSub
 
-<div data-lz:controller="/controllers/lz/pubsub?/docs/hello-pubsub.js" data-lz:showsource="beforeBegin"></div>
+<div data-lz:controller="/controllers/lz/pubsub?/docs/hello-pubsub.js" data-lz:options="{controller:{src:'/docs/hello-pubsub.js'}}" data-lz:showsource="beforeBegin"></div>
 
 Typically, you will want to subscribe to a channel. The `lz:config` attribute can be used to provide configuration
 data to the controller. If the `channel` property in the configuration starts with a `#`, then it is treated as the target
@@ -769,7 +771,7 @@ For convenience, elements enhanced with a `pubsub` controller have `subscribe`an
 JavaScript and also respond to `subscribe` and `unsubscribe` events.
 
 <div data-lz:showsource:inner="beforeBegin">
-<div id="pubsub-example" data-lz:controller="/controllers/lz/pubsub?/docs/hello-pubsub.js" data-lz:options="{controller:{channel:'#joe',target:'beforeEnd',subscribe:true}}">
+<div id="pubsub-example" data-lz:controller="/controllers/lz/pubsub" data-lz:options="{controller:{src:'/docs/hello-pubsub.js',channel:'#joe',target:'beforeEnd',subscribe:true}}">
   <template><div>${message}</div></template>
 </div>
 <div>Joe's Messages
@@ -802,7 +804,7 @@ export {subscribe,unsubscribe}
 
 #### Server Sent Events
 
-<div data-lz:controller="/controllers/lz/sse.js?/datetime" data-lz:showsource="beforeBegin">Loading...</div>
+<div data-lz:controller="/controllers/lz/sse.js" data-lz:options="{controller:{src:'/datetime'}}" data-lz:showsource="beforeBegin">Loading...</div>
 
 If you want to log each server sent event separately you can use the `lz:target` attribute and provide a template with
 a `message` block. If the `message` was parsable as `JSON`, nested properties will be accessible.
@@ -811,7 +813,7 @@ For convenience, elements with an `sse` controller have `subscribe`and `unsubscr
 JavaScript and also respond to `subscribe` and `unsubscribe` events.
 
 <div data-lz:showsource:inner="beforeBegin">
-<div id="sse-example" data-lz:controller="/controllers/lz/sse.js?/datetime" data-lz:target="beforeEnd">
+<div id="sse-example" data-lz:controller="/controllers/lz/sse.js" data-lz:options="{controller:{src:'/datetime'}}" data-lz:target="beforeEnd">
   <template><div>${message}</div></template>
 </div>
 <script>

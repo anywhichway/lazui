@@ -141,6 +141,9 @@
         }
         hljs.configure({ignoreUnescapedHTML:true});
         window.highlight = (target,languages) => {
+            if(target.hasAttribute("data-highlighted")) {
+                target.removeAttribute("data-highlighted");
+            }
             let html = target.innerHTML;
             if(html.includes("`")) html = html.replaceAll(/`/g, "__BACKTICK__");
             const {value,language} = hljs.highlightAuto(html,languages);

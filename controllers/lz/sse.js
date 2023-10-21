@@ -5,9 +5,8 @@ const imports = {
 const init = async ({el,root,options,lazui})=> {
     const {subscribe=true,template} = options,
         {render,prefix,JSON} = lazui,
-        url = new URL(import.meta.url),
-        src = url.search.slice(1),
-        t = template ? root.querySelector(template) : el.querySelector("template");
+        t = template ? root.querySelector(template) : el.querySelector("template"),
+        src = options.src;
     let events;
     el.addEventListener("subscribe",(event) => {
         events = new EventSource(new URL(src,document.baseURI).href)

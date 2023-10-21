@@ -4,10 +4,9 @@ const imports = {
 
 const init = async ({el,root,lazui,options})=> {
     const {target,subscribe=true,template} = options,
-        {render,prefix,replaceBetween,JSON} = lazui,
-        url = new URL(import.meta.url),
-        src = url.search.slice(1);
-    await import(new URL(src,document.baseURI).href).then(async (module) => {
+        {render,prefix,replaceBetween,JSON,url} = lazui,
+        src = options.src;
+    await import(new URL(src,document.baseURI)).then(async (module) => {
         el.addEventListener("message",async (event) => {
             let value = event.data||event.detail;
             try {

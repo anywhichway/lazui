@@ -167,7 +167,7 @@ app.get("*", async (req) => {
                 head = markedDOM.querySelector("head"),
                 body = markedDOM.querySelector("body");
             // move meta, link, title tags to head (leave style and template in body)
-            [...(body.querySelectorAll('meta,link,title,script[src$="/lazui"]')||[])].forEach((el) => head.appendChild(el));
+            [...(body.querySelectorAll('meta,link,title,script[src*="/lazui"]')||[])].forEach((el) => head.appendChild(el));
             // convert all links that specify a sever to external links
             if(req.URL.pathname!=="/README.md") [...(body.querySelectorAll('a[href^="http"]')||[])].forEach((el) => el.hasAttribute("target") || el.setAttribute("target","_blank"));
             if(!req.headers.has("Accept-Include")) //req.URL.pathname.endsWith("/lazui.md")
@@ -237,6 +237,7 @@ io.on('connection', (socket) => {
         console.log('user disconnected');
     });
     socket.onAny((event,msg) => {
+        console.log(event,msg);
         if(["connection","disconnect"].includes(event)) return;
         io.emit(event, msg);
     });

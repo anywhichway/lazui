@@ -104,6 +104,8 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-21 v0.0.11-a thru v0.0.15-a Getting `sse`, `pubsub`, ws working with CDN load
+
 2023-10-21 v0.0.10-a Added `lz:usehighlight` directive.
 
 2023-10-21 v0.0.5-9-a Enabling CDN loading

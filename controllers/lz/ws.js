@@ -5,15 +5,16 @@ const imports = {
 io.__sockets__ ||= new WeakMap()
 const init = async ({el,root,options,lazui})=> {
     const {target,subscribe=true,template} = options,
-        {render,prefix,replaceBetween} = lazui,
-        url = new URL(import.meta.url);
-    let src = url.search.slice(1);
+        {render,prefix,replaceBetween} = lazui;
+    let src = options.src;
     if(!src) {
         const srcUrl = new URL(window.location.href);
-        srcUrl.protocol = url.protocol==="http:" ? url.protocol = "ws" : "wss";
+        srcUrl.protocol = srcUrl.protocol==="http:" ? srcUrl.protocol = "ws" : "wss";
         srcUrl.pathname = "/";
         srcUrl.hash = "";
         src = srcUrl.href;
+    } else {
+        src = new URL(src,document.baseURI).href;
     }
     if(!io.__sockets__.has(el)) {
         const socket = io(src,{transports: ['websocket']});
