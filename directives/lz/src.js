@@ -38,22 +38,21 @@ function src({el,attribute,root,state,lazui}) {
                 where = el.getAttribute(`${prefix}:target`) || el.getAttribute("target") || undefined,
                 mode = el.getAttribute(`${prefix}:mode`),
                 controller = el.attributes[`${prefix}:controller`];
-            if(state || mode ==="frame" || el.state) {
-                let content = mode==="frame" ? string : document.createDocumentFragment();
-                if(mode==="frame") {
-                    update({node:el, content:string, state, root:el, where, recurse: 1});
-                } else {
-                    content.state = el.state;
-                    const div = document.createElement("div");
-                    div.innerHTML = string;
-                    while(div.firstChild) content.appendChild(div.firstChild);
-                    content = render(el,content,{state, root:el, where:null});
-                    update({node:el, content, state, root:el, where, recurse: 1});
-                }
-                //if(controller) loadController({el,attribute:controller,state,root,lazui})
+            if(mode==="frame") {
+                update({node:el, content:string, state:state||el.state, root:el, where, recurse: 1});
             } else {
-                render(el, string, {state, root:el, where, recurse: 1});
-                if(controller) loadController({el,attribute:controller,state,root,lazui})
+                let content = document.createElement("html");
+                content.innerHTML = string;
+                content.state = el.state;
+                content.head = content.firstElementChild;
+                content.body = content.lastElementChild;
+                //if(state || el.state) {
+                //    content = render(el,content,{state, root:el, where:null});
+                //}
+                if(new URL(request.url).origin!==location.origin) content = content.body;
+                render(el,content,{state, root:el, where, recurse:1});
+                //update({node:el, content, state, root:el, where, recurse: 1});
+                //if(controller) loadController({el,attribute:controller,state,root,lazui})
             }
         }
     })

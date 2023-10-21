@@ -1350,8 +1350,4 @@ it is included to serve as a foundation for your use.
 - serves files from the `docs` directory,
 supports Markdown files with the `.md` extension.
 
-## Change History (Reverse Chronological Order)
-
-2023-10-23 v0.0.1-a Initial Release.
-
 

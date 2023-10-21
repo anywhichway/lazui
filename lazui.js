@@ -1,10 +1,12 @@
 (() => {
     "use strict"
     let __OPTIONS__ = {};
-    if(document?.currentScript) {
+    if(document?.currentScript && !window.lazuiLoaded) {
+        window.lazuiLoaded = true;
         const url = new URL(document.currentScript.src);
         if(document.currentScript.hasAttribute("autofocus")) {
-            document.documentElement.style.display = "none"
+            const docEl = document.documentElement;
+            docEl.setAttribute("hidden","")
             document.addEventListener("DOMContentLoaded",async () => {
                 const usejson = document.querySelector(`[${__PREFIX__}\\:usejson]`);
                 if(usejson) await handleDirective(usejson.attributes[`${__PREFIX__}:usejson`]);
@@ -19,18 +21,14 @@
                     const router = routerVariable && document[routerVariable] ? document[routerVariable]() : null;
                     if(router) lazui.useRouter(router,{allowRemote});
                 }
-                //for(const tag of ["head","body"]) {
-                    for(const state of [...document.querySelectorAll(`[${__PREFIX__}\\:state],[${__PREFIX__}\\:state\\:global],[${__PREFIX__}\\:state\\:document]`)]) {
-                        //handleDirectives(template);
-                        for(const attr of [...state.attributes]) {
-                            if(attr.name.startsWith(`${__PREFIX__}:`)) await handleDirective(attr)
-                        }
+                for(const state of [...document.querySelectorAll(`[${__PREFIX__}\\:state],[${__PREFIX__}\\:state\\:global],[${__PREFIX__}\\:state\\:document]`)]) {
+                    //handleDirectives(template);
+                    for(const attr of [...state.attributes]) {
+                        if(attr.name.startsWith(`${__PREFIX__}:`)) await handleDirective(attr)
                     }
-                //}
-                // replace with a resolve call that walks document and resolves all states
-                //lazui.render(document.body,null);
+                }
                 resolve(document.body,{root:document,state:{}})
-                document.documentElement.style.display = "";
+                docEl.removeAttribute("hidden");
                 if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
             })
         }
@@ -240,20 +238,18 @@
         return proxy;
     }
     const getState = (idOrEl, {root = document,options={},throws}={}) => {
-        const {storage,stringify} = options;
+        let {storage,stringify} = options;
         if (!isObject(idOrEl) || !(idOrEl instanceof HTMLElement)) idOrEl = getTop(root).getElementById(idOrEl);
-        let _state = __STATES__.get(idOrEl);
-        if (!_state) {
-            if(storage) {
-                let state = globalThis[storage].getItem(idOrEl.id);
-                if(state) {
-                    state = activate(stringify ? JSON.parse(state) : state,idOrEl);
-                    __STATES__.set(idOrEl, {state,storage});
-                    return state;
-                }
+        const _state = __STATES__.get(idOrEl);
+        if(storage||=_state?.storage) {
+            let state = globalThis[storage||_state?.storage].getItem(idOrEl.id);
+            if(state) {
+                state = activate((stringify||=_state.stringify) ? JSON.parse(state) : state,idOrEl);
+                __STATES__.set(idOrEl, {state,storage,stringify});
+                return state;
             }
-            if(throws) throw new Error(`Can't find state: ${idOrEl.id}`);
         }
+        if(!_state && throws) throw new Error(`Can't find state: ${idOrEl.id}`);
         return _state?.state;
     }
     const setState = (idOrEl,state, {root = document,options={}}) => {
@@ -328,7 +324,7 @@
                 return [...keys];
             },
             set(target,property,value) {
-                throw new Error(`Can't set value for, ${property}, inside string literal.`);
+                throw new Error(`Can't set property value for ${property} inside reactive string literal. It will cause an infinite loop`);
             }
         });
         return proxy;
@@ -338,9 +334,14 @@
         let event;
         if(attribute.name.includes(":")) event = attribute.name.split(":").find((part,i,values) => part=="on" ? values[i] : undefined)
         else event = attribute.name.slice(2);
-        if(attribute.name.includes(":")) attribute.ownerElement.addEventListener(event,value);
-        else {
-            if(typeof value !=="function") value = (new Function("return "+value)()).bind(attribute.ownerElement);
+
+        if(attribute.name.includes(":")) {
+            if(typeof value !=="function") value = (new Function("return "+value)).bind(attribute.ownerElement);
+            attribute.ownerElement.addEventListener(event,(ev) => {
+                value(ev);
+            });
+        } else {
+            if(typeof value !=="function") value = (new Function("return "+value)).bind(attribute.ownerElement);
             else attribute.ownerElement[value.name] = value;
             attribute.ownerElement.addEventListener(event,value);
             attribute.ownerElement.removeAttribute(attribute.name);
@@ -548,13 +549,19 @@
         }
     }
 
-    const evaluateScripts = (node) => {
+    const evaluateScripts = (node,target) => {
         for(const el of node.querySelectorAll("script")) {
-            const script = el.cloneNode(true);
+            const script = document.createElement("script");
+            [...el.attributes].forEach((attr) => script.setAttribute(attr.name,attr.value));
+            if(script.hasAttribute("async") || script.hasAttribute("defer")) {
+                const src = new URL(script.src);
+                src.search += (src.search ? "&" : "") + "t=" + Date.now();
+                script.src = src.href;
+            }
             script.innerHTML = el.innerHTML;
             window.self = node.host ? node.host : node.parentElement;
             window.currentScript = script;
-            el.after(script);
+            (target||el).after(script);
             script.remove();
             delete window.currentScript;
         }
@@ -701,10 +708,14 @@
         if(node===document) {
             document.addEventListener("DOMContentLoaded",() => {
                 if(string) console.warn("String argument ignored when rendering to document on initial load. Existing document content will be used");
-                render(node.head,null,{where:"outer",state,sanitizer,sanitizerOptions,update});
-                render(node.body,null,{node:state,sanitizer,sanitizerOptions,update});
+                render(node.head,null,{where:"outer",state,sanitizer,sanitizerOptions,animator});
+                render(node.body,null,{node:state,sanitizer,sanitizerOptions,animator});
             });
             return;
+        }
+        if(content?.head) {
+            evaluateScripts(content.head,el);
+            content = content.body;
         }
         sanitizer = typeof sanitizer == "function" ? new sanitizer(sanitizerOptions) : sanitizer;
         sanitizer ||= sanitizer!==null && typeof Sanitizer !== "undefined" ? new Sanitizer(sanitizerOptions) : sanitizer;
@@ -715,7 +726,8 @@
             if(isObject(content) && content.toDocumentFragment) content = content.toDocumentFragment();
             if(!content) (content = node.cloneNode(true))
             if(!(content instanceof DocumentFragment) && !(content instanceof NodeList)) {
-                content.innerHTML = replaceBetween(node.innerHTML, "`", "`", (text) => text.replaceAll(/</g, "&lt;"))
+                // ? node.html rathet thna content.html
+                content.innerHTML = replaceBetween(content.innerHTML, "`", "`", (text) => text.replaceAll(/</g, "&lt;"))
             }
             resolve(content,{state,root,recurse});
         }

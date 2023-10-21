@@ -1,5 +1,8 @@
 # lazui
 
+![GitHub](https://img.shields.io/github/license/anywhichway/lazui)
+
+
 Single page apps and lazy loading sites with minimal JavaScript or client build processes.
 
 `lazui` is pronounced "lazy", as in "Lazy loading ... " or "Get lazui ... do less ... deliver more!"
@@ -101,5 +104,9 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-21 v0.0.2-a Documentation updates, optimizations, server bug fixes
+
 2023-10-19 v0.0.1-a Initial Release.
+
+
 

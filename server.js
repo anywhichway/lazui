@@ -119,7 +119,13 @@ const sse = (eventGenerator,clients=[]) => async (req,res) => {
         'Content-Type': 'text/event-stream',
         'Connection': 'keep-alive',
         'Cache-Control': 'no-cache'
-    }).forEach(([key,value]) => res.setHeader(key,value));
+    }).forEach(([key,value]) => {
+        res.setHeader(key,value)
+    });
+    // necessary because the whatwg server adapter does not know how to handle headers on a native response
+    // and sse requires using a native response so we can keep it open and remove from client list when closed
+    // so we act like there are no headers with respect to whatwg
+    res.headers = new Headers();
     clients.push(res);
     eventGenerator(clients);
     res.on('close', () => {
@@ -203,7 +209,23 @@ app.get("*", async (req) => {
         return sendFile(path.join(process.cwd(),req.URL.pathname));
     }
 })
-app.get('*', () => error(404))
+app.get('*', () => error(404));
+
+const CSP = {
+    "default-src": [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://www.gstatic.com",
+        "https://img.shields.io",
+        "https://github.com",
+        "https://buttons.github.io"
+    ],
+    "object-src": [
+        "'none'"
+    ]
+}
+
 
 
 const ittyServer = createServerAdapter(
@@ -211,9 +233,14 @@ const ittyServer = createServerAdapter(
         .handle(req, env.res)
         .then((response) => {
             if(!response.headersSent) {
+                const wsSrc = req.URL.origin.replace(req.URL.protocol,"ws:");
+                if(!CSP["default-src"].includes(wsSrc)) CSP["default-src"].push(wsSrc);
                 //return json(response); // do not remove, will get error if json not processed
-                response.headers.append("Content-Security-Policy","object-src 'none'");
-                response.headers.append("Content-Security-Policy",`default-src 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com ${req.URL.origin} ${req.URL.origin.replace(req.URL.protocol,"ws:")}`);
+                Object.entries(CSP).forEach(([csp,values]) => {
+                    response.headers.append("Content-Security-Policy",[csp,...values].join(" "));
+                });
+                //response.headers.append("Content-Security-Policy","object-src 'none'");
+                //response.headers.append("Content-Security-Policy",`default-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://img.shields.io ${req.URL.origin.replace(req.URL.protocol,"ws:")}`);
             }
             return response;
         })
