@@ -104,6 +104,8 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-21 v0.0.4-a Path correction for CDN loading
+
 2023-10-21 v0.0.3-a Adding ability to load/run from CDN
 
 2023-10-21 v0.0.2-a Documentation updates, optimizations, server bug fixes

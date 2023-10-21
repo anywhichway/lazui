@@ -9,7 +9,6 @@
             docEl.setAttribute("hidden","")
             document.addEventListener("DOMContentLoaded",async () => {
                 lazui.url = new URL(url.href);
-                lazui.url.pathname = "";
                 lazui.url.hash = "";
                 lazui.url.search = "";
                 directiveExports.url = lazui.url;
