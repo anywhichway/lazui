@@ -219,7 +219,9 @@ const CSP = {
         "https://www.gstatic.com",
         "https://img.shields.io",
         "https://github.com",
-        "https://buttons.github.io"
+        "https://buttons.github.io",
+        "https://www.unpkg.com",
+        "https://esm.sh"
     ],
     "object-src": [
         "'none'"
@@ -259,7 +261,6 @@ io.on('connection', (socket) => {
     });
     socket.onAny((event,msg) => {
         if(["connection","disconnect"].includes(event)) return;
-        console.log(event,msg);
         io.emit(event, msg);
     });
 });

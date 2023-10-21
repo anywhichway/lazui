@@ -1,5 +1,5 @@
-<script src='/lazui.js' autofocus 
-    data-lz:usejson="/json5.js" 
+<script src='./lazui.js' autofocus 
+    data-lz:usejson="https://esm.sh/json5" 
     data-lz:userouter="/hono/hono.js" 
     data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}">
 </script>

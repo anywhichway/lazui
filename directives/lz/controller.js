@@ -1,7 +1,7 @@
 
 const loadController = ({el,attribute,state,options,root,lazui}) => {
     const {JSON,prefix,activateHandlers} = lazui,
-        url = new URL(attribute.value,document.baseURI);
+        url = new URL(attribute.value,lazui.url);
     if(!url.pathname.endsWith(".js")) url.pathname += ".js";
     import(url.href).then((module) => {
         if(!el.isConnected) return;

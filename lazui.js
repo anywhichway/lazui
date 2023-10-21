@@ -8,6 +8,11 @@
             const docEl = document.documentElement;
             docEl.setAttribute("hidden","")
             document.addEventListener("DOMContentLoaded",async () => {
+                lazui.url = new URL(url.href);
+                lazui.url.pathname = "";
+                lazui.url.hash = "";
+                lazui.url.search = "";
+                directiveExports.url = lazui.url;
                 const usejson = document.querySelector(`[${__PREFIX__}\\:usejson]`);
                 if(usejson) await handleDirective(usejson.attributes[`${__PREFIX__}:usejson`]);
                 const userouter = document.querySelector(`[${__PREFIX__}\\:userouter]`),
@@ -601,7 +606,7 @@
                 });
             } else {
                 try {
-                    const directive = await import(/* webpackIgnore: true */ `/directives/${namespace}/${handler}.js`);
+                    const directive = await import(/* webpackIgnore: true */ `${lazui.url.href}directives/${namespace}/${handler}.js`);
                     if(directive) {
                         const f = directive[handler] || directive.default;
                         __DIRECTIVES__[namespace] ||= {};
