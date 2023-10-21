@@ -1,7 +1,8 @@
-<script src='/lazui.js' autofocus 
-   data-lz:usejson="/json5.js" 
-   data-lz:userouter="/hono/hono.js" 
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}">
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.10-a'  autofocus 
+    data-lz:usejson="https://esm.sh/json5" 
+    data-lz:userouter="https://esm.sh/hono"
+    data-lz:usehighlight="https://esm.sh/highlight.js"
+   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlight:{style:'/styles/default.css'}}">
 </script>
 <title>lazui Documentation</title>
 <a href="../index.md">lazui</a>
@@ -114,7 +115,7 @@ The attribute takes as its value a URL pointing to the parser. [JSON5](https://j
 or
 
 ```html
-<div data-lz:usejson="https://esm.sh/json5" data-lz:showsource="beforeBegin"></div>
+<div data-lz:usejson="https://esm.sh/json5"></div>
 ```
 
 ### Using State

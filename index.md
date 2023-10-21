@@ -1,6 +1,6 @@
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.3-a' autofocus 
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.10-a' autofocus 
     data-lz:usejson="https://esm.sh/json5" 
-    data-lz:userouter="https://esm.sh/hono.js" 
+    data-lz:userouter="https://esm.sh/hono" 
     data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}">
 </script>
 <title>lazui: Web UI's with less work</title>

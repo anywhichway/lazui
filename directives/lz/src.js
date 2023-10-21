@@ -1,7 +1,5 @@
-import {loadController} from "./controller.js";
-
 function src({el,attribute,root,state,lazui}) {
-    const {render,router,prefix,replaceBetween,handleDirective,update,getState,JSON} = lazui;
+    const {render,router,prefix,replaceBetween,handleDirective,update,getState,JSON,loadController} = lazui;
 
     if(el.hasAttribute(`${prefix}:usestate`)) {
         state = getState(el.getAttribute(`${prefix}:usestate`),{root});
@@ -52,7 +50,7 @@ function src({el,attribute,root,state,lazui}) {
                 if(new URL(request.url).origin!==location.origin) content = content.body;
                 render(el,content,{state, root:el, where, recurse:1});
                 //update({node:el, content, state, root:el, where, recurse: 1});
-                //if(controller) loadController({el,attribute:controller,state,root,lazui})
+                if(controller) loadController({el,attribute:controller,state,root,lazui})
             }
         }
     })

@@ -1,4 +1,3 @@
-import {loadController} from "/directives/lz/controller.js";
 const parseTrigger = (text) => {
     if(text) {
         const trigger = {},
@@ -18,7 +17,8 @@ const parseTrigger = (text) => {
 }
 async function on({el,attribute,state,root,lazui})  {
     let throttle,debounce;
-    const {render,update,router,prefix,replaceBetween} = lazui,
+    const {render,update,router,prefix,replaceBetween,url} = lazui,
+        {loadController} = await import(url + "/directives/lz/controller.js"),
         triggers = attribute.value.split(",").map((text) => text.trim())
         .reduce((acc,text) => {
             if(text.length>0) acc.push(parseTrigger(text));

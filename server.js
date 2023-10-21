@@ -89,11 +89,21 @@ app.get("/lazui.js", (c) => {//"application/javascript
 });
  */
 
+app.get("/lazui", (req) => {
+    return sendFile(process.cwd() + "/lazui.js");
+})
+
+app.get("/lazui/*", (req) => {
+    const pathname = req.URL.pathname.replace("/lazui",""),
+        fname = pathname.split("/").pop().split(".").shift();
+    return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
+})
+
 // prevent directive names from being mangled
-app.get("/directives/*", (req) => {
+/*app.get("/directives/*", (req) => {
     const fname = req.URL.pathname.split("/").pop().split(".").shift();
     return sendFile(process.cwd() + req.URL.pathname,{mangle: {reserved:[fname]}});
-});
+});*/
 
 // as a convenience, provide local copies of itty and Hono for browser use
 app.get("/itty-router.js", (req) => {
@@ -157,7 +167,7 @@ app.get("*", async (req) => {
                 head = markedDOM.querySelector("head"),
                 body = markedDOM.querySelector("body");
             // move meta, link, title tags to head (leave style and template in body)
-            [...(body.querySelectorAll('meta,link,title,script[src*="/lazui.js"]')||[])].forEach((el) => head.appendChild(el));
+            [...(body.querySelectorAll('meta,link,title,script[src$="/lazui"]')||[])].forEach((el) => head.appendChild(el));
             // convert all links that specify a sever to external links
             if(req.URL.pathname!=="/README.md") [...(body.querySelectorAll('a[href^="http"]')||[])].forEach((el) => el.hasAttribute("target") || el.setAttribute("target","_blank"));
             if(!req.headers.has("Accept-Include")) //req.URL.pathname.endsWith("/lazui.md")
@@ -165,42 +175,9 @@ app.get("*", async (req) => {
                 const head = markedDOM.querySelector("head");
                 head.innerHTML += `<meta name="viewport" content="width=device-width, initial-scale=1" />
                         <meta charset="UTF-8">
-                        <link rel="preconnect" href="https://esm.sh">
-                        <link rel='stylesheet' href='/highlight-js/styles/default.css'>
-                        <script src='/highlight-js/highlight.min.js'></script>
-                        <script type="module">
-                            hljs.configure({ignoreUnescapedHTML:true});
-                                    const highlight = window.highlight = (target) => {
-                                         for(const el of document.querySelectorAll("code")) {
-                                            if((!target || el.closest(target.tagName)) && el.innerHTML.includes("\`")) {
-                                        el.innerHTML = el.innerHTML.replaceAll(/\`/g, "__BACKTICK__");
-                                    }
-                                }
-                                hljs.highlightAll();
-                                for (const el of document.querySelectorAll("*")) {
-                                    if ((!target || el.closest(target.tagName)) && el.innerHTML.includes("__BACKTICK__")) {
-                                        for (const child of el.childNodes) {
-                                            if (child.nodeType === Node.TEXT_NODE && child.data.includes("__BACKTICK__")) {
-                                                child.data = child.data.replaceAll(/__BACKTICK__/g, "\'");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            highlight();
-                        </script>`;
+                        <link rel="preconnect" href="https://esm.sh">`;
             }
-            const response = html(`<!DOCTYPE html>${markedDOM}`);
-                /*srcs = [...markedDOM.querySelectorAll("script[src]")].reduce((origins,el) =>  {
-                    const src = el.getAttribute("src");
-                    if(src.startsWith("http")) {
-                        const url = new URL(src);
-                        if(!origins.includes(url.origin)) origins.push(url.origin);
-                    }
-                    return origins;
-                },["'sha256-hV/amTgKaqeJqgtj354GSG/NjspCsrQ9jUzigpgEGJc='","'sha256-FXcDLxqRQh4J/uxqh/XXTaJj/q03NxRUCxCdvKN9Bzc='"]).join(" ");
-            if(srcs) response.headers.append("Content-Security-Policy","script-src " + srcs);*/
-            return response;
+            return html(`<!DOCTYPE html>${markedDOM}`);
         } catch(e) {
             console.log(e);
             throw e;

@@ -3,8 +3,9 @@
     let __OPTIONS__ = {};
     if(document?.currentScript && !window.lazuiLoaded) {
         window.lazuiLoaded = true;
-        const url = new URL(document.currentScript.src);
-        if(document.currentScript.hasAttribute("autofocus")) {
+        const url = new URL(document.currentScript.src),
+            autofocus = document.currentScript.hasAttribute("autofocus")
+       // if(document.currentScript.hasAttribute("autofocus")) {
             const docEl = document.documentElement;
             docEl.setAttribute("hidden","")
             document.addEventListener("DOMContentLoaded",async () => {
@@ -25,17 +26,18 @@
                     const router = routerVariable && document[routerVariable] ? document[routerVariable]() : null;
                     if(router) lazui.useRouter(router,{allowRemote});
                 }
+                const usehighlight = document.querySelector(`[${__PREFIX__}\\:usehighlight]`);
+                if(usehighlight) await handleDirective(usejson.attributes[`${__PREFIX__}:usehighlight`]);
                 for(const state of [...document.querySelectorAll(`[${__PREFIX__}\\:state],[${__PREFIX__}\\:state\\:global],[${__PREFIX__}\\:state\\:document]`)]) {
-                    //handleDirectives(template);
                     for(const attr of [...state.attributes]) {
                         if(attr.name.startsWith(`${__PREFIX__}:`)) await handleDirective(attr)
                     }
                 }
-                resolve(document.body,{root:document,state:{}})
+                if(autofocus) resolve(document.body,{root:document,state:{}})
                 docEl.removeAttribute("hidden");
                 if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
             })
-        }
+       // }
         const params = new URL(document.currentScript.getAttribute("src"),document.baseURI).searchParams;
         for(const [key,value] of params.entries()) {
             try {
@@ -129,6 +131,39 @@
         });
         if (all) router.all("*", all);
         return __ROUTER__ = router;
+    }
+
+    const useHighlight = (hljs,css) => {
+        if(css) {
+            const style = document.createElement("style");
+            style.innerHTML = css;
+            document.head.appendChild(style);
+        }
+        hljs.configure({ignoreUnescapedHTML:true});
+        window.highlight = (target,languages) => {
+            let html = target.innerHTML;
+            if(html.includes("`")) html = html.replaceAll(/`/g, "__BACKTICK__");
+            const {value,language} = hljs.highlightAuto(html,languages);
+            target.className += ` language-${language} hljs`;
+            target.innerHTML = value.replaceAll(/__BACKTICK__/g, "`");
+        }
+        const els = [];
+        for(const el of document.querySelectorAll("code")) {
+            if (el.innerHTML.includes("`")) {
+                el.innerHTML = el.innerHTML.replaceAll(/`/g, "__BACKTICK__");
+                els.push(el);
+            }
+        }
+        hljs.highlightAll();
+        for (const el of els) {
+            if (el.innerHTML.includes("__BACKTICK__")) {
+                for (const child of el.childNodes) {
+                    if (child.nodeType === Node.TEXT_NODE && child.data.includes("__BACKTICK__")) {
+                        child.data = child.data.replaceAll(/__BACKTICK__/g, "`");
+                    }
+                }
+            }
+        }
     }
     const isBoolAttribute = (name) => name.startsWith("?") || ["checked", "selected", "disabled", "readonly", "multiple", "ismap", "defer", "noresize", "nowrap", "noshade", "compact", "async", "autofocus", "autoplay", "controls", "default", "formnovalidate", "hidden", "ismap", "loop", "muted", "novalidate", "open", "reversed", "scoped", "seamless", "truespeed", "typemustmatch"].includes(name),
         isObject = (value) => value && typeof value === "object",
@@ -605,7 +640,7 @@
                 });
             } else {
                 try {
-                    const directive = await import(/* webpackIgnore: true */ `${lazui.url.href}directives/${namespace}/${handler}.js`);
+                    const directive = await import(/* webpackIgnore: true */ `${lazui.url.href}/directives/${namespace}/${handler}.js`);
                     if(directive) {
                         const f = directive[handler] || directive.default;
                         __DIRECTIVES__[namespace] ||= {};
@@ -654,7 +689,7 @@
         iframe.srcdoc = `<head>
             <base href="${document.baseURI}">
             ${node.hasAttribute("title") ? "<title>" + node.getAttribute("title") + "</title>" : ""}
-            <script src="${document.querySelector('script[src*=\"/lazui.js\"]').getAttribute('src')}" autofocus></script>
+            <script src="${document.querySelector('script[src*=\"/lazui\"]').getAttribute('src')}" autofocus></script>
             <script>
                 window.top = window.parent = window.self = window.globalState = window;
                 window.frameElement = null;
@@ -868,7 +903,7 @@
         return updated;
     }
 
-    const directiveExports = {render,update,html,compile,interpolate,getState,setState,observeNodes,handleDirective,useJSON,useRouter,replaceBetween},
+    const directiveExports = {render,update,html,compile,interpolate,getState,setState,observeNodes,handleDirective,useJSON,useRouter,useHighlight,replaceBetween},
         exported = {...directiveExports,useDirectives};
     if(typeof module !== "undefined") {
         module.exports = exported;
