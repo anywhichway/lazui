@@ -1,4 +1,5 @@
 async function tagname({el,attribute,root,state,lazui}) {
+    if(customElements.get(attribute.value)) return;
     const {prefix} = lazui,
         className = attribute.value.split("-").map((word,index) => word[0].toUpperCase()+word.slice(1)).join(""),
         mode = el.getAttribute(`${prefix}:mode`) || "open",

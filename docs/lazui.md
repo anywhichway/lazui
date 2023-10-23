@@ -1,27 +1,48 @@
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a'  autofocus 
+<script src='/lazui'  autofocus 
     data-lz:usejson="https://esm.sh/json5" 
     data-lz:userouter="https://esm.sh/hono"
-    data-lz:usehighlight="https://esm.sh/highlight.js"
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlight:{style:'/styles/default.css'}}">
+    data-lz:usehighlighter="https://esm.sh/highlight.js"
+   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
 </script>
 <title>lazui Documentation</title>
 <a href="../index.md">lazui</a>
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
 <lz-toc></lz-toc>
 
-## Introduction
-
-
 
 ## Installation
 
-```bash
-npm install lazui
+Unless you need your own attribute directives, you can use the CDN version of `lazui`. You can use custom controllers, even with the
+CDN version. Place the following script tag in the head of your HTML:
+
+```html
+<script src='https://www.unpkg.com/@anywhichway/lazui' autofocus></script>
+```
+
+Attribute Directive
+: A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance, `lz:src` 
+is an attribute directive that loads content into an element.
+
+Controller
+: A JavaScript file that is loaded to provide additional sophisticated functionality to an element. For instance, [chart.js](#charts)
+can be loaded by the attribute [lz:controller](#pre-built-controllers) to support rendering of charts and graphs with configuration data provided
+by the element.
+
+You can also configure `lazui` to use a [relaxed JSON parser](#relaxed-json-parser), a [client side router](#client-side-routing), 
+and if you are documenting code, a [highlighter](#code-highlighting).
+
+```html
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a'  autofocus 
+    data-lz:usejson="https://esm.sh/json5" 
+    data-lz:userouter="https://esm.sh/hono"
+    data-lz:usehighlighter="https://esm.sh/highlight.js"
+   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
+</script>
 ```
 
 ## Documentation Conventions
 
-Although `lazui` can be used as a powerful Javascript rendering engine, it really shines at reducing the amount of
+Although `lazui` can be used as a powerful JavaScript rendering engine, it really shines at reducing the amount of
 JavaScript required to create an interactive website or single page app. This shininess is provided through a set of
 attribute directives and JavaScript controller files.
 
@@ -40,7 +61,7 @@ In some cases, the documentation will use `TypeScript` notation to make APIs cle
 `TypeScript`.
 
 Most of the JSON in the document is in [JSON5](https://json5.org/) format. This make JSON easier to write and less error
-prone. See [Configuring the JSON Parser](#configuring-the-json-parser) for more information. Unless you configure your
+prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your
 version of `lazui` to use JSON5, you will need to modify the JSON in the examples to be valid JSON.
 
 ## How To Be Lazui
@@ -102,30 +123,57 @@ Hence, `lazui` directive, `lz:src` should be in `/directives/lz/src.js`.
 If this convention is followed, `lazui` will lazy load only those directives that are used. If you want to preload
 directives or use a different naming/filesystem convention, you can [load the directives directly using JavaScript](use-directive).
 
-### Configuring the JSON Parser
+Attribute directives can be provided configuration values with another directive called `lz:options`. The value of
+`lz:options` is a JSON object. The `lz:options` directive can be placed on any element and will apply to all directives.
+The configuration data for a specific directive is provided through a key of the same name as the directive. For instance,
 
-The directive `lz-usejson` can be used to configure the JSON parser for more flexibility. This can dramatically simplify 
+```html
+<template id="person" data-lz:state="{name:'Joe',age:30}" data-lz:options="{state:{storage:'localStorage'}}"></template>
+```
+
+### Relaxed JSON Parser
+
+The directive `lz:usejson` can be used to configure the JSON parser for more flexibility. This can dramatically simplify 
 using embedded JSON by eliminating the need for quotes around keys and allowing the use of single quotes for strings. In
 short, you can be lazy about your JSON.
 
-The attribute takes as its value a URL pointing to the parser. [JSON5](https://json5.org/) is a good choice.
+You can do this:
 
-```html
-<div data-lz:usejson="/json5.js"></div>
+```json
+{
+    name: "John",
+    age: 30
+}
 ```
 
-or
+instead of this:
+
+```json
+{
+    "name": "John",
+    "age": 30
+}
+```
+
+The attribute takes as its value a URL pointing to the parser. [JSON5](https://json5.org/) is a good choice.
 
 ```html
 <div data-lz:usejson="https://esm.sh/json5"></div>
 ```
 
+or, if you have a local copy of JSON5:
+
+```html
+<div data-lz:usejson="/json5.js"></div>
+```
+
 ### Using State
 
-Being able to insert a date and time or do inline math may be useful, but you will probably want to include general data.
+Being able to insert a date and time or do inline math may with templates in HTML be useful, but you will probably want 
+to include general data.
 
 The `data-lz:state` attribute can be used to define a model. The value of the attribute is the name of the state/model. 
-The state is defined as a JSON object inside a template element or loaded from a file:
+The state is defined as a JSON object inside an element (typically a `<template>`) or loaded from a file:
 
 <template data-lz:state="person" data-lz:options="{state:{storage:'localStorage',stringify:true}}" data-lz:showsource="beforeBegin">
 {
@@ -138,7 +186,11 @@ The state is defined as a JSON object inside a template element or loaded from a
 or
     
 ```html
-<template data-lz:state="person" data-lz:src="./person.json">
+<template data-lz:state="person" data-lz:options="{state:{storage:'localStorage',stringify:true}}">
+{
+   name: "John",
+   age: 30
+}
 </template>
 ```
 
@@ -148,7 +200,7 @@ Now you can do this:
     ${name} is ${age} years old.
 </div>
 
-You can also set a state as the default state for a document:
+You can also set a state as the default state for a `document` or `global` (stored on the `globalThis` object):
 
 ```html
 <template data-lz:state:document="person">
@@ -158,6 +210,38 @@ You can also set a state as the default state for a document:
 }
 </template>
 ```
+
+The `data-lz:options` value for `state` is optional. In this case, it is used to store the state in `localStorage` and treat
+the data as a string. This is useful for storing state across page loads. The state will prefer the data in the storage over
+that originally specified as part of the `innerHTML`. See [Advanced Storage](#advanced-storage) for how to implement your own
+storage engine.
+
+The `data-lz:options` attribute value can also take a `src` key to load the JSON from a remote location, e.g.
+
+```html
+<template data-lz:state="someuniqueid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
+</template>
+<script>
+   const state = lazui.getState("someuniqueid");
+   state.name = "John";
+</script>
+```
+
+<div data-lz:showsource:inner="beforeBegin">
+<template data-lz:state="someuniqueid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
+</template>
+<script data-lz:usestate="someuniqueid">
+document.addEventListener("lazuiLoaded",() => {
+   const state = lazui.getState("someuniqueid");
+   state.name = "John";
+   state["^"].mtime = Date.now() + 2000;
+});
+</script>
+</div>
+
+If `post` is true, then every time the state changes, the state will be posted to the `src` URL.
+
+The data is only loaded from the server when the local state is created.
 
 *Markdown Hint*: Setting state at the document level can be useful with Markdown. Below is the content of the file `using-state-with-markdown.md`,
 followed by the `HTML` loading the file and the `IFrame` generated.
@@ -192,7 +276,7 @@ ${name} is ${age} years old.
 </div>
 </div>
 
-#### State Inheritance
+### State Inheritance
 
 States are inherited down the DOM and shadow the values of properties with the same name in ancestor element states.
 
@@ -336,7 +420,11 @@ with its own tag.
 The attribute `lz:mode` can also take the value `frame`. This will load the content into an `iframe` and unlike the
 `open` mode, scripts will be executed regardless of origin, so long as a [content security policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) has not been applied.
 
-<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:mode="frame" data-lz:showsource="beforeBegin" title="My Frame"></div>
+```html
+<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:mode="frame" title="My Frame"></div>
+```
+
+<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:mode="frame" title="My Frame"></div>
 
 Note, if you are viewing the JavaScript console you may see a warning like this: 
 
@@ -644,7 +732,7 @@ the `data-` attributes as keys and the values as values, e.g.
 
 ### Styling and Accessibility
 
-#### aria
+#### ARIA
 
 The `lz:aria` directive can be used to set ARIA attributes. The value of the attribute is a JSON object with the names of
 the ARIA attributes as keys and the values as values, e.g.
@@ -653,7 +741,19 @@ the ARIA attributes as keys and the values as values, e.g.
 <div data-lz:aria='{"role":"button","aria-label":"Click Me"}'>Click Me</div>
 ```
 
-#### style
+### Code Highlighting
+
+The `lz:usehighlighter` directive is typically attached to the `<script>` that loads `lazui`. Currently, only [highlight.js](https://highlightjs.org/)
+is supported.
+
+```html
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.16-a'  autofocus
+    data-lz:usehighlighter="https://esm.sh/highlight.js"
+   data-lz:options="{usehighlighter:{style:'/styles/default.css'}}">
+</script>
+```
+
+#### Style
 
 The `lz:style` directive can be used to set `style` attributes. The value of the attribute is a JSON object with the names of
 the `style` attributes as keys and the values as values. The keys can be in either camelCase or dashed format, e.g.
@@ -670,7 +770,33 @@ Controllers are small JavaScript files that manage the behavior of the element t
 predefined controllers that can be used to enhance forms processing and interact with servers. However, you can also
 [create your own controllers](#creating-custom-controllers).
 
+Controllers are always loaded using the attribute directive `lz:controller=<location>`. The `location` can be relative to
+the current document or an absolute URL including starting with a `/`, `http:` or `https:`.
+
+Controllers can accept configuration data through the attribute `lz:options`. The value of the attribute is a JSON object
+with the key `controller`. This key should contain an object with the configuration data.
+
 ### Charts
+
+Currently supported chart types are those in the Google core library:
+
+- bar,
+- column,
+- line,
+- area,
+- stepped area,
+- bubble,
+- pie,
+- donut,
+- combo,
+- candlestick,
+- histogram,
+- scatter
+
+You can see examples in the Google [chart gallery](https://developers.google.com/chart/interactive/docs/gallery).
+
+**Note**: Some of the charts in the gallery are not supported core types.
+
 
 ```html
 <template data-lz:state="pizza">
@@ -717,29 +843,10 @@ predefined controllers that can be used to enhance forms processing and interact
 You can optionally provide a `type` query parameter to the controller to override the chart type:
 
 ```html
-<div data-lz:controller="/controllers/lz/chart.js?type=BarChart" data-lz:usestate="pizza"></div>
+<div data-lz:controller="/controllers/lz/chart.js" data-lz:options="{controller:{type:'BarChart'}}" data-lz:usestate="pizza"></div>
 ```
 
-<div data-lz:controller="/controllers/lz/chart.js?type=BarChart" data-lz:usestate="pizza"></div>
-
-Currently supported chart types are those in the Google core library:
-
-- bar,
-- column,
-- line,
-- area,
-- stepped area,
-- bubble,
-- pie,
-- donut,
-- combo,
-- candlestick,
-- histogram,
-- scatter
-
-You can see examples in the Google [chart gallery](https://developers.google.com/chart/interactive/docs/gallery).
-
-**Note**: Some of the charts in the gallery are not supported core types.
+<div data-lz:controller="/controllers/lz/chart.js" data-lz:options="{controller:{type:'BarChart'}}" data-lz:usestate="pizza"></div>
 
 ### Form Processing
 
@@ -932,10 +1039,30 @@ Advanced use of the router can be made at the JavaScript level. See [Specifying 
 
 ## Using JavaScript
 
-Unless otherwise noted, all the JavaScript examples below assume that `lazui.js` has already been loaded using:
+If you plan to write custom JavaScript, you will probably want to install `lazui` locally:
+
+```bash
+npm install lazui
+```
+
+This will install a local server you can run using:
+
+```bash
+npm run serve
+```
+
+Unless otherwise noted, all the JavaScript examples below assume that `lazui.js` has already been loaded. 
+
+If you are using the local server the script will be:
 
 ```html
-<script src="./lazui.js"></script>
+<script src="/lazui"></script>
+```
+
+Otherwise, [unpkg](https://unpkg.com/) can be used to load the script:
+
+```html
+<script src="https://www.unpkg.com/lazui"></script>
 ```
 
 ### html
@@ -951,10 +1078,23 @@ const greeting = (person) => html`Hello, ${person.name}!`;
 const interpolation = greeting({name:"John"});
 ```
 
-The `interpolation` value above is an enhancement of an object capturing the arguments generated what JavaScript processes a tagged template,
-e.g. `const html = (strings, ...values) => { return {strings,values} }` returns an object of the form `{strings:string[],values:any[]}`. See the 
-[MDN documentation on tagged templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) 
-for more information.
+The `interpolation` value above is an enhancement of an object capturing the arguments generated when JavaScript processes a tagged template.
+Tagged template functions take a fairly standard form:
+
+```javascript
+const myfunction = (strings, ...values) => { return {strings,values} };
+
+const person = {name:"John"};
+
+const interplolation = myfunction`Hello, ${person.name}!`;
+
+const {strings,values} = interpolation;
+
+console.log(strings); // ["Hello, ","!"]
+console.log(values); // ["John"]
+```
+
+See the [MDN documentation on tagged templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) for more information.
 
 The `lazui` implementation of `html` is a bit more sophisticated than the above, it returns an object with three additional properties:
 
@@ -963,7 +1103,7 @@ The `lazui` implementation of `html` is a bit more sophisticated than the above,
     strings: string[];
     values: any[];
     raw(): string;
-    toDocument(): DocumentFragment;
+    toDocumentFragment(): DocumentFragment;
     nodes(): NodeList;
 }
 ```
@@ -1050,7 +1190,7 @@ function is called with `<style>` and `<template>` elements in a `<head>` sectio
 
 #### nodes()
 
-`nodes(sanitize?:(fragment:DocumentFragment)=>DocumentFragment):NodeList`
+`nodes(sanitize?):NodeList`
 
 `nodes` is just a convenience wrapper around `toDocumentFragment`.
 
@@ -1153,9 +1293,9 @@ Custom Elements are just templates with the directive `lz:tagname`.
 </template>
 <my-custom-element id="custom-element" title=""></my-custom-element>
 <script type="module">
-    setTimeout(() => {
-      document.getElementById("custom-element").setAttribute("title","My Title");
-    },1000);
+document.addEventListener("lazuiLoaded",() => {
+   document.getElementById("custom-element").setAttribute("title","My Title");
+ });
 </script>
 </div>
 

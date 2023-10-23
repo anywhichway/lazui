@@ -1,11 +1,12 @@
-const MODE = "development"; //"production
-
+const MODE = "development"; //production, development
+import JSON5 from 'json5';
 import { createServerAdapter } from '@whatwg-node/server'
 import { createServer } from 'http'
 import { error, json, html, text, jpeg, png, webp, Router } from 'itty-router'
 import {Server as socketIO} from "socket.io";
 import {default as MarkdownIt} from "markdown-it";
 import {default as MarkdownItAnchor} from "markdown-it-anchor";
+import {default as MarkdownItDeflist} from "markdown-it-deflist";
 import {promises as fs} from "fs";
 import * as process from "node:process";
 import * as path from "node:path"
@@ -13,14 +14,18 @@ const md = new MarkdownIt({
     html: true,
     linkify: true,
     typographer: true
-})
-md.use(MarkdownItAnchor,{
+}).use(MarkdownItAnchor,{
     slugify(s) {
         return encodeURIComponent(String(s).trim().toLowerCase().replace(/[\s+,:+,\=+,/]/g, '-').replace(/'/g, ''))
     }
-});
+}).use(MarkdownItDeflist);
+
 import { parse } from 'node-html-parser';
 import { minify } from "terser";
+import brotli from './brotli.cjs';
+const {compress} = brotli;
+
+const sleep = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function toArrayBuffer(buffer) {
     const arrayBuffer = new ArrayBuffer(buffer.length);
@@ -33,34 +38,36 @@ function toArrayBuffer(buffer) {
 
 
 const contentTypes = {
-    ".js": "application/javascript",
-    ".cjs": "application/javascript",
-    ".mjs": "application/javascript",
-    ".css": "text/css",
-    ".html": "text/html",
-    ".md": "text/html",
-    ".json": "application/json",
-    ".svg": "image/svg+xml",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".ico": "image/x-icon",
-    ".txt": "text/plain"
+    ".js": {encoding:"utf8",type:"application/javascript"},
+    ".cjs": {encoding:"utf8",type:"application/javascript"},
+    ".mjs": {encoding:"utf8",type:"application/javascript"},
+    ".css": {encoding:"utf8",type:"text/css"},
+    ".html": {encoding:"utf8",type:"text/html"},
+    ".md": {encoding:"utf8",type:"text/html"},
+    ".json": {encoding:"utf8",type:"application/json"},
+    ".svg": {type:"image/svg+xml"},
+    ".png": {type:"image/png"},
+    ".jpg": {type:"image/jpeg"},
+    ".jpeg": {type:"image/jpeg"},
+    ".gif": {type:"image/gif"},
+    ".ico": {type:"image/x-icon"},
+    ".txt": {encoding:"utf8",type:"text/plain"}
 }
 async function sendFile(pathname,{mangle=true}={}) {
     //console.log(pathname);
     const headers = {},
         options = {};
     try {
-        Object.entries(contentTypes).forEach(([key,value]) => {
+        Object.entries(contentTypes).forEach(([key, {encoding,type}]) => {
             if(pathname.endsWith(key)) {
-                headers["content-type"] = value;
-                if(value.includes("javascript")) options.encoding = "utf8";
+                headers["content-type"] = type;
+                if(encoding) options.encoding = encoding;
             }
         });
-        const data = await fs.readFile(pathname,options),
-            response = new Response(typeof data === "string" ? (MODE==="production" ? (await minify(data,{mangle})).code : data) : toArrayBuffer(data),{headers});
+        if(options.encoding==="utf8") headers["content-encoding"] = "br";
+        const content = await fs.readFile(pathname,options),
+            data = MODE==="production" && headers["content-type"].includes("javascript") ? (await minify(content,{mangle})).code : content,
+            response = new Response(typeof data === "string" ? compress(Buffer.from(data)) : toArrayBuffer(data),{headers});
         return response;
     } catch(e) {
         console.log(e)
@@ -81,6 +88,7 @@ const serveStatic = ({root}) => {
 const app = Router();
 app.all("*", (req) => {
     req.URL = new URL(req.url);
+    if(!req.url.includes("datetime")) console.log(req.method,req.url)
 });
 
 /*
@@ -99,12 +107,6 @@ app.get("/lazui/*", (req) => {
     return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
 })
 
-// prevent directive names from being mangled
-/*app.get("/directives/*", (req) => {
-    const fname = req.URL.pathname.split("/").pop().split(".").shift();
-    return sendFile(process.cwd() + req.URL.pathname,{mangle: {reserved:[fname]}});
-});*/
-
 // as a convenience, provide local copies of itty and Hono for browser use
 app.get("/itty-router.js", (req) => {
     return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs');
@@ -122,6 +124,8 @@ app.get("/json5.js", (req) => {
 app.get('/highlight-js/*', (req) => {
     return sendFile(process.cwd() + req.URL.pathname);
 });
+
+
 
 // middleware for producing server side event generators
 const sse = (eventGenerator,clients=[]) => async (req,res) => {
@@ -157,6 +161,43 @@ const dateTime = (clients) => {
 
 app.get('/datetime',sse(dateTime));
 
+app.get('/data/:id.json', (req) => {
+    const {id} = req.params;
+    return sendFile(process.cwd() + "/data/" + id + ".json");
+})
+app.put('/data/:id.json', async (req) => {
+    const {id} = req.params,
+        text = await req.text(),
+        newjson = JSON5.parse(text.replaceAll(/'^':/g,'"^":').replaceAll(/^:/g,'"^":'));
+    let now = Date.now();
+    console.log(newjson,now)
+    if(newjson["^"].mtime>now) {
+        // if client is trying to spoof the mtime, penalize client and wait until the mtime is now
+        const sleeptime = newjson["^"].mtime - now;
+        console.warn(`Client is trying to spoof mtime. Sleeping for ${sleeptime}ms`);
+        await sleep(sleeptime);
+    }
+    newjson["^"].mtime = now = Date.now(); // update mtime
+    let content;
+    try {
+        content = await fs.readFile(process.cwd() + "/data/" + id + ".json",{encoding:"utf8"});
+    } catch {
+        content = "{}"; // create an empty object if file does not exist
+    }
+    const json = JSON5.parse(content);
+    json["^"] ||= {};
+    json["^"].mtime ||= now-1; // set mtime to now-1 if it does not exist
+    if(newjson["^"].mtime>json["^"].mtime) {
+        // update content only if client has the same or more recent mtime
+        await fs.writeFile(process.cwd() + "/data/" + id + ".json",JSON.stringify(newjson),{encoding:"utf8"});
+    }
+    return sendFile(process.cwd() + "/data/" + id + ".json");
+})
+app.delete('/data/%id.json', async (req) => {
+    const {id} = req.params;
+    await fs.unlink(process.cwd() + "/data/" + id + ".json");
+    return new Response(200);
+})
 app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
@@ -168,7 +209,7 @@ app.get("*", async (req) => {
                 body = markedDOM.querySelector("body");
             // move meta, link, title tags to head (leave style and template in body)
             [...(body.querySelectorAll('meta,link,title,script[src*="/lazui"]')||[])].forEach((el) => head.appendChild(el));
-            // convert all links that specify a sever to external links
+            // convert all links that specify a server to external links
             if(req.URL.pathname!=="/README.md") [...(body.querySelectorAll('a[href^="http"]')||[])].forEach((el) => el.hasAttribute("target") || el.setAttribute("target","_blank"));
             if(!req.headers.has("Accept-Include")) //req.URL.pathname.endsWith("/lazui.md")
             {
@@ -177,7 +218,7 @@ app.get("*", async (req) => {
                         <meta charset="UTF-8">
                         <link rel="preconnect" href="https://esm.sh">`;
             }
-            return html(`<!DOCTYPE html>${markedDOM}`);
+            return html(compress(Buffer.from(`<!DOCTYPE html>${markedDOM}`)),{headers:{"content-encoding":"br"}});
         } catch(e) {
             console.log(e);
             throw e;
@@ -193,6 +234,7 @@ const CSP = {
         "'self'",
         "'unsafe-inline'",
         "'unsafe-eval'",
+        "https://lazui.org",
         "https://www.gstatic.com",
         "https://img.shields.io",
         "https://github.com",
@@ -211,7 +253,7 @@ const ittyServer = createServerAdapter(
     (req, env) => app
         .handle(req, env.res)
         .then((response) => {
-            if(!response.headersSent) {
+            if(!response?.headersSent && response?.headers) {
                 const wsSrc = req.URL.origin.replace(req.URL.protocol,"ws:");
                 if(!CSP["default-src"].includes(wsSrc)) CSP["default-src"].push(wsSrc);
                 //return json(response); // do not remove, will get error if json not processed
@@ -223,7 +265,10 @@ const ittyServer = createServerAdapter(
             }
             return response;
         })
-        .catch(error)
+        .catch((err) => {
+            console.log(err);
+            error(err);
+        })
 )
 
 // Then use it in any environment
@@ -232,9 +277,9 @@ httpServer.listen(3000);
 
 const io = new socketIO(httpServer);
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    //console.log('a user connected');
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        //console.log('user disconnected');
     });
     socket.onAny((event,msg) => {
         console.log(event,msg);

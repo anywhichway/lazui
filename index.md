@@ -1,39 +1,73 @@
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a' autofocus 
-    data-lz:usejson="https://esm.sh/json5" 
-    data-lz:userouter="https://esm.sh/hono" 
-    data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true}}">
+<!-- https://www.unpkg.com/@anywhichway/lazui@0.0.16-a -->
+<script src='/lazui' autofocus 
+    data-lz:usejson="https://esm.sh/json5"
+    data-lz:usehighlighter="https://esm.sh/highlight.js"
+    data-lz:userouter="https://esm.sh/hono"
+    data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
 </script>
 <title>lazui: Web UI's with less work</title>
-<div data-lz:src="./docs/header.html"></div>
+<div style="width:100%" data-lz:src="./docs/header.html"></div>
 
-Short for &quot;lazy UI&quot;. Single page apps and lazy loading sites with minimal JavaScript or client build processes.
+<div style="width:100%;text-align:center;font-size:20px">The lazy UI framework. Get `lazui`, do less, deliver more.</div>
 
-`lazui` is pronounced &quot;lazy&quot;, as in &quot;Lazy loading &period;&period;&period;&quot; or &quot;Get lazui &period;&period;&period; do less
-&period;&period;&period; deliver more!&quot;
+<template data-lz:state="lazuiwords">
+{
+    type: 'WordTree',
+    options:{
+        maxFontSize: 18,
+        wordtree: {
+            format: 'implicit',
+            word: 'lazui'
+        }
+    },
+    data: [
+        ['Phrases'],
+        ['lazui as in pronounced lazy'],
+        ['lazui as in lazy loading'],
+        ['lazui as in do less and deliver more'],
+        ['lazui has benefit reduced or no javascript'],
+        ['lazui has benefit small core(7k minimized and compressed)'],
+        ['lazui has benefit incremental loading'],
+        ['lazui has benefit no virtual dom'],
+        ['lazui has benefit no build process'],
+        ['lazui has benefit no custom server required'],
+        ['lazui has benefit choice of multiple paradigms'],
+        ['lazui has benefit Markdown friendly'],
+        ['lazui features ${templates in HTML}'],
+        ['lazui features attributes for styling'],
+        ['lazui features attributes for layout'],
+        ['lazui features attributes for state and data management'],
+        ['lazui features attributes for event management'],
+        ['lazui features attributes for content loading and targetting'],
+        ['lazui features JavaScript free server side events'],
+        ['lazui features JavaScript free web sockets'],
+        ['lazui features JavaScript free form processing'],
+        ['lazui features JavaScript free routing'],
+        ['lazui features JavaScript free charts and gauges'],
+        ['lazui features JavaScript free remote data synchronization'],
+        ['lazui features JavaScript access to html template function'],
+        ['lazui features JavaScript access to render function'],
+        ['lazui features JavaScript access to pre-built server'],
+        ['lazui draws from htmx'],
+        ['lazui draws from lighterHTML'],
+        ['lazui draws from Knockout'],
+        ['lazui draws from Turbo'],
+        ['lazui draws from Stimulus'],
+        ['lazui draws from Vue'],
+        ['lazui draws from Lit-Element'],
+        ['lazui draws from hyperHTML'],
+        ['lazui draws from Riot']
+    ]
+}
+</template>
+<div data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="lazuiwords" data-lz:options='{controller:{packages:["wordtree"]}}'>
 
-# introduction
-
-`lazui` gives you access to the best ideas from [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),  [Knockout](https://knockoutjs.com/), [Turbo](https://turbo.hotwired.dev/) and [Stimulus](https://stimulus.hotwired.dev/) and [Vue](https://vuejs.org/)
-
-`lazui` has a small core (less than 7K) and incremental loading of just the parts you use. Or, you can [create a custom bundle](./lazui.md/#creating-a-custom-bundle) for one time loading.
-
-# motivation
-
-There are great features in the above libraries, you should not have to choose just one approach.
-
-- Why shouldn't you be able to choose the simplest way to implement a feature?
-- Why should content only be sourced from URLs?
-- Why shouldn't templating be directly available in HTML?
-- Why should you have to write a bunch of client side JavaScript to use WebSockets or Server Sent Events?
-- Why should you be limited to the attribute directives that come with a library?
-- Why should `<a>` and `<form>` elements be the only ones that can make requests?
-- Why should you only be able to target the entire page (`_top`) or use another tab (`_blank`), or be limited to one target?
-- Why should you have to implement a server from scratch?
+</div>
 
 # quick start
 
 ```html
-<script src="./lazui.js"></script>
+<script src="https://www.unpkg.com/@anywhichway/lazui"></script>
 ```
 
 ## for HTML
@@ -42,7 +76,7 @@ There are great features in the above libraries, you should not have to choose j
 <template id="goodbye">
     Goodbye ${userName}
 </template>
-<div data-lz:src="#goodbye" data-lz:state='{"userName":"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
+<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 ```
@@ -50,7 +84,7 @@ There are great features in the above libraries, you should not have to choose j
 <template id="goodbye">
     Goodbye ${userName}!
 </template>
-<div data-lz:src="#goodbye" data-lz:state='{"userName":"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
+<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 
@@ -79,42 +113,3 @@ const clicked = (event) => {
 };
 render(document.currentScript, html`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
 </script>
-
-
-# all the things
-
-- String literal templates directly in HTML, e.g. `<div>\${new Date()}</div>`
-- Extensive target options
-    - `beforebegin`, `afterBegin`, `beforeEnd`, `afterEnd`, `inner`,
-      `outer`, `firstChild`, `lastChild`, `_body`, `_top`
-    - CSS targets for multiple location updates
-- Works well with [Markdown](./lazui.md/#working-with-markdown)
-- As few or as many dynamically loaded attribute directives as you wish
-    - pre-built directives:
-        - `lz:state`, `lz:usestate` for [state](docs/lazui.md#using-state),
-        - `lz:src` and `lz:mode` for [loading content](./lazui#loading-content), including [single page components](./lazui#single-page-components).
-        - `lz:url` for use with [client side routing](./lazui#client-side-routing),
-        - `lz:on` for [handling events](./lazui#handling-events),
-        - `lz:foreach`, `lz:if`, `lz:show`, `lz:showsource` for [content control](./lazui#content-control),
-        - `lz:dataset` for element [dataset management](./lazui#dataset-management),
-        - `lz:style`, `lz:aria` for [styling and accessibility](./lazui#styling-and-accessibility),
-        - `lz:tagname` for [custom elements](./lazui#creating-custom-elements),
-        - `lz:usejson` for [configuring the JSON parser](./lazui#configuring-the-json-parser),
-        - `lz:controller` for loading a custom controller
-    - custom directives, e.g. [lz:mycustomdirective](./lazui#creating-custom-attribute-directives)
-- As few or as many dynamically loaded controllers as you wish
-    - [pre-built controllers](pre-built-controllers)
-        - [router](./lazui#treating-elements-as-files)
-        - [form](./lazui#form), [input](./lazui#input), [select](./lazui#select), [textarea](./lazui#textarea) for form processing
-        - [chart](./lazui#charts) for pie charts, guages, etc.
-        - [ws](./lazui#web-sockets), [sse](./lazui#server-sent-events), [pubsub](./lazui#pubsub) for websockets, server sent events, and pubsub
-    - [custom controllers](./lazui#defining-custom-controllers)
-- `html` template literal and `render` functions for string interpolation and rendering
-    - [html](./lazui#html) template literals can return raw HTML or a document fragment
-    - Powerful [render](./lazui#render) function
-        - accepts a `where` argument to specify where to render the content
-        - a `state` argument to specify the state to use
-        - accepts interpolations, DOM nodes, and strings as content
-- [Chose an attribute name space]() with or without the `data-` prefix, e.g. `data-lz:src`, `lz:src`, or even `myname:src`.
-- No virtual DOM. The dependency tracker targets just those nodes that need updates.
-- A [basic server](docs/lazui.md#basic-server) with markdown processing, automatic minification, server side events and web sockets already implemented.

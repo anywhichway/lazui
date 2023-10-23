@@ -4,49 +4,42 @@
     if(document?.currentScript && !window.lazuiLoaded) {
         window.lazuiLoaded = true;
         const url = new URL(document.currentScript.src),
-            autofocus = document.currentScript.hasAttribute("autofocus")
-       // if(document.currentScript.hasAttribute("autofocus")) {
-            const docEl = document.documentElement;
-            docEl.setAttribute("hidden","")
-            document.addEventListener("DOMContentLoaded",async () => {
-                lazui.url = new URL(url.href);
-                lazui.url.hash = "";
-                lazui.url.search = "";
-                directiveExports.url = lazui.url;
-                const usejson = document.querySelector(`[${__PREFIX__}\\:usejson]`);
-                if(usejson) await handleDirective(usejson.attributes[`${__PREFIX__}:usejson`]);
-                const userouter = document.querySelector(`[${__PREFIX__}\\:userouter]`),
-                    routerVariable = url.searchParams.get("router"),
-                    allowRemote = url.searchParams.get("allowRemote");
-                if(userouter) {
-                    const attribute = userouter.attributes[`${__PREFIX__}:userouter`];
-                    if(routerVariable && document[routerVariable]) console.warn(`Global router with name '${routerVariable}' being overruled by 'userouter=\"${attribute.value}\"'`);
-                    await handleDirective(attribute);
-                } else {
-                    const router = routerVariable && document[routerVariable] ? document[routerVariable]() : null;
-                    if(router) lazui.useRouter(router,{allowRemote});
-                }
-                const usehighlight = document.querySelector(`[${__PREFIX__}\\:usehighlight]`);
-                if(usehighlight) await handleDirective(usejson.attributes[`${__PREFIX__}:usehighlight`]);
-                for(const state of [...document.querySelectorAll(`[${__PREFIX__}\\:state],[${__PREFIX__}\\:state\\:global],[${__PREFIX__}\\:state\\:document]`)]) {
-                    for(const attr of [...state.attributes]) {
-                        if(attr.name.startsWith(`${__PREFIX__}:`)) await handleDirective(attr)
-                    }
-                }
-                if(autofocus) resolve(document.body,{root:document,state:{}})
-                docEl.removeAttribute("hidden");
-                if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
-            })
-       // }
-        const params = new URL(document.currentScript.getAttribute("src"),document.baseURI).searchParams;
-        for(const [key,value] of params.entries()) {
-            try {
-                __OPTIONS__[key] = JSON.parse(value);
-            } catch {
-                __OPTIONS__[key] = value==="" ? true : value;
+            autofocus = document.currentScript.hasAttribute("autofocus"),
+            docEl = document.documentElement;
+        docEl.setAttribute("hidden","")
+        document.addEventListener("DOMContentLoaded",async () => {
+            lazui.url = new URL(url.href);
+            lazui.url.hash = "";
+            lazui.url.search = "";
+            directiveExports.url = lazui.url;
+            const usejson = document.querySelector(`[${directiveExports.prefix}\\:usejson]`);
+            if(usejson) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usejson`]);
+            const userouter = document.querySelector(`[${directiveExports.prefix}\\:userouter]`),
+                routerVariable = url.searchParams.get("router"),
+                allowRemote = url.searchParams.get("allowRemote");
+            if(userouter) {
+                const attribute = userouter.attributes[`${directiveExports.prefix}:userouter`];
+                if(routerVariable && document[routerVariable]) console.warn(`Global router with name '${routerVariable}' being overruled by 'userouter=\"${attribute.value}\"'`);
+                await handleDirective(attribute);
+            } else {
+                const router = routerVariable && document[routerVariable] ? document[routerVariable]() : null;
+                if(router) lazui.useRouter(router,{allowRemote});
             }
-        }
-
+            const usehighlighter = document.querySelector(`[${directiveExports.prefix}\\:usehighlighter]`);
+            if(usehighlighter) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usehighlighter`]);
+            for(const state of [...document.querySelectorAll(`[${directiveExports.prefix}\\:state],[${directiveExports.prefix}\\:state\\:global],[${directiveExports.prefix}\\:state\\:document]`)]) {
+                for(const attr of [...state.attributes]) {
+                    if(attr.name.startsWith(`${directiveExports.prefix}:state`)) await handleDirective(attr)
+                }
+            }
+            for(const customElement of [...document.querySelectorAll(`[${directiveExports.prefix}\\:tagname]`)]) {
+                await handleDirective(customElement.attributes[`${directiveExports.prefix}:tagname`]);
+            }
+            if(autofocus) resolve(document.body,{root:document,state:{}})
+            docEl.removeAttribute("hidden");
+            if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
+            document.dispatchEvent(new CustomEvent("lazuiLoaded"));
+        })
     }
 
     const useDirectives = (namespace, ...directives) => {
@@ -61,113 +54,8 @@
         })
     }
 
-    const useJSON = (json) => __JSON__ = json;
+    const usePrefix = (prefix) => directiveExports.prefix = prefix;
 
-    const usePrefix = (prefix) => __PREFIX__ = prefix;
-    const useRouter = (router,{root = document.documentElement,allowRemote=__OPTIONS__.allowRemote,all=(c) => {
-        if(c.req.raw.mode==="document") {
-            return new Response("Not Found",{status:404})
-        }
-        if(c.req.URL.pathname.endsWith(".md")) {
-            c.req.raw.headers.set("Accept-Include","true");
-        }
-        return fetch(c.req.raw);
-    }}={}) => {
-        // (req,resp)
-        // (req,resp,next)
-        // (ctx,next)
-        // must support router.get("*",handler) and router.all("*",...) and return of a Response object (both Hono and Itty do)
-        router.all("*", async (arg1,arg2,arg3) => {
-            let c = arg1.req ? arg1 : {req:arg1},
-                next = typeof arg2 === "function" ? arg2 : typeof arg3 === "function" ? arg3 : null;
-            const url = c.req.URL = new URL(c.req.url, document.baseURI);
-            if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
-                const el = document.getElementById(url.hash.slice(1));
-                return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
-            }
-            let node,
-                isLocal;
-            if(isLocal = c.req.url.startsWith(document.location.origin)) {
-                node = root.querySelector(`[${__PREFIX__}\\:url="${c.req.url}"],[${__PREFIX__}\\:url="${url.pathname}"]`);
-            } else if(allowRemote && /^(http|https):/i.test(c.req.url)) {
-                node = root.querySelector(`[${__PREFIX__}\\:url="${c.req.url}"]`);
-            }
-            if(!node && c.req.method==="POST" && (isLocal || allowRemote)) {
-                node = document.createElement("template");
-                const target = root.querySelector("head")||root.querySelector("body");
-                node.setAttribute(`${__PREFIX__}:url`,c.req.url);
-                target.appendChild(node);
-            }
-            if (node) {
-                if(c.req.method==="PUT" || c.req.method==="POST") {
-                    const text = await c.req.text();
-                    node.innerHTML = text;
-                }
-                if(["GET","PUT","POST","PATCH"].includes(c.req.method)) {
-                    const headers = {"content-type": "text/html"};
-                    for (const attr of [...node.attributes]) {
-                        if (attr.name.startsWith(`${__PREFIX__}:header-`)) headers[attr.name.substring(12)] = attr.value;
-                        else if (attr.name === `${__PREFIX__}:headers`) Object.assign(headers, __JSON__.parse(attr.value))
-                    }
-                    const html = document.createElement("html");
-                    html.innerHTML = node.innerHTML;
-                    const head = html.querySelector("head");
-                    let style = "",
-                        link = "";
-                    if(head) {
-                        for(const equiv of head.querySelectorAll("meta[http-equiv]")) headers[equiv.getAttribute("http-equiv")] = equiv.getAttribute("content");
-                        for(const el of head.querySelectorAll("style")) style += el.outerHTML;
-                        for(const el of head.querySelectorAll("link[rel=stylesheet]")) link += el.outerHTML;
-                    }
-                    const status = node.getAttribute(`${__PREFIX__}:status`) || 200;
-                    return new Response(style + link + (node.querySelector("body")||node).innerHTML, {status,headers});
-                }
-
-            }
-            if(c.req.raw.mode==="document") {
-                return new Response("Not Found",{status: 404});
-            }
-            if(next) await next();
-        });
-        if (all) router.all("*", all);
-        return __ROUTER__ = router;
-    }
-
-    const useHighlight = (hljs,css) => {
-        if(css) {
-            const style = document.createElement("style");
-            style.innerHTML = css;
-            document.head.appendChild(style);
-        }
-        hljs.configure({ignoreUnescapedHTML:true});
-        window.highlight = (target,languages) => {
-            if(target.hasAttribute("data-highlighted")) {
-                target.removeAttribute("data-highlighted");
-            }
-            let html = target.innerHTML;
-            if(html.includes("`")) html = html.replaceAll(/`/g, "__BACKTICK__");
-            const {value,language} = hljs.highlightAuto(html,languages);
-            target.className += ` language-${language} hljs`;
-            target.innerHTML = value.replaceAll(/__BACKTICK__/g, "`");
-        }
-        const els = [];
-        for(const el of document.querySelectorAll("code")) {
-            if (el.innerHTML.includes("`")) {
-                el.innerHTML = el.innerHTML.replaceAll(/`/g, "__BACKTICK__");
-                els.push(el);
-            }
-        }
-        hljs.highlightAll();
-        for (const el of els) {
-            if (el.innerHTML.includes("__BACKTICK__")) {
-                for (const child of el.childNodes) {
-                    if (child.nodeType === Node.TEXT_NODE && child.data.includes("__BACKTICK__")) {
-                        child.data = child.data.replaceAll(/__BACKTICK__/g, "`");
-                    }
-                }
-            }
-        }
-    }
     const isBoolAttribute = (name) => name.startsWith("?") || ["checked", "selected", "disabled", "readonly", "multiple", "ismap", "defer", "noresize", "nowrap", "noshade", "compact", "async", "autofocus", "autoplay", "controls", "default", "formnovalidate", "hidden", "ismap", "loop", "muted", "novalidate", "open", "reversed", "scoped", "seamless", "truespeed", "typemustmatch"].includes(name),
         isObject = (value) => value && typeof value === "object",
         isHook = (value) => isObject(value) && typeof value.hook ==="function",
@@ -212,14 +100,18 @@
                     const oldValue = target[property],
                         wasIn = property in target;
                     if(oldValue!==value) {
+                        if(oldValue!==undefined && value!==undefined) target[property] = value;
                         if(el && value!==undefined) {
                             let event;
-                            if(wasIn) el.dispatchEvent(event = new CustomEvent("change", {bubbles: true, detail: {property, value,oldValue,path,ancestors}}));
-                            else el.dispatchEvent(event = new CustomEvent("set", {bubbles: true, detail: {property, value,path,ancestors}}));
-                            if(event.defaultPrevented) return true;
+                            if(wasIn) el.dispatchEvent(event = new CustomEvent("change", {bubbles: true, detail: {state:proxy,property, value,oldValue,path,ancestors}}));
+                            else el.dispatchEvent(event = new CustomEvent("set", {bubbles: true, detail: {state:proxy,property, value,path,ancestors}}));
+                            if(event.defaultPrevented) {
+                                if(oldValue===undefined) delete target[property];
+                                else target[property] = oldValue;
+                                return true;
+                            }
                         }
                         const subscriberSet = new Set([...(subscribers.get(property)||[]),...(subscribers.get("__all__")||[])]);
-                        if(oldValue!==undefined && value!==undefined) target[property] = value;
                         for(const observation of subscriberSet) {
                             const {nodes,observe,root,string,recurse,state} = observation;
                             // should we filter for connected nodes and drop others?
@@ -267,10 +159,7 @@
                             observe = observation.observe || [];
                         if(observe.includes(property) || observe.includes("*")) {
                             let subscriberSet = subscribers.get(property);
-                            if(!subscriberSet) {
-                                subscriberSet = [];
-                                subscribers.set(property,subscriberSet);
-                            }
+                            if(!subscriberSet) subscribers.set(property,subscriberSet=[]);
                             subscriberSet.push(observation)
                         }
                     }
@@ -319,7 +208,7 @@
         return state;
     }
 
-    const getStates = (node,states=[],attrName = `${__PREFIX__}:usestate`) => {
+    const getStates = (node,states=[],attrName = `${directiveExports.prefix}:usestate`) => {
         if(node===null) {
             if(document.documentState) states.push(document.documentState);
             if(window.globalState) states.push(window.globalState);
@@ -421,15 +310,6 @@
         if (node.nodeType == Node.TEXT_NODE) {
             if (callback) callback(node, level, root);
         } else {
-            if (node.nodeType == Node.ELEMENT_NODE && node.ownerDocument instanceof XMLDocument) {
-                const htmlNode = document.createElement(node.tagName);
-                for (const attr of [...node.attributes]) {
-                    if (attr.name !== "xmlns") htmlNode.setAttribute(attr.name, attr.value);
-                }
-                htmlNode.append(...node.childNodes);
-                node.replaceWith(htmlNode);
-                node = htmlNode;
-            }
             if (node.nodeType == Node.ELEMENT_NODE) for (const attr of [...node.attributes]) !callback || callback(attr, level, root)
             if(node.tagName!=="SCRIPT" && node.tagName!=="CODE") {
                 if (callback) callback(node, level, root);
@@ -437,20 +317,11 @@
                 for (const child of nodes) walk(child, callback, root, level + 1);
             }
         }
-        if (node instanceof XMLDocument) {
-            const newNode = document.createElement("div");
-            newNode.append(...node.childNodes);
-            node = newNode;
-        }
         return node;
     };
 
     const __DIRECTIVES__ = {},
-        __HTML_CACHE__ = new Map(),
-        __ATTRIBUTES__ = new WeakMap();
-    let __ROUTER__ = window,
-        __JSON__ = JSON,
-        __PREFIX__ = "data-lz";
+        __HTML_CACHE__ = new Map();
     const html = function (strings, ...values) {
         const {state, root} = isHTMLScope(this) ? this : {state: {}, root: document},
         locator = "__LOCATOR__",
@@ -553,9 +424,7 @@
                 //sanitize
                 const base = html.startsWith("<head>") ? parsed.head : parsed.body,
                     fragment = document.createDocumentFragment();
-                if(html.includes("<style>") && !html.startsWith("<head>")) {
-                    fragment.append(...parsed.head.querySelectorAll("style")||[])
-                }
+                if(html.includes("<style>") && !html.startsWith("<head>")) fragment.append(...parsed.head.querySelectorAll("style")||[]);
                 while(base.firstChild) fragment.appendChild(base.firstChild);
                 if (templateOutsideHead) {
                     const fragment = document.createDocumentFragment(),
@@ -575,9 +444,7 @@
         return Function("html", "root", "return (state) => { with(state) { return html`" + unescaped + "`}}")(html, root); // html.bind({state,root});
     }
 
-    const interpolate = (text, state = {}, root,all) => {
-        return compile(text, root,all)(state)
-    }
+    const interpolate = (text, state = {}, root,all) => compile(text, root,all)(state);
 
     let animations = [];
     const animate = (callback) => {
@@ -610,10 +477,10 @@
     }
 
     const getOptions = ({el,handler,root}) => {
-        let options = handler!=="usejson" && handler!=="options" && el.hasAttribute(`${__PREFIX__}:options`) ? (__JSON__.parse(el.getAttribute(`${__PREFIX__}:options`))[handler])||{} : {};
+        let options = handler!=="usejson" && handler!=="options" && el.hasAttribute(`${directiveExports.prefix}:options`) ? (directiveExports.JSON.parse(el.getAttribute(`${directiveExports.prefix}:options`))[handler])||{} : {};
         if(typeof options==="string" && options[0]==="#") {
             const el = root.getElementById(options);
-            options = __JSON__.parse(el.innerHTML);
+            options = directiveExports.JSON.parse(el.innerHTML);
         }
         return options;
     }
@@ -622,48 +489,32 @@
         const {name,value} = attr,
             parts = name.substring(5).split(":"); // data-foo:bar
         if(parts.length>1) {
-            let [namespace,handler,...args] = parts;
-            const stateProxy = statesProxy(getStates(attr.ownerElement,state ? [state] : undefined)),
-                options = getOptions({el:attr.ownerElement,handler,root});
-            if(__DIRECTIVES__[namespace] && __DIRECTIVES__[namespace][handler]) {
-                await __DIRECTIVES__[namespace][handler]({
+            const [namespace,handler,...args] = parts,
+                arg = {
                     namespace,
                     handler,
                     el: attr.ownerElement,
                     attribute: attr,
                     rawValue: value,
                     args,
-                    options,
-                    state:stateProxy,
+                    options:getOptions({el:attr.ownerElement,handler,root}),
+                    state:statesProxy(getStates(attr.ownerElement,state ? [state] : undefined)),
                     root,
                     window,
                     document,
                     recurse,
-                    lazui: {router: __ROUTER__, JSON: __JSON__, prefix: __PREFIX__, ...directiveExports, state, root}
-                });
+                    lazui: directiveExports
+                };
+            if(__DIRECTIVES__[namespace] && __DIRECTIVES__[namespace][handler]) {
+                await __DIRECTIVES__[namespace][handler](arg);
             } else {
                 try {
                     const directive = await import(/* webpackIgnore: true */ `${lazui.url.href}/directives/${namespace}/${handler}.js`);
                     if(directive) {
                         const f = directive[handler] || directive.default;
-                        __DIRECTIVES__[namespace] ||= {};
-                        __DIRECTIVES__[namespace][handler] = f;
+                        (__DIRECTIVES__[namespace] ||={})[handler] = f;
                         try {
-                            await f({
-                                namespace,
-                                handler,
-                                el: attr.ownerElement,
-                                attribute: attr,
-                                rawValue: value,
-                                args,
-                                options,
-                                state:stateProxy,
-                                root,
-                                window,
-                                document,
-                                recurse,
-                                lazui: {router: __ROUTER__, JSON: __JSON__, prefix: __PREFIX__, ...directiveExports}
-                            })
+                            await f(arg)
                         } catch(e) {
                             console.warn(`Directive: ${namespace}/${handler} threw an error ${e}`);
                         }
@@ -717,7 +568,7 @@
     const resolve = (content,{state,root,recurse}) => {
         walk(content,(node) => {
             if(node.nodeType===Node.ATTRIBUTE_NODE) {
-                const attrName = `${__PREFIX__}:usestate`,
+                const attrName = `${directiveExports.prefix}:usestate`,
                     stateProxy = statesProxy(getStates(node.ownerElement,state ? [state] : undefined));
                 if(node.value.includes("${")) {
                     observeNodes({nodes:[node],observe:["*"],root,string:node.value,state:stateProxy},() => {
@@ -730,11 +581,11 @@
                 } else if(node.name.startsWith("on")) {
                     handleOnAttribute(node,node.ownerElement[node.name] || node.value)
                 }
-                if (node.name.startsWith(__PREFIX__)) handleDirective(node,{state:stateProxy,root,recurse});
+                if (node.name.startsWith(directiveExports.prefix)) handleDirective(node,{state:stateProxy,root,recurse});
                 return;
             }
             if(node.nodeType===Node.TEXT_NODE && node.data.includes("${") && node.parentElement?.constructor.name!=="HTMLTemplateElement") {
-                const attrName = `${__PREFIX__}:usestate`,
+                const attrName = `${directiveExports.prefix}:usestate`,
                     stateProxy = statesProxy(getStates(node,state ? [state] : undefined)),
                     observation = {nodes:[node],observe:["*"],root,string:node.data,recurse,state:stateProxy};
                 observeNodes(observation,() => {
@@ -808,10 +659,10 @@
     }
 
     const update = ({node, content, state=document.documentState||window.globalState||{}, where="inner", root=document.documentElement, animator = (f) => animate(f),callback}) => {
-        const mode = node.nodeType===Node.ELEMENT_NODE ? node.getAttribute(`${__PREFIX__}:mode`) : null;
+        const mode = node.nodeType===Node.ELEMENT_NODE ? node.getAttribute(`${directiveExports.prefix}:mode`) : null;
         if(mode) {
             if(where!=="inner") throw new Error(`${mode} must use where="inner" not where="${where}"`);
-            if(mode!=="open" && mode!=="frame") throw new Error(`${__PREFIX__}:${mode}, is not currently supported`);
+            if(mode!=="open" && mode!=="frame") throw new Error(`${directiveExports.prefix}:${mode}, is not currently supported`);
         }
         const updated = [],
             getNodes = (content) => content.childNodes ? content.childNodes : content, // if no content.childNodes, content is a NodeList or an error
@@ -829,7 +680,7 @@
                             shadowRoot.state = state;
                             updated.push(...getNodes(content));
                             shadowRoot.replaceChildren(...getNodes(content));
-                            const src = node.getAttribute(`${__PREFIX__}:src`);
+                            const src = node.getAttribute(`${directiveExports.prefix}:src`);
                             if(!src || !src.startsWith("http")) evaluateScripts(shadowRoot)
                         } else if (mode === "frame") {
                             updated.push(...getNodes(content));
@@ -906,7 +757,7 @@
         return updated;
     }
 
-    const directiveExports = {render,update,html,compile,interpolate,getState,setState,observeNodes,handleDirective,useJSON,useRouter,useHighlight,replaceBetween},
+    const directiveExports = {render,update,html,compile,interpolate,getState,setState,observeNodes,handleDirective,replaceBetween,router:window,JSON,prefix:"data-lz"},
         exported = {...directiveExports,useDirectives};
     if(typeof module !== "undefined") {
         module.exports = exported;

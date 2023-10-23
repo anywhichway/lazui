@@ -20,9 +20,21 @@
         padding: 2px; /* Adds a little space around each <li> tag */
         line-height: 80%
     }
+    [id="close-button"] {
+        display: none;
+        float: right;
+        font-weight: bold;
+        margin-top: 0px;
+    }
+    [id="open-button"] {
+        display: none;
+        float: left;
+        font-weight: bold;
+        margin-top: 0px;
+    }
 </style>
 <div id="header" style="font-weight:bold;margin-top:0px">
-    &nbsp;<span id="toggle-button" style="display:none;float:right;font-weight:bold;margin-top:0px">&lt;&lt;</span>
+    &nbsp;<span id="open-button">&gt;&gt;</span><span id="close-button">&lt;&lt;</span>
 </div>
 <div class="toc" style="border:1px solid grey;margin-right:5px;border-radius:5px;overflow-x:hidden;overflow-y:auto;background:whitesmoke">
 </div>
@@ -72,30 +84,31 @@
             y = 0;
         const toggle = this.shadowRoot,
             header = this.shadowRoot.getElementById("header");
-        this.shadowRoot.getElementById("toggle-button").style.setProperty("display","inline");
         function handleGesture({event,right,left}={}) {
             if (left && touchendX < touchstartX && Math.abs(touchstartY-touchendY)<100 && Math.abs(touchstartX-touchendX)>75) { left(); }
             else if (right && touchendX > touchstartX && touchstartX<150) { right(); }
         }
         let opened;
-        function handleTOC(open) {
+        const handleTOC = (open) => {
             const previous = opened;
             if(open===undefined) open = opened = !opened
             else opened = open;
             if(opened) {
+                this.shadowRoot.getElementById("close-button").style.setProperty("display","inline");
+                this.shadowRoot.getElementById("open-button").style.setProperty("display","");
                 toc.style.setProperty("max-width","");
                 toc.style.setProperty("overflow-y","auto");
                 toc.style.setProperty("max-height","calc(100% - 8em)");
                 toc.style.setProperty("height","calc(100% - 8em)");
-                header.style.setProperty("display","initial");
                 content.style.setProperty("margin-left",toc.clientWidth+10);
                 content.style.setProperty("max-width",`calc(100% - ${toc.clientWidth+40}px)`);
             } else {
+                this.shadowRoot.getElementById("close-button").style.setProperty("display","");
+                this.shadowRoot.getElementById("open-button").style.setProperty("display","inline");
                 toc.style.setProperty("max-width","10px");
                 toc.style.setProperty("overflow-y","hidden");
                 toc.style.setProperty("max-height","97%");
                 toc.style.setProperty("height","97%");
-                header.style.display = "none";
                 content.style.setProperty("margin-left","");
                 content.style.setProperty("max-width",`calc(100% - ${48}px)`);
             }
@@ -112,7 +125,7 @@
         content.style.setProperty("margin-left",toc.clientWidth+10);
         content.style.setProperty("max-width",`calc(100% - ${toc.clientWidth+40}px)`);
         toc.style.setProperty("max-width","7px");
-        handleTOC(true);
+        handleTOC(false);
         toc.addEventListener('touchstart', event => {
             touchstartX = event.changedTouches[0].screenX
         });
@@ -138,7 +151,7 @@
                 handleTOC(true);
                 history.replaceState({tocHREF:window.location.href}, "");
             }
-            else if(event.target.id==="toggle-button") handleTOC(false);
+            else if(event.target.id==="close-button") handleTOC(false);
             else if(!opened) handleTOC(true);
         });
         window.addEventListener("popstate", (event) => {
