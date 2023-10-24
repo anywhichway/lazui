@@ -104,6 +104,8 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-24 v0.0.18a documentation updates, refinement to WordChart processing
+
 2023-10-23 v0.0.17-a server data sync, content updates
 
 2023-10-22 v0.0.16-a size optimizations

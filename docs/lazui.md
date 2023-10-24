@@ -60,28 +60,25 @@ to attribute directives will take the form `lz:<directive>` and sample code will
 In some cases, the documentation will use `TypeScript` notation to make APIs clear, however, `lazui` is not written in
 `TypeScript`.
 
-Most of the JSON in the document is in [JSON5](https://json5.org/) format. This make JSON easier to write and less error
+Most of the JSON in the document is in [JSON5](https://json5.org/) format. This makes JSON easier to write and less error
 prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your
 version of `lazui` to use JSON5, you will need to modify the JSON in the examples to be valid JSON.
+
+Any time you see `/lazui` as a source attribute you could insert a CDN URL. We have throughly tested with `https://www.unpkg.com/@anywhichway/lazui`. 
+You can use just `/lazui` if you are running the [basic lazui server](#basic-server).
 
 ## How To Be Lazui
 
 Place one of these in the `<head>` of your HTML:
 
 ```html
-<script src="./lazui.js">
+<script src="/lazui">
 ```
 or
 
 ```html
-<script src="./lazui.js" autofocus>
+<script src="/lazui" autofocus>
 ```
-
-Why isn't `lazui.js` a module? Modules do not fully resolve until a page is fully loaded, which makes it harder
-to intercept display of the page to prevent flicker on initial rendering. Providing `autofocus` to a standard script, 
-will cause `lazui` to start processing the page for template literals embedded in HTML and process `lazui` directives as
-soon as the `DOMContent` is loaded, but before it is displayed to the user. However, all `lazui` directives and controllers
-are modules.
 
 Here is the first simple example:
 
@@ -257,7 +254,7 @@ ${name} is ${age} years old.
 ```
 <div data-lz:src="./using-state-with-markdown.md" data-lz:mode="frame" data-lz:showsource="beforeBegin" title="Lazui: Markdown Example"></div>
 
-### Reactive State
+#### Reactive State
 
 Modifying a state will cause any elements using the state to be updated.
 
@@ -265,7 +262,7 @@ Modifying a state will cause any elements using the state to be updated.
     Click Count:${clickCount}
 </div>
 
-### Inline State
+#### Inline State
 
 You can also define state inline by providing JSON as the value of the `data-lz:state` attribute. An element id will be
 generated automatically if the element does not have an id.
@@ -276,7 +273,7 @@ ${name} is ${age} years old.
 </div>
 </div>
 
-### State Inheritance
+#### State Inheritance
 
 States are inherited down the DOM and shadow the values of properties with the same name in ancestor element states.
 
@@ -321,6 +318,21 @@ If the value starts with a `#` it is treated as an element id and the `innerHTML
 
 *Markdown Hint*: Except for your main `.md` file, you do not have to add the `lazui.js` script to your `markdown` files, 
 it will be added automatically for any content loaded using `lz-src`.
+
+#### Targets
+
+Anything with a `src`, `action` (forms), or `data-lz:src`, attribute can have a `data-lz:target` attribute. The value
+can be `_beforeBegin`, `_afterBegin`, `_beforeEnd`, `_afterEnd`, `_inner`, `_outer`, `_firstChild`, `_lastChild`, `_parent`, `_top`
+`_blank` or a CSS selectable target.
+
+The targets `_inner`, `_outer`, `_parent` and `_body` can also have a `.<css-selector>` suffix. This means you can update multiple
+elements with a single anchor or form submission.
+
+- `_outer.<css>` `_inner.<css>` and are effectively `this.querySelectorAll(<css>)`
+- `_parent.<css>` is effectively `this.parentElement.querySelectorAll(<css>)`
+- `_body.<css>` is effectively `document.querySelectorAll(<css>)`
+
+If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
 
 #### State and Loaded Content
 
@@ -570,20 +582,20 @@ event to get the load to occur.
 Events can be separated by commas, e.g. `data-lz:on="click dispatch:load, mouseover dispatch:load once"`.
 
 
-#### User Responsiveness
+##### User Responsiveness
 
 The event modifiers `debounce:<ms>` and `throttle:<ms>` can be used to control responsiveness to user interaction. The
 below will effectively ignore clicks at less than 2 second increments.
 
 <div data-lz:src="/path/to/somefile.html" data-lz:on="click debounce:2000 dispatch:load" data-lz:showsource="beforeBegin" data-lz:mode="open">Click Me</div>
 
-#### Loading Just Once
+##### Loading Just Once
 
 `once` can be used to process an event only the first time it occurs. `load once` is the same as having just a 
 `data-lz:src` attribute and no `data-lz:on` attribute. However, `click once call:window.alert("clicked")` will only display the 
 alert once.
 
-#### Delaying and Repeating Loads
+##### Delaying and Repeating Loads
 
 Processing of events and subsequent loading of the content can be delayed by adding `delay:<ms>` to the event, e.g.
 `data-lz:on="click dispatch:load delay:1000"`.
@@ -600,7 +612,7 @@ the content every second.
 <div data-lz:src="/clock" data-lz:on="click once delay:2000 dispatch:load placeholder:Loading clock ...,load every:1000">Click Me</div>
 </div>
 
-#### Alternative Actions
+##### Alternative Actions
 
 Finally, `call:<scope>...<functionName>(...args)?` can be used to call a function in the specified scope when the event occurs instead
 of or in addition to loading. For convenience, if parentheses are not provided, it is assumed the function should be called wih the
@@ -620,20 +632,6 @@ Dotted access after the scope is permitted, e.g. `window.console.log`
 
 An error will occur if the scope does not provide the dotted path or implement the `functionName`.
 
-### Targets
-
-Anything with a `src`, `action` (forms), or `data-lz:src`, attribute can have a `data-lz:target` attribute. The value
-can be `_beforeBegin`, `_afterBegin`, `_beforeEnd`, `_afterEnd`, `_inner`, `_outer`, `_firstChild`, `_lastChild`, `_parent`, `_top`
-`_blank` or a CSS selectable target.
-
-The targets `_inner`, `_outer`, `_parent` and `_body` can also have a `.<css-selector>` suffix. This means you can update multiple
-elements with a single anchor or form submission.
-
-- `_outer.<css>` `_inner.<css>` and are effectively `this.querySelectorAll(<css>)`
-- `_parent.<css>` is effectively `this.parentElement.querySelectorAll(<css>)`
-- `_body.<css>` is effectively `document.querySelectorAll(<css>)`
-
-If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
 
 ### Content Control
 
@@ -741,7 +739,7 @@ the ARIA attributes as keys and the values as values, e.g.
 <div data-lz:aria='{"role":"button","aria-label":"Click Me"}'>Click Me</div>
 ```
 
-### Code Highlighting
+#### Code Highlighting
 
 The `lz:usehighlighter` directive is typically attached to the `<script>` that loads `lazui`. Currently, only [highlight.js](https://highlightjs.org/)
 is supported.
@@ -984,6 +982,18 @@ document.addEventListener("DOMContentLoaded", () => {
   },1000);
 });
 </script>
+
+## Pre-Built Components
+
+Components are loaded into `<template>` elements via the `lz:src` attribute with an HTML file as the value and a
+`lz:tagname` attribute to specify the custom tag name to use.
+
+### Document Table of Contents
+
+```html
+<template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
+```
+
 
 ## Start Up Options
 
@@ -1391,12 +1401,12 @@ export {
 The above is somewhat blunt, but it demonstrates the ability to add controllers to specific elements within a form. See
 the [MDN documentation on form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) for more information on how to do this properly.
 
-### Configuring Lazui
+### Advanced Configuration
 
 The first place you may wish to use JavaScript is for the configuration of `alzui`. In a module script immediately after
 the script that loads `lazui` you can do things like define which attribute directives, JSON parser and router to use.
 
-### Setting The Attribute Namespace
+#### Setting The Attribute Namespace
 
 #### Loading Attribute Directives
 
@@ -1404,7 +1414,7 @@ the script that loads `lazui` you can do things like define which attribute dire
 
 #### Specifying A JSON Parser
 
-### Creating A Custom Bundle
+#### Creating A Custom Bundle
 
 If you prefer a single http connection to get all or most of the `lazui` capability loaded when a web page loads,
 creating a custom bundle is easy if you know how to use `webpack`.
@@ -1492,5 +1502,38 @@ it is included to serve as a foundation for your use.
 
 - serves files from the `docs` directory,
 supports Markdown files with the `.md` extension.
+
+## Inspiration
+
+`lazui` draws from many other UI toolkits:
+
+### htmx
+
+### lighterHTML
+
+### lit-element
+
+### Knockout
+
+### Turbo and Stimulus
+
+### Riot
+
+### Vue
+
+
+
+
+
+## FAQs
+
+Why isn't `lazui.js` a module? 
+: Modules do not fully resolve until a page is fully loaded, which makes it harder
+to intercept display of the page to prevent flicker on initial rendering. Providing `autofocus` to a standard script,
+will cause `lazui` to start processing the page for template literals embedded in HTML and process many `lazui` directives as
+soon as the `DOMContent` is loaded, but before it is displayed to the user. However, all `lazui` directives and controllers
+are modules.
+
+<div style="width:100%;text-align:center" data-lz:src="/docs/footer.html"></div>
 
 

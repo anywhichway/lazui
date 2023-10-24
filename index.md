@@ -6,15 +6,21 @@
     data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
 </script>
 <title>lazui: Web UI's with less work</title>
-<div style="width:100%" data-lz:src="./docs/header.html"></div>
+<div style="width:500px;margin:auto" data-lz:src="./docs/header.html"></div>
 
-<div style="width:100%;text-align:center;font-size:20px">The lazy UI framework. Get `lazui`, do less, deliver more.</div>
+<p style="width:100%;text-align:center;font-size:20px">The lazy UI framework. Get lazui ... do less ... deliver more.</p>
+
+<p style="width:100%;text-align:center"><a href="#quick-start">Quick Start</a> or <a href="/docs/lazui.md">Dive In</a></p>
+
+<div style="margin:auto;width:70%">
+
+## all the things
 
 <template data-lz:state="lazuiwords">
 {
     type: 'WordTree',
     options:{
-        maxFontSize: 18,
+        maxFontSize: 20,
         wordtree: {
             format: 'implicit',
             word: 'lazui'
@@ -31,46 +37,105 @@
         ['lazui has benefit no virtual dom'],
         ['lazui has benefit no build process'],
         ['lazui has benefit no custom server required'],
-        ['lazui has benefit choice of multiple paradigms'],
+        ['lazui has benefit choice of multiple development paradigms'],
         ['lazui has benefit Markdown friendly'],
-        ['lazui features ${templates in HTML}'],
-        ['lazui features attributes for styling'],
-        ['lazui features attributes for layout'],
-        ['lazui features attributes for state and data management'],
+        ['lazui features attributes for styling and accessibility'],
+        ['lazui features attributes for state management'],
         ['lazui features attributes for event management'],
-        ['lazui features attributes for content loading and targetting'],
-        ['lazui features JavaScript free server side events'],
-        ['lazui features JavaScript free web sockets'],
-        ['lazui features JavaScript free form processing'],
-        ['lazui features JavaScript free routing'],
-        ['lazui features JavaScript free charts and gauges'],
-        ['lazui features JavaScript free remote data synchronization'],
-        ['lazui features JavaScript access to html template function'],
-        ['lazui features JavaScript access to render function'],
-        ['lazui features JavaScript access to pre-built server'],
+        ['lazui features attributes for content loading and targeting'],
+        ['lazui features attributes for content control'],
+        ['lazui features without JavaScript ${templates in HTML}'],
+        ['lazui features without JavaScript server sent events'],
+        ['lazui features without JavaScript web sockets'],
+        ['lazui features without JavaScript form processing'],
+        ['lazui features without JavaScript client side routing'],
+        ['lazui features without JavaScript charts and gauges'],
+        ['lazui features without JavaScript document table of contents'],
+        ['lazui features without JavaScript remote data synchronization'],
+        ['lazui features with JavaScript html template function'],
+        ['lazui features with JavaScript render function'],
+        ['lazui features with JavaScript custom attributes and controllers'],
+        ['lazui features with JavaScript web components (custom elements)'],
+        ['lazui features with JavaScript advanced configuration'],
+        ['lazui features with JavaScript configurable bundling'],
+        ['lazui features with JavaScript pre-built server'],
         ['lazui draws from htmx'],
         ['lazui draws from lighterHTML'],
         ['lazui draws from Knockout'],
-        ['lazui draws from Turbo'],
-        ['lazui draws from Stimulus'],
+        ['lazui draws from Turbo and Stimulus'],
         ['lazui draws from Vue'],
         ['lazui draws from Lit-Element'],
-        ['lazui draws from hyperHTML'],
         ['lazui draws from Riot']
     ]
 }
 </template>
-<div data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="lazuiwords" data-lz:options='{controller:{packages:["wordtree"]}}'>
+<div id="lazuiwordtree" data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="lazuiwords" data-lz:options='{controller:{redirectEvents:true,packages:["wordtree"]}}'></div>
+<style>
+    .wordtree-leaf {
+        font-style: italic;
+        cursor: pointer;
+    }
+</style>
+<script>
+(() => {
+    const slugs = {
+        "styling and accessibility": "styling-and-accessibility",
+        "control": "content-control",
+        "state management": "using-state",
+        "event management": "handling-events",
+        "loading and targeting": "loading-content",
+        "${templates in HTML}":"how-to-be-lazui",
+        "server sent events":"server-sent-events",
+        "web sockets":"web-sockets",
+        "form processing":"form",
+        "client side routing":"client-side-routing",
+        "charts and gauges":"charts",
+        "document table of contents":"document-table-of-contents",
+        "remote data synchronization":"remote-data-synchronization",
+        "html template function":"html",
+        "render function":"render",
+        "custom attributes and controllers":"creating-custom-attribute-directives",
+        "web components (custom elements)":"creating-custom-elements",
+        "advanced configuration":"advanced-configuration",
+        "configurable bundling":"creating-a-custom-bundle",
+        "pre-built server":"basic-server",
+        "htmx":"htmx",
+        "lighterHTML":"lighterhtml",
+        "Knockout":"knockout",
+        "Turbo and Stimulus":"turbo-and-stumulus",
+        "Vue":"vue",
+        "Lit-Element":"lit-element",
+        "Riot":"riot"
+    };
+    const el = document.getElementById("lazuiwordtree");
+    let __LABEL__ = "";
+    el.addEventListener("click",(event) => {
+        const {label,targets} = el.getLabel(event.target);
+        if(slugs[__LABEL__]) {
+            window.location.href = `/docs/lazui.md#${slugs[__LABEL__]}`;
+        }
+    });
+    el.addEventListener("mouseenter",(event) => {
+        if(event.target.classList.contains("wordtree-leaf")) {
+            const {label,targets} = el.getLabel(event.target);
+            __LABEL__ = label;
+        } 
+    });
+    el.addEventListener("mouseleave",(event) => {
+        if(event.target.classList.contains("wordtree-leaf")) {
+            __LABEL__ = "";
+        } 
+    });
+})();
+</script>
 
-</div>
-
-# quick start
+## quick start
 
 ```html
 <script src="https://www.unpkg.com/@anywhichway/lazui"></script>
 ```
 
-## for HTML
+### for HTML
 
 ```html
 <template id="goodbye">
@@ -88,7 +153,7 @@
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 
-## for JavaScript
+### for JavaScript
 
 ```javascript
 <script>
@@ -113,3 +178,8 @@ const clicked = (event) => {
 };
 render(document.currentScript, html`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
 </script>
+
+Ok, now it's time to [dive in](/docs/lazui.md)!
+
+<div style="width:100%;text-align:center" data-lz:src="/docs/footer.html"></div>
+</div>

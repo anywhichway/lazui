@@ -112,13 +112,13 @@
                 content.style.setProperty("margin-left","");
                 content.style.setProperty("max-width",`calc(100% - ${48}px)`);
             }
-            if(opened && previous!=undefined) {
-                setTimeout(()=> {
-                    content.scrollTo({top:y});
-                },250);
-            } else if(!opened) {
-                setTimeout(()=> {
-                    content.scrollTo({top:y-45});
+            if(window.location.hash) {
+                setTimeout(() => {
+                    const element = document.querySelector(window.location.hash);
+                    if(element) {
+                        element.scrollIntoView();
+                        //content.scrollTo({top:content.scrollTop-45});
+                    }
                 },250);
             }
         }
