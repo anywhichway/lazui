@@ -38,7 +38,7 @@ const init = async ({el,root,state,options}, )=> {
                             targets.push(txt);
                             label += " " + txt.innerHTML;
                             txt = txt.nextElementSibling;
-                        } while(txt.tagName.toLowerCase()==="text");
+                        } while(txt?.tagName.toLowerCase()==="text");
                         return {targets,label:label.trim()};
                     };
                     const rows = state.data.map((row) => row.join(" "));

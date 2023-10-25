@@ -148,13 +148,21 @@
         toggle.addEventListener("click",(event) => {
             event.stopImmediatePropagation();
             if(event.target.tagName==="A") {
+                history.pushState({tocHREF:event.target.href}, "");
                 handleTOC(true);
                 history.replaceState({tocHREF:window.location.href}, "");
             }
             else if(event.target.id==="close-button") handleTOC(false);
             else if(!opened) handleTOC(true);
         });
+        content.addEventListener("click",(event) => {
+            if(event.target.tagName==="A") {
+                history.pushState({contentPosition: {scrollLeft:content.scrollLeft,scrollTop:content.scrollTop}}, "");
+            }
+        });
         window.addEventListener("popstate", (event) => {
+            const contentPosition = event.state?.contentPosition;
+            if(contentPosition) content.scrollLeft = contentPosition.scrollLeft, content.scrollTop = contentPosition.scrollTop;
             if(event.state?.tocHREF) window.location = event.state.tocHREF;
         });
     }

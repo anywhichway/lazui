@@ -21,7 +21,7 @@ It has a core size of less that 7K minimized and Brotli compressed and can be us
 
 ### Lazy Loading
 
-Unless a [custom build is created](#creating-a-custom-build), all the attribute functionality provided by `lazui` is 
+Unless a [custom bundle is created](#creating-a-custom-bundle), all the attribute functionality provided by `lazui` is 
 loaded on demand. The functionality of each attribute is in its own file. Some attributes are loaded in a non-blocking
 manner when a page first loads and some are loaded just the first time the attribute is found in the HTML. This gets the 
 page to its first meaningful paint faster.
@@ -44,8 +44,7 @@ with that library, but if you yearn for capability from more than one library, `
 
 ## Installation
 
-Unless you need your own attribute directives, you can use the CDN version of `lazui`. You can use custom controllers, even with the
-CDN version. Place the following script tag in the head of your HTML:
+Unless you need your own attribute directives, you can use the CDN version of `lazui`. Place the following script tag in the head of your HTML:
 
 ```html
 <script src='https://www.unpkg.com/@anywhichway/lazui' autofocus></script>
@@ -54,11 +53,6 @@ CDN version. Place the following script tag in the head of your HTML:
 Attribute Directive
 : A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance, `lz:src` 
 is an attribute directive that loads content into an element.
-
-Controller
-: A JavaScript file that is loaded to provide additional sophisticated functionality to an element. For instance, [chart.js](#charts)
-can be loaded by the attribute [lz:controller](#pre-built-controllers) to support rendering of charts and graphs with configuration data provided
-by the element.
 
 Unless you are willing to [write your own JavaScript](#using-javascript), you should always provide the `autofocus` attribute. It tells `lazui` to
 process all the custom attribute directives and template substitutions in the document.
@@ -79,7 +73,8 @@ and if you are documenting code, a [highlighter](#code-highlighting).
 
 If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is because
 the browser will render the page before `lazui` has a chance to process all the templates and custom elements. You can avoid this
-by setting the attribute `hidden` in the body tag of your HTML. `lazui` will remove the `hidden` attribute when it is done processing.
+by setting the attribute `hidden` in the `<html>` tag in your file. This is handled automatically for Markdown files. 
+`lazui` will remove the `hidden` attribute when it is done processing.
 
 ## Documentation Conventions
 
@@ -91,7 +86,7 @@ If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScrip
 JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before the
 use of the `html` template literal and `render` functions. 
 
-If you wish, you can jump to the more JavaScript focused [html](#the-html-function) and [render](#the-render-function) sections of the documentation.
+If you wish, you can jump to the more JavaScript focused [html](#html) and [render](#render) sections of the documentation.
 
 It is possible to completely modify the `lazui` namespace. Throughout the documentation, references
 to attribute directives will take the form `lz:<directive>` and sample code will use the standards compliant form 
@@ -245,7 +240,13 @@ ${name} is ${age} years old.
 
 Modifying a state will cause any elements using the state to be updated.
 
-<div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++" data-lz:showsource="beforeBegin">
+```html
+<div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
+    Click Count:${clickCount}
+</div>
+```
+
+<div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
     Click Count:${clickCount}
 </div>
 
@@ -294,7 +295,7 @@ States are inherited down the DOM and shadow the values of properties with the s
 
 By default, this will load the contents of `somefile.html` as the `innerHTML` of the `div`.
 
-If the value starts with a `#` it is treated as an element id and the `innerHTML` of the element is used as the content.
+If the `lz:src` value starts with a `#` it is treated as an element id and the `innerHTML` of the element is used as the content.
 
 <div data-lz:showsource:inner="beforeBegin">
 <template id="myelement">
@@ -385,7 +386,7 @@ the rest of the page.
 <div data-lz:src="https://lazui.org/path/to/element.html" data-lz:mode="open" data-lz:showsource="beforeBegin"></div>
 
 
-In the example above you can see the attribute `data-lz:url`, this is covered later in [Treating Elements As Files](#treating-elements-as-files).
+In the example above you can see the attribute `data-lz:url`, this is covered later in [Lazui Router](#lazui-router).
 
 If the file has the same origin as the requesting document, scripts will be processed; otherwise, they will be
 ignored. In the case above, they are ignored. However, if we mount a similar file locally, they
@@ -411,7 +412,7 @@ will be executed.
 
 **Note**: `data-lz:mode="closed"` is not supported.
 
-If you are prepared to potentially write a lot JavaScript and what custom HTML tags, you can [create a custom element](creating-custom-elements) 
+If you are prepared to potentially write a lot JavaScript and want custom HTML tags, you can [create a custom element](#creating-custom-elements) 
 with its own tag.
 
 #### Using Frames
@@ -509,7 +510,7 @@ example above.
 </template>
 ```
 
-Alternatively, see [Creating A Router](#creating-a-router), which requires a few lines of JavaScript.
+Alternatively, see [Specifying A Router](#specifying-a-router), which requires a few lines of JavaScript.
 
 #### Enhanced Requests
 
@@ -751,15 +752,22 @@ the `style` attributes as keys and the values as values. The keys can be in eith
 The above sections have covered the use of pre-built attribute directives. You can define your own attribute directives
 using JavaScript. See [Creating Custom Attribute Directives](#creating-custom-attribute-directives).
 
-Controllers are small JavaScript files that manage the behavior of the element they are attached to. There are several
-predefined controllers that can be used to enhance forms processing and interact with servers. However, you can also
-[create your own controllers](#creating-custom-controllers).
+
+Controller
+: A JavaScript file that is loaded to provide additional sophisticated functionality to an element. For instance, [chart.js](#charts)
+can be loaded by the attribute `lz:controller` to support rendering of charts and graphs with configuration data provided
+by the element. 
+
+There are a number of pre-built controllers; however, you can also [create your own controllers](#creating-custom-controllers). You can use custom controllers, even with the
+CDN version.
 
 Controllers are always loaded using the attribute directive `lz:controller=<location>`. The `location` can be relative to
 the current document or an absolute URL including starting with a `/`, `http:` or `https:`.
 
 Controllers can accept configuration data through the attribute `lz:options`. The value of the attribute is a JSON object
-with the key `controller`. This key should contain an object with the configuration data.
+with the key `controller`. This key should contain an object with the configuration data, which will be different for each controller. 
+One options object can contain configuration data for a controller and any attributes attached to an element. The attribute 
+names are also keys in the options object.
 
 ### Charts
 
@@ -1032,7 +1040,7 @@ The `lazui` router is a simple router that can be used to load content from a se
 with the query string `?router=<globalVariable>&allowRemote=true|false`. The router will then attempt to load content 
 from elements with `lz:url` attributes and fall back to a server.
 
-Advanced use of the router can be made at the JavaScript level. See [Specifying A Router](specifying-a-router).
+Advanced use of the router can be made at the JavaScript level. See [Specifying A Router](#specifying-a-router).
 
 ## Advanced Use Of State
 
@@ -1248,7 +1256,7 @@ assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bo
 sanitize the HTML. If provided, the `sanitize` function should accept a `DocumentFragment` and return a `DocumentFragment`.
 node.
 
-In Chrome you can enable the [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/Sanitize) by enabling 
+In Chrome you can enable the [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) by enabling 
 the `Experimental Web Platform features` flag in `chrome://flags`. Then you pass in a bound `sanitize` function:
 
 ```javascript
@@ -1475,6 +1483,8 @@ export {
 
 The above is somewhat blunt, but it demonstrates the ability to add controllers to specific elements within a form. See
 the [MDN documentation on form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) for more information on how to do this properly.
+
+### Advanced Storage
 
 ### Advanced Configuration
 
