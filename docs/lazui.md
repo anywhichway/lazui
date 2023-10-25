@@ -1,5 +1,5 @@
-<script src='/lazui'  autofocus 
-    data-lz:usejson="https://esm.sh/json5" 
+<script src='/lazui'   
+    data-lz:usejson="https://esm.sh/json5" autofocus
     data-lz:userouter="https://esm.sh/hono"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
    data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
@@ -9,6 +9,38 @@
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
 <lz-toc></lz-toc>
 
+## Introduction
+
+`lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
+
+It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript so
+you don't have to.
+
+It has a core size of less that 7K minimized and Brotli compressed and can be used without a build process, but 
+[enhanced with one](#creating-a-custom-bundle).
+
+### Lazy Loading
+
+Unless a [custom build is created](#creating-a-custom-build), all the attribute functionality provided by `lazui` is 
+loaded on demand. The functionality of each attribute is in its own file. Some attributes are loaded in a non-blocking
+manner when a page first loads and some are loaded just the first time the attribute is found in the HTML. This gets the 
+page to its first meaningful paint faster.
+
+### Dependency Tracking
+
+`lazui` does not use a virtual DOM, it uses direct dependency tracking and a special updating function wrapped around 
+the normal browser screen refresh handler drive updates. When a state changes, the nodes that depend on that state
+are updated. These are typically text nodes, but can also be attributes. This is automatic at the no JavaScript level. 
+You can take a more [functional approach](#html) by using the `html` template literal and `render` function
+if you write JavaScript.
+
+### Choose Your Development Paradigm
+
+`lazui` draws its inspiration from the varied capabilities of [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),
+[Knockout](https://knockoutjs.com/), [Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
+[Vue](https://vuejs.org/), [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
+You are free to choose your preferred development paradigm. If it is just that of one library, you may be better off sticking
+with that library, but if you yearn for capability from more than one library, `lazui` may be for you.
 
 ## Installation
 
@@ -28,6 +60,9 @@ Controller
 can be loaded by the attribute [lz:controller](#pre-built-controllers) to support rendering of charts and graphs with configuration data provided
 by the element.
 
+Unless you are willing to [write your own JavaScript](#using-javascript), you should always provide the `autofocus` attribute. It tells `lazui` to
+process all the custom attribute directives and template substitutions in the document.
+
 You can also configure `lazui` to use a [relaxed JSON parser](#relaxed-json-parser), a [client side router](#client-side-routing), 
 and if you are documenting code, a [highlighter](#code-highlighting).
 
@@ -40,6 +75,12 @@ and if you are documenting code, a [highlighter](#code-highlighting).
 </script>
 ```
 
+### Avoiding Page Flicker
+
+If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is because
+the browser will render the page before `lazui` has a chance to process all the templates and custom elements. You can avoid this
+by setting the attribute `hidden` in the body tag of your HTML. `lazui` will remove the `hidden` attribute when it is done processing.
+
 ## Documentation Conventions
 
 Although `lazui` can be used as a powerful JavaScript rendering engine, it really shines at reducing the amount of
@@ -50,8 +91,7 @@ If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScrip
 JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before the
 use of the `html` template literal and `render` functions. 
 
-If you wish, you can jump to detailed comparisons with the more JavaScript focused [lighterHTML](./lighterHTML.md) or [Knockout]() or 
-review the [html](#the-html-function) and [render](#the-render-function) sections of the documentation.
+If you wish, you can jump to the more JavaScript focused [html](#the-html-function) and [render](#the-render-function) sections of the documentation.
 
 It is possible to completely modify the `lazui` namespace. Throughout the documentation, references
 to attribute directives will take the form `lz:<directive>` and sample code will use the standards compliant form 
@@ -64,27 +104,16 @@ Most of the JSON in the document is in [JSON5](https://json5.org/) format. This 
 prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your
 version of `lazui` to use JSON5, you will need to modify the JSON in the examples to be valid JSON.
 
-Any time you see `/lazui` as a source attribute you could insert a CDN URL. We have throughly tested with `https://www.unpkg.com/@anywhichway/lazui`. 
+Any time you see `/lazui` as a source attribute you could insert a CDN URL. We have thoroughly tested with `https://www.unpkg.com/@anywhichway/lazui`. 
 You can use just `/lazui` if you are running the [basic lazui server](#basic-server).
 
 ## How To Be Lazui
-
-Place one of these in the `<head>` of your HTML:
-
-```html
-<script src="/lazui">
-```
-or
-
-```html
-<script src="/lazui" autofocus>
-```
 
 Here is the first simple example:
 
 ```html
 <html>
-    <head><script src="./lazui.js" autofocus></head>
+    <head><script src="https://www.unpkg.com/@anywhichway/lazui" autofocus></head>
     <body>
         Hello, the date and time is ${new Date().toLocaleTimeString()}
     </body>
@@ -118,7 +147,7 @@ By convention, the files are in a directory called `directives` with subdirector
 Hence, `lazui` directive, `lz:src` should be in `/directives/lz/src.js`.
 
 If this convention is followed, `lazui` will lazy load only those directives that are used. If you want to preload
-directives or use a different naming/filesystem convention, you can [load the directives directly using JavaScript](use-directive).
+directives or use a different naming/filesystem convention, you can [load the directives directly using JavaScript](#loading-attribute-directives).
 
 Attribute directives can be provided configuration values with another directive called `lz:options`. The value of
 `lz:options` is a JSON object. The `lz:options` directive can be placed on any element and will apply to all directives.
@@ -172,7 +201,7 @@ to include general data.
 The `data-lz:state` attribute can be used to define a model. The value of the attribute is the name of the state/model. 
 The state is defined as a JSON object inside an element (typically a `<template>`) or loaded from a file:
 
-<template data-lz:state="person" data-lz:options="{state:{storage:'localStorage',stringify:true}}" data-lz:showsource="beforeBegin">
+<template data-lz:state="person" data-lz:showsource="beforeBegin">
 {
     name: "John",
     age: 30
@@ -180,24 +209,11 @@ The state is defined as a JSON object inside an element (typically a `<template>
 </template>
 
 
-or
-    
-```html
-<template data-lz:state="person" data-lz:options="{state:{storage:'localStorage',stringify:true}}">
-{
-   name: "John",
-   age: 30
-}
-</template>
-```
-
 Now you can do this:
 
-<div data-lz:usestate="person" data-lz:showsource="beforeBegin">
-    ${name} is ${age} years old.
-</div>
+<div data-lz:usestate="person" data-lz:showsource="beforeBegin">${name} is ${age} years old.</div>
 
-You can also set a state as the default state for a `document` or `global` (stored on the `globalThis` object):
+You can also set a state as the default state for a `document` or `global` (stored on the `window` object):
 
 ```html
 <template data-lz:state:document="person">
@@ -208,37 +224,8 @@ You can also set a state as the default state for a `document` or `global` (stor
 </template>
 ```
 
-The `data-lz:options` value for `state` is optional. In this case, it is used to store the state in `localStorage` and treat
-the data as a string. This is useful for storing state across page loads. The state will prefer the data in the storage over
-that originally specified as part of the `innerHTML`. See [Advanced Storage](#advanced-storage) for how to implement your own
-storage engine.
-
-The `data-lz:options` attribute value can also take a `src` key to load the JSON from a remote location, e.g.
-
-```html
-<template data-lz:state="someuniqueid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
-</template>
-<script>
-   const state = lazui.getState("someuniqueid");
-   state.name = "John";
-</script>
-```
-
-<div data-lz:showsource:inner="beforeBegin">
-<template data-lz:state="someuniqueid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
-</template>
-<script data-lz:usestate="someuniqueid">
-document.addEventListener("lazuiLoaded",() => {
-   const state = lazui.getState("someuniqueid");
-   state.name = "John";
-   state["^"].mtime = Date.now() + 2000;
-});
-</script>
-</div>
-
-If `post` is true, then every time the state changes, the state will be posted to the `src` URL.
-
-The data is only loaded from the server when the local state is created.
+There are more [advanced use of state](#advanced-use-of-state) to support storing it in a database or remote server 
+synchronization [documented later](#advanced-use-of-state).
 
 *Markdown Hint*: Setting state at the document level can be useful with Markdown. Below is the content of the file `using-state-with-markdown.md`,
 followed by the `HTML` loading the file and the `IFrame` generated.
@@ -1047,6 +1034,94 @@ from elements with `lz:url` attributes and fall back to a server.
 
 Advanced use of the router can be made at the JavaScript level. See [Specifying A Router](specifying-a-router).
 
+## Advanced Use Of State
+
+The `lz:state` attribute supports the use of `lz:options`. Below, it is used to store the state in `localStorage` and treat
+the data as a string. This is useful for storing state across page loads. The state will prefer the data in the storage over
+that originally specified as part of the `innerHTML`. 
+
+<div data-lz:showsource:inner="beforeBegin">
+<template id="someuniquelocalid" data-lz:state="{name:'Johnathan'}" data-lz:options="{state:{storage:'localStorage',stringify:true}}">
+</template>
+<script>
+document.addEventListener("lz:loaded",() => {
+   const state = lazui.getState("someuniquelocalid");
+   state.name = "John";
+   console.log(localStorage.getItem("someuniquelocalid")); // {"name":"John"}
+});
+</script>
+</div>
+
+You can use `sessionStorage` in addition to `localStorage`.
+
+The `data-lz:options` attribute value can also take a `src` key and HTTP verb settings to load and manage JSON at a remote location, e.g.
+
+<div data-lz:showsource:inner="beforeBegin">
+<template data-lz:state="someuniqueremoteid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
+</template>
+<script data-lz:usestate="someuniqueremoteid">
+document.addEventListener("lz:loaded",() => {
+   const state = lazui.getState("someuniqueremoteid");
+   state.name = "John";
+   state["^"].timeout = Date.now() + 1000000;
+   state["^"].mtime = Date.now() + 2000;
+});
+</script>
+</div>
+
+If `post` is true, when the state is first encountered on the page a `post` request with the state contents will be sent to the server.
+
+If `put` is true, every time the state changes, the state will be posted to the `src` URL and updated with the response. 
+
+If the state is ever deleted (by removing the element it is associated with), a `delete` request will be sent to the `src` URL.
+
+### Meta Data and Data Versioning
+
+The below explanation assumes the data requests are being sent to a server based on the basic server included with `lazui`
+
+In the above example you can see the line `state["^"].mtime = Date.now() + 2000`.
+
+The special attribute `^` is used to store metadata about the state, e.g. who created it, access controls, timeouts, etc. 
+You can store anything you wish in this attribute. `lazui` focuses on `mtime` and `timeout`.
+
+The `mtime` property is used to store the last modified time of the state. If the state is loaded from a remote source, 
+this may actually be ignored, it is only present in the example to make it easy to talk about. `lazui` uses time based versioning
+where the server is the sole arbiter of the time to ensure the browser always has the most recent copy of the data, even if
+it is being updated by multiple people. Here is the algorithm:
+
+- If the request is a `delete`
+  - retrieve the server copy of the data
+  - If there is a copy
+    - Set the `^.timeout to` the current server time (don't actually delete)
+    - Respond with 200 and nothing
+  - Else
+    - Respond with 404
+- If the request is a `get`
+  - retrieve the server copy of the data
+  - If there is a server copy
+    - If a timeout value on the server copy is less than or equal to the server time, respond with 404
+    - Respond with 200 and server copy
+  - Else Respond with 404
+- Otherwise, for `put` and `post`
+  - If `timeout` from the browser copy is less than or equal to the current server time
+    - delete the `^.timeout` on the browser copy
+  - If the `mtime` received from the browser is greater than that on the server, the server will
+    - wait until the server time matches the `mtime` from the browser
+  - If the `mtime` for an update is less that or equal to that on the server, the server will 
+    - retrieve the server copy of the data
+    - set browser copy `mtime` to its current time
+    - If there is no current server copy, the server will
+      - create a server copy using the browser data
+    - Else, the server will
+      - update the server copy using the browser data
+    - respond with 200 and server copy
+
+There are some security issues with the above, browser requests can completely overwrite data or make it look like it is
+gone by making delete requests, but there are limits to what can be achieved without writing JavaScript.
+
+If the above approaches do not suit your needs, see [Advanced Storage](#advanced-storage) for how to implement your own
+storage engine or modify the Basic Server.
+
 ## Using JavaScript
 
 If you plan to write custom JavaScript, you will probably want to install `lazui` locally:
@@ -1303,7 +1378,7 @@ Custom Elements are just templates with the directive `lz:tagname`.
 </template>
 <my-custom-element id="custom-element" title=""></my-custom-element>
 <script type="module">
-document.addEventListener("lazuiLoaded",() => {
+document.addEventListener("lz:loaded",() => { // Note: if you are using a custom namespace you will need to replace "lz"
    document.getElementById("custom-element").setAttribute("title","My Title");
  });
 </script>

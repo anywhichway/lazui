@@ -6,7 +6,6 @@
         const url = new URL(document.currentScript.src),
             autofocus = document.currentScript.hasAttribute("autofocus"),
             docEl = document.documentElement;
-        docEl.setAttribute("hidden","")
         document.addEventListener("DOMContentLoaded",async () => {
             lazui.url = new URL(url.href);
             lazui.url.hash = "";
@@ -38,7 +37,8 @@
             if(autofocus) resolve(document.body,{root:document,state:{}})
             docEl.removeAttribute("hidden");
             if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
-            document.dispatchEvent(new CustomEvent("lazuiLoaded"));
+            const namespace = directiveExports.prefix.split("-").pop();
+            document.dispatchEvent(new CustomEvent(`${namespace}:loaded`));
         })
     }
 
@@ -177,6 +177,9 @@
             if(state) {
                 state = activate((stringify||=_state.stringify) ? JSON.parse(state) : state,idOrEl);
                 __STATES__.set(idOrEl, {state,storage,stringify});
+                state.addEventListener("change",({detail}) => {
+                    globalThis[storage||_state.storage].setItem(idOrEl.id,stringify ? JSON.stringify(detail.state) : detail.state);
+                })
                 return state;
             }
         }

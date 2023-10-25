@@ -31,7 +31,7 @@ const init = async ({el,root,state,options}, )=> {
                         const targets = [];
                         let label = "";
                         let txt = target;
-                        while(txt.previousElementSibling.tagName.toLowerCase()==="text") {
+                        while(txt.previousElementSibling?.tagName.toLowerCase()==="text") {
                             txt = txt.previousElementSibling;
                         }
                         do {
@@ -45,7 +45,7 @@ const init = async ({el,root,state,options}, )=> {
                     for(const txt of el.querySelectorAll("text")) {
                         const {targets,label} = el.getLabel(txt),
                             leaf = rows.find((row) => row.endsWith(label));
-                        if(leaf) txt.setAttribute("class","wordtree-leaf");
+                        if(leaf) txt.setAttribute("wordtreeleaf","true"); //txt.setAttribute("class","wordtree-leaf");
                     }
                 }
                 if(options.redirectEvents) {
@@ -63,6 +63,7 @@ const init = async ({el,root,state,options}, )=> {
                         }
                     }
                 }
+                el.dispatchEvent(new CustomEvent("ready", {detail: {chart}}));
             });
             chart.draw(data, state.options);
         }

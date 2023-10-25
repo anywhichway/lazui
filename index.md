@@ -31,10 +31,10 @@
         ['lazui as in pronounced lazy'],
         ['lazui as in lazy loading'],
         ['lazui as in do less and deliver more'],
-        ['lazui has benefit reduced or no javascript'],
+        ['lazui has benefit reduced or no JavaScript'],
         ['lazui has benefit small core(7k minimized and compressed)'],
         ['lazui has benefit incremental loading'],
-        ['lazui has benefit no virtual dom'],
+        ['lazui has benefit no virtual DOM'],
         ['lazui has benefit no build process'],
         ['lazui has benefit no custom server required'],
         ['lazui has benefit choice of multiple development paradigms'],
@@ -79,6 +79,12 @@
 <script>
 (() => {
     const slugs = {
+        "lazy loading": "lazy-loading",
+        "small core": "introduction",
+        "reduced or no JavaScript": "introduction",
+        "virtual DOM": "dependency-tracking",
+        "choice of multiple development paradigms": "choosing-a-development-paradigm",
+        "Markdown friendly": "working-with-markdown",
         "styling and accessibility": "styling-and-accessibility",
         "control": "content-control",
         "state management": "using-state",
@@ -125,6 +131,14 @@
         if(event.target.classList.contains("wordtree-leaf")) {
             __LABEL__ = "";
         } 
+    });
+    el.addEventListener("ready",() => {
+        for(const txt of el.querySelectorAll('[wordtreeleaf="true"]')) {
+            const {label,targets} = el.getLabel(txt);
+            if(slugs[label]) {
+                txt.setAttribute("class","wordtree-leaf");
+            }
+        }
     });
 })();
 </script>

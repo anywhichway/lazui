@@ -27,7 +27,7 @@ const state = async({el,attribute,root,options,window,document,lazui,args}) => {
             const text = await fetch(src).then((response) => response.text()); //el.getAttribute('data-lz:src')
             state = JSON.parse(text);
         } else {
-            state = JSON.parse(el.innerText||el.innerHTML)
+            state = JSON.parse(el.innerText||el.innerHTML.trim())
         }
     }
     state = setState(el,state,{root,options});
