@@ -104,6 +104,8 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-25 v0.0.21a documentation updates, form handling refinements, rendering refinements
+
 2023-10-25 v0.0.20a documentation updates, refinement to TOC handling
 
 2023-10-25 v0.0.19a documentation updates, refinement to data sync

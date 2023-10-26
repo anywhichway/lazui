@@ -35,7 +35,7 @@
             for(const customElement of [...document.querySelectorAll(`[${directiveExports.prefix}\\:tagname]`)]) {
                 await handleDirective(customElement.attributes[`${directiveExports.prefix}:tagname`]);
             }
-            if(autofocus) resolve(document.body,{root:document,state:{}})
+            if(autofocus) await resolve(document.body,{root:document,state:{}})
             docEl.removeAttribute("hidden");
             if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
             const namespace = directiveExports.prefix.split("-").pop();
@@ -234,7 +234,38 @@
         states = [...states];
         const proxy = new Proxy({},{
             get(target,property) {
-                if(property==="set") return (property,value) => target[property] = value;
+                if(property==="set") {
+                    return (property,value,local) => {
+                        if(!local) {
+                            const parts = property.split(".");
+                            let state = states.find((state) => parts[0] in state);
+                            if(state) {
+                                while(parts.length>0) {
+                                    const key = parts.shift();
+                                    if(parts.length===0) state[key] = value;
+                                    else if(state[property]!=null || typeof state[property]!=="object") throw new TypeError(`Attempt to use ${property} to set a value but ${key} is not an object`);
+                                    else state = state[property] ||= {};
+                                }
+                            }
+                        }
+                        return target[property] = value;
+                    }
+                }
+                if(property==="get") {
+                    return (property) => {
+                        const parts = property.split(".");
+                        let state = states.find((state) => parts[0] in state);
+                        if(state) {
+                            while(parts.length>0) {
+                                const key = parts.shift();
+                                if(parts.length===0) return state[key];
+                                state = state[key];
+                                if(state && typeof state!=="object") throw new TypeError(`Attempt to use ${property} to get a value but ${key} is not an object`);
+                            }
+                        }
+                        return target[property] = value;
+                    }
+                }
                 const value = target[property];
                 if(value!==undefined) return value;
                 for(const state of states) {
@@ -310,7 +341,7 @@
         },interval || delay || 1000)
     }
 
-    const walk = (node, callback, root = node, level = 0) => {
+    const walkSync = (node, callback, root = node, level = 0) => {
         if (node.nodeType == Node.TEXT_NODE) {
             if (callback) callback(node, level, root);
         } else {
@@ -318,7 +349,21 @@
             if(node.tagName!=="SCRIPT" && node.tagName!=="CODE") {
                 if (callback) callback(node, level, root);
                 const nodes = [...(node.childNodes ? node.childNodes : node)];
-                for (const child of nodes) walk(child, callback, root, level + 1);
+                for (const child of nodes) walkSync(child, callback, root, level + 1);
+            }
+        }
+        return node;
+    };
+
+    const walk = async (node, callback, root = node, level = 0) => {
+        if (node.nodeType == Node.TEXT_NODE) {
+            if (callback) await callback(node, level, root);
+        } else {
+            if (node.nodeType == Node.ELEMENT_NODE) for (const attr of [...node.attributes]) !callback || callback(attr, level, root)
+            if(node.tagName!=="SCRIPT" && node.tagName!=="CODE") {
+                if (callback) callback(node, level, root);
+                const nodes = [...(node.childNodes ? node.childNodes : node)];
+                for (const child of nodes) await walk(child, callback, root, level + 1);
             }
         }
         return node;
@@ -358,7 +403,7 @@
                 __HTML_CACHE__.set(strings, html);
                 if (templateOutsideHead) html = "<div>" + html.slice(10).slice(0, -11) + "</div>";
                 const parsed = new DOMParser().parseFromString(html, "text/html");
-                walk(parsed, (node) => {
+                walkSync(parsed, (node) => {
                     if (node.nodeType == Node.ATTRIBUTE_NODE) {
                         const name = node.name,
                             owner = node.ownerElement;
@@ -489,6 +534,10 @@
         return options;
     }
 
+    const getContext = (el,state=el.state) => {
+        return statesProxy(getStates(el,state ? [state] : undefined))
+    }
+
     const handleDirective = async (attr,{state,window=globalThis,document=globalThis.document,root=document,recurse}={}) => {
         const {name,value} = attr,
             parts = name.substring(5).split(":"); // data-foo:bar
@@ -569,11 +618,10 @@
         if(state) iframe.contentDocument.documentState = state;
     }
 
-    const resolve = (content,{state,root,recurse}) => {
-        walk(content,(node) => {
+    const resolve = async (content,{state,root,recurse}) => {
+        await walk(content,async (node) => {
             if(node.nodeType===Node.ATTRIBUTE_NODE) {
-                const attrName = `${directiveExports.prefix}:usestate`,
-                    stateProxy = statesProxy(getStates(node.ownerElement,state ? [state] : undefined));
+                const stateProxy = statesProxy(getStates(node.ownerElement,state ? [state] : undefined));
                 if(node.value.includes("${")) {
                     observeNodes({nodes:[node],observe:["*"],root,string:node.value,state:stateProxy},() => {
                         const value = interpolate(node.value,stateProxy,root);
@@ -585,12 +633,11 @@
                 } else if(node.name.startsWith("on")) {
                     handleOnAttribute(node,node.ownerElement[node.name] || node.value)
                 }
-                if (node.name.startsWith(directiveExports.prefix)) handleDirective(node,{state:stateProxy,root,recurse});
+                if (node.name.startsWith(directiveExports.prefix)) await handleDirective(node,{state:stateProxy,root,recurse});
                 return;
             }
             if(node.nodeType===Node.TEXT_NODE && node.data.includes("${") && node.parentElement?.constructor.name!=="HTMLTemplateElement") {
-                const attrName = `${directiveExports.prefix}:usestate`,
-                    stateProxy = statesProxy(getStates(node,state ? [state] : undefined)),
+                const stateProxy = statesProxy(getStates(node,state ? [state] : undefined)),
                     observation = {nodes:[node],observe:["*"],root,string:node.data,recurse,state:stateProxy};
                 observeNodes(observation,() => {
                     const interpolated = interpolate(node.data,stateProxy,root,node.parentElement?.tagName==="SCRIPT").toDocumentFragment();
@@ -601,12 +648,12 @@
         })
     }
 
-    const render = (el,content,{node=el||document.createDocumentFragment(),where="inner",root=document,state=document.documentState||window.globalState||{},forElement,sanitizer,sanitizerOptions={},animator=(f) => animate(f),recurse=0}={}) => {
+    const render = async (el,content,{node=el||document.createDocumentFragment(),where="inner",root=document,state=document.documentState||window.globalState||{},forElement,sanitizer,sanitizerOptions={},animator=(f) => animate(f),recurse=0}={}) => {
         if(node===document) {
-            document.addEventListener("DOMContentLoaded",() => {
+            document.addEventListener("DOMContentLoaded",async () => {
                 if(string) console.warn("String argument ignored when rendering to document on initial load. Existing document content will be used");
-                render(node.head,null,{where:"outer",state,sanitizer,sanitizerOptions,animator});
-                render(node.body,null,{node:state,sanitizer,sanitizerOptions,animator});
+                await render(node.head,null,{where:"outer",state,sanitizer,sanitizerOptions,animator});
+                await render(node.body,null,{node:state,sanitizer,sanitizerOptions,animator});
             });
             return;
         }
@@ -626,12 +673,12 @@
                 // ? node.html rathet thna content.html
                 content.innerHTML = replaceBetween(content.innerHTML, "`", "`", (text) => text.replaceAll(/</g, "&lt;"))
             }
-            resolve(content,{state,root,recurse});
+            await resolve(content,{state,root,recurse});
         }
         if(where===null) return content;
-        const callback = recurse>0 ? ({childNodes}) => {
+        const callback = recurse>0 ? async ({childNodes}) => {
             for(const child of childNodes) {
-                if(child.nodeType!==Node.TEXT_NODE) render(child,null,{root,state,sanitizer,sanitizerOptions,animator,recurse:recurse-1})
+                if(child.nodeType!==Node.TEXT_NODE) await render(child,null,{root,state,sanitizer,sanitizerOptions,animator,recurse:recurse-1})
             }
         } : undefined;
         return update({node,content,state,root,where,animator,callback});
@@ -669,8 +716,10 @@
             if(mode!=="open" && mode!=="frame") throw new Error(`${directiveExports.prefix}:${mode}, is not currently supported`);
         }
         const updated = [],
-            getNodes = (content) => content.childNodes ? content.childNodes : content, // if no content.childNodes, content is a NodeList or an error
-            updater = () => {
+             // if no content.childNodes, content is a NodeList or an error
+            updater = async () => {
+                const getNodes = (content) => content.childNodes ? content.childNodes : content;
+                content = await content;
                 let childNodes = [...getNodes(content)];
                 if (where === "inner") {
                     if (node.nodeType === Node.TEXT_NODE) {
@@ -761,7 +810,7 @@
         return updated;
     }
 
-    const directiveExports = {render,update,html,compile,interpolate,getState,setState,observeNodes,handleDirective,replaceBetween,router:window,JSON,prefix:"data-lz"},
+    const directiveExports = {render,update,html,compile,interpolate,getState,setState,getContext,observeNodes,handleDirective,replaceBetween,router:window,JSON,prefix:"data-lz"},
         exported = {...directiveExports,useDirectives};
     if(typeof module !== "undefined") {
         module.exports = exported;

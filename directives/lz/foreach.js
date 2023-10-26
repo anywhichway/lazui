@@ -25,10 +25,10 @@ function foreach({el,attribute,root,state,args,lazui}) {
     }
     while(el.firstChild) el.removeChild(el.firstChild);
     Object[iterationType](data).forEach((v,i,a) => {
-        state.set(value,v);
-        state.set(index,i);
-        state.set(array,a);
-        render(el,template||template,{state, root, where:"beforeEnd"});
+        state.set(value,v,true);
+        state.set(index,i,true);
+        state.set(array,a,true);
+        render(el,template,{state, root, where:"beforeEnd"});
     });
 }
 

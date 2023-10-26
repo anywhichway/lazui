@@ -1,4 +1,4 @@
-<script src='/lazui'   
+<script src='https://www.unpkg.com/@anywhichway/lazui'   
     data-lz:usejson="https://esm.sh/json5" autofocus
     data-lz:userouter="https://esm.sh/hono"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
@@ -1107,20 +1107,21 @@ it is being updated by multiple people. Here is the algorithm:
 - If the request is a `get`
   - retrieve the server copy of the data
   - If there is a server copy
-    - If a timeout value on the server copy is less than or equal to the server time, respond with 404
-    - Respond with 200 and server copy
+    - If a timeout value on the server copy is less than or equal to the server time
+      - respond with 404
+    - Else respond with 200 and server copy
   - Else Respond with 404
 - Otherwise, for `put` and `post`
   - If `timeout` from the browser copy is less than or equal to the current server time
     - delete the `^.timeout` on the browser copy
-  - If the `mtime` received from the browser is greater than that on the server, the server will
+  - If the `mtime` received from the browser is greater than that on the server
     - wait until the server time matches the `mtime` from the browser
-  - If the `mtime` for an update is less that or equal to that on the server, the server will 
+  - If the `mtime` for an update is less than or equal to that on the server
     - retrieve the server copy of the data
     - set browser copy `mtime` to its current time
-    - If there is no current server copy, the server will
+    - If there is no current server copy
       - create a server copy using the browser data
-    - Else, the server will
+    - Else
       - update the server copy using the browser data
     - respond with 200 and server copy
 
@@ -1420,7 +1421,7 @@ executed after the element content is loaded. A controller is simply a module th
 ```
 
 ```javascript
-const targets = {
+const imports = {
     greeting: '[lz:property="greeting"]',
     name: 'input[name="name"]',
 };
@@ -1434,7 +1435,7 @@ function onclick(event) {
 }
 
 export {
-    targets,
+    imports,
     greet,
     onclick
 }

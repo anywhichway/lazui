@@ -1,5 +1,5 @@
 <!-- https://www.unpkg.com/@anywhichway/lazui@0.0.16-a -->
-<script src='/lazui' autofocus 
+<script src='https://www.unpkg.com/@anywhichway/lazui' autofocus 
     data-lz:usejson="https://esm.sh/json5"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
     data-lz:userouter="https://esm.sh/hono"
@@ -165,6 +165,24 @@
 </template>
 <div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
+</div>
+
+<div data-lz:showsource:inner="beforeBegin">
+<template data-lz:state="person">
+{
+    name: "Mary",
+    age: 21,
+    married: false
+}
+</template>
+<div data-lz:usestate="person">
+    <form data-lz:controller="/controllers/lz/form.js">
+        <input data-lz:bind="name" type="text" placeholder="name">
+        <input data-lz:bind="age" type="number" placeholder="age">
+        <input data-lz:bind="married" type="checkbox"> Married
+    </form>
+    <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
 </div>
 
 ### for JavaScript

@@ -1,9 +1,9 @@
 
-const loadController = ({el,attribute,state,options,root,lazui}) => {
+const loadController = async ({el,attribute,state,options,root,lazui}) => {
     const {JSON,prefix,activateHandlers} = lazui,
         url = new URL(lazui.url.href + attribute.value);
     if(!url.pathname.endsWith(".js")) url.pathname += ".js";
-    import(url.href).then((module) => {
+    await import(url.href).then((module) => {
         if(!el.isConnected) return;
         for(const [key,value] of Object.entries(module)) {
             const type = typeof value;
@@ -25,7 +25,7 @@ const loadController = ({el,attribute,state,options,root,lazui}) => {
 }
 async function controller({el,attribute,state,root,options,lazui})  {
     if(el.hasAttribute("data-lz:src")) return;
-    loadController({el,attribute,state,options,root,lazui});
+    await loadController({el,attribute,state,options,root,lazui});
 }
 
 export {controller,loadController}
