@@ -1,5 +1,5 @@
 <!-- https://www.unpkg.com/@anywhichway/lazui@0.0.16-a -->
-<script src='https://www.unpkg.com/@anywhichway/lazui' autofocus 
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.22-a' autofocus 
     data-lz:usejson="https://esm.sh/json5"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
     data-lz:userouter="https://esm.sh/hono"
@@ -32,7 +32,7 @@
         ['lazui as in lazy loading'],
         ['lazui as in do less and deliver more'],
         ['lazui has benefit reduced or no JavaScript'],
-        ['lazui has benefit small core(7k minimized and compressed)'],
+        ['lazui has benefit small core(8k minimized and compressed)'],
         ['lazui has benefit incremental loading'],
         ['lazui has benefit no virtual DOM'],
         ['lazui has benefit no build process'],
@@ -167,7 +167,7 @@
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 
-<div data-lz:showsource:inner="beforeBegin">
+```html
 <template data-lz:state="person">
 {
     name: "Mary",
@@ -175,15 +175,27 @@
     married: false
 }
 </template>
-<div data-lz:usestate="person">
-    <form data-lz:controller="/controllers/lz/form.js">
-        <input data-lz:bind="name" type="text" placeholder="name">
-        <input data-lz:bind="age" type="number" placeholder="age">
-        <input data-lz:bind="married" type="checkbox"> Married
-    </form>
-    <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-</div>
+<form data-lz:usestate="person" data-lz:controller="/controllers/lz/form.js">
+    <input data-lz:bind="name" type="text" placeholder="name">
+    <input data-lz:bind="age" type="number" placeholder="age">
+    <input data-lz:bind="married" type="checkbox"> Married
+</form>
+<div data-lz:usestate="person">${name}'s age is ${age}${married ? " and married" :""}.</div>
+```
+
+<template data-lz:state="person">
+{
+    name: "Mary",
+    age: 21,
+    married: false
+}
+</template>
+<form data-lz:usestate="person" data-lz:controller="/controllers/lz/form.js">
+    <input data-lz:bind="name" type="text" placeholder="name">
+    <input data-lz:bind="age" type="number" placeholder="age">
+    <input data-lz:bind="married" type="checkbox"> Married
+</form>
+<div data-lz:usestate="person">${name}'s age is ${age}${married ? " and married" :""}.</div>
 
 ### for JavaScript
 

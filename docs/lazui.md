@@ -1,4 +1,4 @@
-<script src='https://www.unpkg.com/@anywhichway/lazui'   
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.22-a'   
     data-lz:usejson="https://esm.sh/json5" autofocus
     data-lz:userouter="https://esm.sh/hono"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
@@ -16,7 +16,7 @@
 It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript so
 you don't have to.
 
-It has a core size of less that 7K minimized and Brotli compressed and can be used without a build process, but 
+It has a core size of less that 8K minimized and Brotli compressed and can be used without a build process, but 
 [enhanced with one](#creating-a-custom-bundle).
 
 ### Lazy Loading
@@ -104,7 +104,7 @@ You can use just `/lazui` if you are running the [basic lazui server](#basic-ser
 
 ## How To Be Lazui
 
-Here is the first simple example:
+ou can put template literals directly in your HTML. Here is the first simple example:
 
 ```html
 <html>
@@ -115,7 +115,7 @@ Here is the first simple example:
 </html>
 ```
 
-That's right! You can put template literals directly in your HTML. The above will render as:
+The above will render as:
 
 <div>Hello, the date and time is ${new Date().toLocaleTimeString()}</div>
 
@@ -343,7 +343,7 @@ the need for a custom element. Hence, the HTML can include `<style>` tags that w
 the rest of the page.
 
 ```html
-<template id="element" data-lz:url="https://lazui.org/path/to/element.html">
+<script id="element" data-lz:url:get="https://lazui.org/path/to/element.html">
     <head>
         <meta http-equiv="my-custom-header" content="my-custom-value">
         <style>
@@ -361,10 +361,10 @@ the rest of the page.
              (document.currentScript||currentScript).insertAdjacentText("afterEnd","This was inserted by a script");
         </script>
     </body>
-</template>
+</script>
 ```
 
-<template id="element" data-lz:url="https://lazui.org/path/to/element.html">
+<template id="element" data-lz:url:get="https://lazui.org/path/to/element.html">
     <head>
         <meta http-equiv="my-custom-header" content="my-custom-value">
         <style>
@@ -437,8 +437,7 @@ itself to prevent navigating out of the iframe.
 
 #### Client Side Routing
 
-If `lazui.js` is loaded with the query string `?router=<globalVariableForRouter>`, then a core router will be created
-and used to load content first from elements with `lz:url` attributes and then from a server.
+If you create a router it will be used to load content first from elements with `lz:url` attributes and then from a server.
 
 The directive and value `lz:controller="/controllers/lz/router.js"` will let you create a router without writing any Javascript.
 
@@ -449,17 +448,27 @@ The directive and value `lz:controller="/controllers/lz/router.js"` will let you
     "import": "Hono", // name of import from module file
     "create": "new", // optional, provide only if creating router requires a call to "new"
     "options": {}, // options to pass to router
-    "allowRemote": true // optional, default is false, allow spoofing of remote content
+    "allowRemote": true // optional, default is false, use true to allow spoofing of remote content
 }
 </template>
 ```
 
-With a `lazui` router in place, elements with a `lz:url` attribute can be treated as files.
-This is useful for creating true single page apps or for testing the client with stubbed out responses when a server is
-not available.
+Alternatively, see [Specifying A Router](#specifying-a-router), which requires a few lines of JavaScript.
+
+With a `lazui` router in place, elements with a `lz:url` attribute can be treated as files. This is useful for creating 
+true single page apps, demonstrations or for testing the client with stubbed out responses when a server is not available.
+
+The `lz:url` attribute always has a second component of `get`, `put`, `post`, or `delete` to indicate the HTTP method for
+which a response is supported. The value of the attribute is the URL of the file. The path must always be a full URL or 
+an absolute path on the current server.
+
+Although it is theoretically possible to associate the `lz:url` attribute with almost any element, it should typically be 
+associated with a `<template>`.
+
+##### get
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url="/path/to/somefile.html">
+<template data-lz:url:get="/path/to/somefile.html">
     <style>
         p {
             color: red;
@@ -477,7 +486,7 @@ You can even simulate headers and status codes by adding `data-lz:header`, `data
 attributes to the source elements.
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url="/404.html" data-lz:status="404">
+<template data-lz:url:get="/404.html" data-lz:status="404">
 Not Found
 </template>
 <div data-lz:src="/404.html"></div>
@@ -510,7 +519,17 @@ example above.
 </template>
 ```
 
-Alternatively, see [Specifying A Router](#specifying-a-router), which requires a few lines of JavaScript.
+##### put and post
+
+Elements with `lz:url:put` and `lz:url-post` should be empty. The content is ignored. They are simply used to indicate
+to the router that it is OK to create a element with the URL if one does not exist and update the content of an element
+with the corresponding `lz:url:get` if it does exist and set its `lz:status` to `200`.
+
+See the next section [Enhanced Requests](#enhanced-requests) for an example.
+
+##### delete
+
+Removes the content from the element with the corresponding `lz:url:get` URL and sets its `lz:status` to `200`.
 
 #### Enhanced Requests
 
@@ -525,16 +544,21 @@ not be forwarded to a server under any circumstances. If the `mode` is not `docu
 be treated like a cache entry and cache control headers will be respected. And, all requests other than `GET` will be
 forwarded to the server (if any).
 
-As a demonstration, this series tries to load a path that does not exist, then creates the path with content using `POST`,
-then loads it again. The delay on the second `GET` request is because it may take a moment for asynchronous updates of the page
-to occur.
+As a demonstration, this series tries to load a path that does not exist, i.e. the content is empty, then creates the 
+content using `POST`, then loads it again. The delay on the second `GET` request is because it may take a moment 
+for asynchronous updates of the page to occur.
 
-
-<div data-lz:showsource:inner="beforeBegin">
+```html
+<template data-lz:url:post="/path/to/newelement.html"></template>
 <div data-lz:src="/path/to/newelement.html"></div>
 <div data-lz:src='{"url":"/path/to/newelement.html","method":"POST","body":"name=John","mode":"document"}'></div>
 <div data-lz:src="/path/to/newelement.html" data-lz:on="load delay:1000"></div>
-</div>
+```
+
+<template data-lz:url:post="/path/to/newelement.html"></template>
+<div data-lz:src="/path/to/newelement.html"></div>
+<div data-lz:src='{"url":"/path/to/newelement.html","method":"POST","body":"name=John","mode":"document"}'></div>
+<div data-lz:src="/path/to/newelement.html" data-lz:on="load delay:1000"></div>
 
 The `GET`, `DELETE`, `PUT`, `PATCH`, `HEAD` methods are respected:
 
@@ -592,7 +616,7 @@ A repeating load can be established with `every`, e.g. `data-lz:on="load every:1
 the content every second.
 
 <div data-lz:showsource:inner="beforeBegin">
-<template id="clock" data-lz:url="/clock">
+<template id="clock" data-lz:url:get="/clock">
     <p>
         The time is ${new Date().toLocaleTimeString()}
     </p>
@@ -769,17 +793,123 @@ with the key `controller`. This key should contain an object with the configurat
 One options object can contain configuration data for a controller and any attributes attached to an element. The attribute 
 names are also keys in the options object.
 
+### Form Processing
+
+Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
+to the form. The form does not need to be sumitted for its filed to impact the UI. If it is submitted, the submit is trapped
+and `fetch` is used to get the response for updating the target(s) of the form. A template to format
+the results, the method and encoding, and the expected type of the response can be controller via `lz:options`.
+
+To bind form elements to state, use the `lz:bind` attribute with form elements. The value of the attribute is the name of the property in the state.
+If `lz:bind` has no value, but the attribute is provided, the value of the `name` attribute is used.
+
+#### Form With No Submit
+
+```html
+<div data-lz:usestate="formexamplestate">
+   <form data-lz:controller="/controllers/lz/form.js">
+      <input name="name" data-lz:bind type="text" placeholder="name">
+      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+```
+
+<template data-lz:state="formexamplestate">
+   {
+   name: "Mary",
+   age: 21,
+   married: false
+   }
+</template>
+<div data-lz:usestate="formexamplestate">
+   <form data-lz:controller="/controllers/lz/form.js">
+      <input name="name" data-lz:bind type="text" placeholder="name">
+      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+
+
+#### Form With Standard Submit
+
+The example below just returns the body it was sent.
+
+```html
+<div data-lz:usestate="formexamplestate">
+   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
+      <input name="name" data-lz:bind="name" type="text" placeholder="name">
+      <input name="age" data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+      <button type="submit">Submit</button><br>
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+```
+
+<script data-lz:url:post="/reflectbody">
+   document.currentScript.post = async (req) => {
+         return new Response(await req.text());
+   }
+</script>
+
+<div data-lz:usestate="formexamplestate">
+   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
+      <input name="name" data-lz:bind="name" type="text" placeholder="name">
+      <input name="age" data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+      <button type="submit">Submit</button><br>
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+
+#### Form With Templates
+
+<div data-lz:showsource:inner="beforeBegin">
+<template id="formresponse">
+    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
+</template>
+<form action="/reflectbody" data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
+   <input name="name" type="text" placeholder="name">
+   <input name="age" type="number" placeholder="age">
+   <button type="submit">Submit</button>
+</form>
+</div>
+
+You can use `lz:bind` with forms that use template output. The above example does not, just for clarity.
+
+If a template is provided, then `expect:json` is assumed, other expect types will throw an error.
+
+If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
+
+If `expect:"html"` is provided, scripts are not run and only the body is used.
+
+If `expect:"template"` is provided, the HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution. 
+Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is not updated unless `lz:bind` has been used.
+
+<template data-lz:url:get="/form-template-example">
+    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
+</template>
+
+<div data-lz:showsource:inner="beforeBegin">
+<div data-lz:usestate="formexamplestate">
+   <form action="/form-template-example"  data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
+      <input name="name" type="text" placeholder="name">
+      <input name="age" type="number" placeholder="age">
+      <input name="married" type="checkbox"> Married<br>
+      <button type="submit">Submit</button>
+   </form>
+</div>
+</div>
+
 ### Charts
 
-Currently supported chart types are those in the Google core library:
+Currently supported chart types are those in the Google library, just some of which are:
 
 - bar,
 - column,
-- line,
-- area,
-- stepped area,
-- bubble,
-- pie,
 - donut,
 - combo,
 - candlestick,
@@ -788,7 +918,10 @@ Currently supported chart types are those in the Google core library:
 
 You can see examples in the Google [chart gallery](https://developers.google.com/chart/interactive/docs/gallery).
 
-**Note**: Some of the charts in the gallery are not supported core types.
+The core library is automatically loaded. You can add special packages with the `lz:options` attribute, e.g.
+`lz:options="{controller:{packages:['wordtree']}}"`.
+
+The chart definitions always use a `type`, `options`, and `data` property in the state defining the chart.
 
 
 ```html
@@ -796,9 +929,9 @@ You can see examples in the Google [chart gallery](https://developers.google.com
 {
     type: 'PieChart',
     options:{
-    title:'How Much Pizza I Ate Last Night',
-    width:400,
-    height:300
+       title:'How Much Pizza I Ate Last Night',
+       width:400,
+       height:300
     },
     data: [
         ["Topping","Slices"],
@@ -833,18 +966,13 @@ You can see examples in the Google [chart gallery](https://developers.google.com
 </template>
 <div data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="pizza"></div>
 
-You can optionally provide a `type` query parameter to the controller to override the chart type:
+You can optionally provide a `type` to the controller options to override the chart type:
 
 ```html
 <div data-lz:controller="/controllers/lz/chart.js" data-lz:options="{controller:{type:'BarChart'}}" data-lz:usestate="pizza"></div>
 ```
 
 <div data-lz:controller="/controllers/lz/chart.js" data-lz:options="{controller:{type:'BarChart'}}" data-lz:usestate="pizza"></div>
-
-### Form Processing
-
-Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/form.js"` has been applied
-to the form. The form is submitted using `fetch` and the response is used to update the target(s) of the form.
 
 ### Pushed Content
 

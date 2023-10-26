@@ -669,11 +669,13 @@
         } else {
             if(isObject(content) && content.toDocumentFragment) content = content.toDocumentFragment();
             if(!content) (content = node.cloneNode(true))
-            if(!(content instanceof DocumentFragment) && !(content instanceof NodeList)) {
-                // ? node.html rathet thna content.html
-                content.innerHTML = replaceBetween(content.innerHTML, "`", "`", (text) => text.replaceAll(/</g, "&lt;"))
+            if(state!==null) {
+                if(!(content instanceof DocumentFragment) && !(content instanceof NodeList)) {
+                    // ? node.html rathet thna content.html
+                    content.innerHTML = replaceBetween(content.innerHTML, "`", "`", (text) => text.replaceAll(/</g, "&lt;"))
+                }
+                await resolve(content,{state,root,recurse});
             }
-            await resolve(content,{state,root,recurse});
         }
         if(where===null) return content;
         const callback = recurse>0 ? async ({childNodes}) => {
@@ -747,6 +749,11 @@
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     updated.push(...getNodes(content))
                     target.replaceWith(...getNodes(content));
+                } else if (where === "previousSibling") {
+                    updated.push(...getNodes(content))
+                    const target = root instanceof DocumentFragment && root.host ? root.host : node;
+                    if(target.previousSibling) target.previousSibling.replaceWith(...getNodes(content));
+                    else target.before(...getNodes(content));
                 } else if (where === "beforeBegin") {
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     updated.push(...getNodes(content))
@@ -771,6 +778,11 @@
                     updated.push(...getNodes(content))
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     target.after(...getNodes(content));
+                } else if (where === "nextSibling") {
+                    updated.push(...getNodes(content))
+                    const target = root instanceof DocumentFragment && root.host ? root.host : node;
+                    if(target.nextSibling) target.nextSibling.replaceWith(...getNodes(content));
+                    else target.after(...getNodes(content));
                 } else if (where === "_top") {
                     let newContent;
                     if (content.firstElementChild.tagName !== "HTML") {

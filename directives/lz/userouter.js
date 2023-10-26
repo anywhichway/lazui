@@ -26,49 +26,56 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
     router.all("*", async (arg1,arg2,arg3) => {
         let c = arg1.req ? arg1 : {req:arg1},
             next = typeof arg2 === "function" ? arg2 : typeof arg3 === "function" ? arg3 : null;
-        const url = c.req.URL = new URL(c.req.url, document.baseURI);
+        const url = c.req.URL = new URL(c.req.url, document.baseURI),
+            method = c.req.method.toLowerCase(),
+            isLocal = c.req.url.startsWith(document.location.origin);
         if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
             const el = document.getElementById(url.hash.slice(1));
             return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
         }
-        let node,
-            isLocal;
-        if(isLocal = c.req.url.startsWith(document.location.origin)) {
-            node = root.querySelector(`[${prefix}\\:url="${c.req.url}"],[${prefix}\\:url="${url.pathname}"]`);
-        } else if(allowRemote && /^(http|https):/i.test(c.req.url)) {
-            node = root.querySelector(`[${prefix}\\:url="${c.req.url}"]`);
-        }
-        if(!node && c.req.method==="POST" && (isLocal || allowRemote)) {
-            node = document.createElement("template");
-            const target = root.querySelector("head")||root.querySelector("body");
-            node.setAttribute(`${prefix}:url`,c.req.url);
-            target.appendChild(node);
-        }
-        if (node) {
-            if(c.req.method==="PUT" || c.req.method==="POST") {
-                const text = await c.req.text();
-                node.innerHTML = text;
+        if(isLocal || allowRemote) {
+            let node;
+            if (isLocal) {
+                node = root.querySelector(`[${prefix}\\:url\\:${method}="${c.req.url}"],[${prefix}\\:url\\:${method}="${url.pathname}"]`);
+            } else if (allowRemote && /^(http|https):/i.test(c.req.url)) {
+                node = root.querySelector(`[${prefix}\\:url\\:${method}="${c.req.url}"]`);
             }
-            if(["GET","PUT","POST","PATCH"].includes(c.req.method)) {
-                const headers = {"content-type": "text/html"};
+            if(node) {
+                if(typeof node[method] === "function") {
+                    const resp = await node[method](c.req);
+                    node.setAttribute(`${prefix}:status`,resp.status);
+                    resp.headers.forEach((value,key) => {
+                        node.setAttribute(`${prefix}:header-${key}`,value);
+                    });
+                    return resp;
+                }
+                const status = node.getAttribute(`${prefix}:status`) || 200,
+                    headers = {"content-type": node.getAttribute(`${prefix}:content-type`) || "text/plain"};
                 for (const attr of [...node.attributes]) {
                     if (attr.name.startsWith(`${prefix}:header-`)) headers[attr.name.substring(12)] = attr.value;
-                    else if (attr.name === `${prefix}:headers`) Object.assign(headers, __JSON__.parse(attr.value))
+                    else if (attr.name === `${prefix}:headers`) Object.assign(headers, JSON.parse(attr.value))
                 }
-                const html = document.createElement("html");
-                html.innerHTML = node.innerHTML;
-                const head = html.querySelector("head");
-                let style = "",
-                    link = "";
-                if(head) {
-                    for(const equiv of head.querySelectorAll("meta[http-equiv]")) headers[equiv.getAttribute("http-equiv")] = equiv.getAttribute("content");
-                    for(const el of head.querySelectorAll("style")) style += el.outerHTML;
-                    for(const el of head.querySelectorAll("link[rel=stylesheet]")) link += el.outerHTML;
+                if (method === "post" || method === "put") {
+                    let target = root.querySelector(`[${prefix}\\:url\\:get="${c.req.url}"],[${prefix}\\:url\\:get="${url.pathname}"]`);
+                    if(!target) {
+                        target = document.createElement("template");
+                        target.setAttribute(`${prefix}:url:get`,c.req.url);
+                        node.after(target);
+                    }
+                    target.setAttribute(`${prefix}:content-type`,c.req.headers.get("content-type")||"text/plain");
+                    target.setAttribute(`${prefix}:status`,"200")
+                    target.innerHTML = await c.req.text();
+                    return new Response("ok",{status:200, headers});
+                } else if (method === "get") {
+                    if(node.innerHTML.length!==0) {
+                        return new Response(node.innerHTML,{status,headers})
+                    }
+                } else if(method === "delete") {
+                    node.innerHTML = "";
+                    node.setAttribute(`${prefix}:status`,"404");
+                    return new Response("ok", {status, headers});
                 }
-                const status = node.getAttribute(`${prefix}:status`) || 200;
-                return new Response(style + link + (node.querySelector("body")||node).innerHTML, {status,headers});
             }
-
         }
         if(c.req.raw.mode==="document") {
             return new Response("Not Found",{status: 404});

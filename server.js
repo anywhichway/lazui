@@ -196,7 +196,11 @@ app.put('/data/:id.json', async (req) => {
 app.delete('/data/%id.json', async (req) => {
     const {id} = req.params;
     await fs.unlink(process.cwd() + "/data/" + id + ".json");
-    return new Response(200);
+    return new Response("ok",{status:200});
+})
+
+app.post('/reflectbody', async (req) => {
+    return new Response(await req.text(),{status:200});
 })
 app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
