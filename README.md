@@ -104,6 +104,8 @@ See the main site for a live example: [https://lazui.org](https://lazui.org)
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-26 v0.0.23a documentation updates, client side routing refinements, form binding refinements
+
 2023-10-26 v0.0.22a documentation updates, form handling refinements, client side routing refinements
 
 2023-10-25 v0.0.21a documentation updates, form handling refinements, rendering refinements

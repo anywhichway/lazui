@@ -29,6 +29,7 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
         const url = c.req.URL = new URL(c.req.url, document.baseURI),
             method = c.req.method.toLowerCase(),
             isLocal = c.req.url.startsWith(document.location.origin);
+        let mode = c.req.raw.mode;
         if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
             const el = document.getElementById(url.hash.slice(1));
             return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
@@ -49,6 +50,7 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
                     });
                     return resp;
                 }
+                if(node.hasAttribute(`${prefix}:mode`)) mode = node.getAttribute(`${prefix}:mode`); // overwrites
                 const status = node.getAttribute(`${prefix}:status`) || 200,
                     headers = {"content-type": node.getAttribute(`${prefix}:content-type`) || "text/plain"};
                 for (const attr of [...node.attributes]) {
@@ -56,21 +58,46 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
                     else if (attr.name === `${prefix}:headers`) Object.assign(headers, JSON.parse(attr.value))
                 }
                 if (method === "post" || method === "put") {
+                    let response;
+                    if(mode!=="document") {
+                        try {
+                            response = await fetch(c.req.raw);
+                        } catch {
+
+                        }
+                    }
                     let target = root.querySelector(`[${prefix}\\:url\\:get="${c.req.url}"],[${prefix}\\:url\\:get="${url.pathname}"]`);
                     if(!target) {
                         target = document.createElement("template");
                         target.setAttribute(`${prefix}:url:get`,c.req.url);
                         node.after(target);
                     }
-                    target.setAttribute(`${prefix}:content-type`,c.req.headers.get("content-type")||"text/plain");
-                    target.setAttribute(`${prefix}:status`,"200")
-                    target.innerHTML = await c.req.text();
-                    return new Response("ok",{status:200, headers});
+                    target.setAttribute(`${prefix}:content-type`,response?.status===200 ? response.headers.get("content-type") : c.req.headers.get("content-type")||"text/plain");
+                    target.setAttribute(`${prefix}:status`,response?.status===200 ? response.status : 200);
+                    target.innerHTML = response?.status===200 ? await response.text() : await c.req.text();
+                    return new Response("ok",{status:200, headers:response?.status===200 ? response.status.headers : headers});
                 } else if (method === "get") {
-                    if(node.innerHTML.length!==0) {
-                        return new Response(node.innerHTML,{status,headers})
+                    let response;
+                    if(mode!=="document") {
+                        try {
+                            response = await fetch(c.req.raw);
+                        } catch {
+
+                        }
+                    }
+                    const value = response?.status===200 ? await response.text() : node.innerHTML;
+                    if(value.length!==0) {
+                        return new Response(value,{status:response ? response.status : status, headers:response?.status===200 ? response.status.headers : headers})
                     }
                 } else if(method === "delete") {
+                    let response;
+                    if(mode!=="document") {
+                        try {
+                            response = await fetch(c.req.raw);
+                        } catch {
+
+                        }
+                    }
                     node.innerHTML = "";
                     node.setAttribute(`${prefix}:status`,"404");
                     return new Response("ok", {status, headers});

@@ -1,5 +1,5 @@
 <!-- https://www.unpkg.com/@anywhichway/lazui@0.0.16-a -->
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.22-a' autofocus 
+<script src='/lazui' autofocus 
     data-lz:usejson="https://esm.sh/json5"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
     data-lz:userouter="https://esm.sh/hono"
@@ -13,6 +13,13 @@
 <p style="width:100%;text-align:center"><a href="#quick-start">Quick Start</a> or <a href="/docs/lazui.md">Dive In</a></p>
 
 <div style="margin:auto;width:70%">
+
+## introduction
+
+`lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
+
+It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript, so
+you don't have to.
 
 ## all the things
 

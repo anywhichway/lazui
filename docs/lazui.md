@@ -1,4 +1,4 @@
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.22-a'   
+<script src='/lazui'   
     data-lz:usejson="https://esm.sh/json5" autofocus
     data-lz:userouter="https://esm.sh/hono"
     data-lz:usehighlighter="https://esm.sh/highlight.js"
@@ -13,98 +13,31 @@
 
 `lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
 
-It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript so
+It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript, so
 you don't have to.
-
-It has a core size of less that 8K minimized and Brotli compressed and can be used without a build process, but 
-[enhanced with one](#creating-a-custom-bundle).
-
-### Lazy Loading
-
-Unless a [custom bundle is created](#creating-a-custom-bundle), all the attribute functionality provided by `lazui` is 
-loaded on demand. The functionality of each attribute is in its own file. Some attributes are loaded in a non-blocking
-manner when a page first loads and some are loaded just the first time the attribute is found in the HTML. This gets the 
-page to its first meaningful paint faster.
-
-### Dependency Tracking
-
-`lazui` does not use a virtual DOM, it uses direct dependency tracking and a special updating function wrapped around 
-the normal browser screen refresh handler drive updates. When a state changes, the nodes that depend on that state
-are updated. These are typically text nodes, but can also be attributes. This is automatic at the no JavaScript level. 
-You can take a more [functional approach](#html) by using the `html` template literal and `render` function
-if you write JavaScript.
-
-### Choose Your Development Paradigm
-
-`lazui` draws its inspiration from the varied capabilities of [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),
-[Knockout](https://knockoutjs.com/), [Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
-[Vue](https://vuejs.org/), [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
-You are free to choose your preferred development paradigm. If it is just that of one library, you may be better off sticking
-with that library, but if you yearn for capability from more than one library, `lazui` may be for you.
 
 ## Installation
 
-Unless you need your own attribute directives, you can use the CDN version of `lazui`. Place the following script tag in the head of your HTML:
+Unless you need your own attribute directives, you can use the CDN version of `lazui`. Place the following script tag 
+in the head of your HTML:
 
 ```html
 <script src='https://www.unpkg.com/@anywhichway/lazui' autofocus></script>
 ```
 
+`lazui` has a core size of less that 8K minimized and Brotli compressed and can be used without a build process, but
+[enhanced with one](#creating-a-custom-bundle).
+
 Attribute Directive
-: A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance, `lz:src` 
-is an attribute directive that loads content into an element.
+: A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance, 
+`lz:src` is an attribute directive that loads content into an element.
 
-Unless you are willing to [write your own JavaScript](#using-javascript), you should always provide the `autofocus` attribute. It tells `lazui` to
-process all the custom attribute directives and template substitutions in the document.
-
-You can also configure `lazui` to use a [relaxed JSON parser](#relaxed-json-parser), a [client side router](#client-side-routing), 
-and if you are documenting code, a [highlighter](#code-highlighting).
-
-```html
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a'  autofocus 
-    data-lz:usejson="https://esm.sh/json5" 
-    data-lz:userouter="https://esm.sh/hono"
-    data-lz:usehighlighter="https://esm.sh/highlight.js"
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
-</script>
-```
-
-### Avoiding Page Flicker
-
-If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is because
-the browser will render the page before `lazui` has a chance to process all the templates and custom elements. You can avoid this
-by setting the attribute `hidden` in the `<html>` tag in your file. This is handled automatically for Markdown files. 
-`lazui` will remove the `hidden` attribute when it is done processing.
-
-## Documentation Conventions
-
-Although `lazui` can be used as a powerful JavaScript rendering engine, it really shines at reducing the amount of
-JavaScript required to create an interactive website or single page app. This shininess is provided through a set of
-attribute directives and JavaScript controller files.
-
-If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScript. Since writing HTML is easier than 
-JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before the
-use of the `html` template literal and `render` functions. 
-
-If you wish, you can jump to the more JavaScript focused [html](#html) and [render](#render) sections of the documentation.
-
-It is possible to completely modify the `lazui` namespace. Throughout the documentation, references
-to attribute directives will take the form `lz:<directive>` and sample code will use the standards compliant form 
-`data-lz:<directive>`, but they could just as well be `data-myapp:<directive>` or even `myapp:<directive>`.
-
-In some cases, the documentation will use `TypeScript` notation to make APIs clear, however, `lazui` is not written in
-`TypeScript`.
-
-Most of the JSON in the document is in [JSON5](https://json5.org/) format. This makes JSON easier to write and less error
-prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your
-version of `lazui` to use JSON5, you will need to modify the JSON in the examples to be valid JSON.
-
-Any time you see `/lazui` as a source attribute you could insert a CDN URL. We have thoroughly tested with `https://www.unpkg.com/@anywhichway/lazui`. 
-You can use just `/lazui` if you are running the [basic lazui server](#basic-server).
+Unless you are willing to [write your own JavaScript](#using-javascript), you should always provide the `autofocus` attribute. It 
+tells `lazui` to process all the custom attribute directives and template substitutions in the document.
 
 ## How To Be Lazui
 
-ou can put template literals directly in your HTML. Here is the first simple example:
+You can put template literals directly in your HTML. Here is the first simple example:
 
 ```html
 <html>
@@ -133,13 +66,70 @@ renders as:
 
 Throughout the rest of the documentation, hints are provided on how to use `lazui` with Markdown.
 
+### Lazy Loading
+
+Unless a [custom bundle is created](#creating-a-custom-bundle), all the attribute directive functionality provided by
+`lazui` is loaded on demand. The functionality of each attribute is in its own file. Some attributes are loaded in a
+non-blocking manner when a page first loads and some are loaded just the first time the attribute is found in the HTML.
+This gets the page to its first meaningful paint faster.
+
+### Avoiding Page Flicker
+
+If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is 
+because the browser will render the page before `lazui` has a chance to process all the templates and custom elements. 
+You can avoid this by setting the attribute `hidden` in the `<html>` tag in your file. This is handled automatically for 
+Markdown files. `lazui` will remove the `hidden` attribute when it is done processing.
+
+### Choose Your Development Paradigm
+
+`lazui` draws its inspiration from the varied capabilities of [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),
+[Knockout](https://knockoutjs.com/), [Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
+[Vue](https://vuejs.org/), and [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
+You are free to choose your preferred development paradigm. If it is just that of one library, you may be better off
+sticking with that library, but if you yearn for capability from more than one library, `lazui` may be for you.
+
+You can also configure `lazui` to use a [relaxed JSON parser](#relaxed-json-parser), a [client side router](#client-side-routing), and if you are 
+documenting code, a [highlighter](#code-highlighting).
+
+```html
+<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a'  autofocus 
+   data-lz:usejson="https://esm.sh/json5" 
+   data-lz:userouter="https://esm.sh/hono"
+   data-lz:usehighlighter="https://esm.sh/highlight.js"
+   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
+</script>
+```
+
+Although `lazui` can be used as a powerful JavaScript rendering engine, it really shines at reducing the amount of
+JavaScript required to create an interactive website or single page app. This shininess is provided through a set of
+attribute directives and JavaScript controller files.
+
+If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScript. Since writing HTML is easier than
+JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before
+the more [JavaScript focused](#using-javascript) [html](#html) and [render](#render) functions.
+
+## Documentation Conventions
+
+It is possible to completely modify the `lazui` namespace. Throughout the documentation, references
+to attribute directives will take the form `lz:<directive>` and sample code will use the standards compliant form 
+`data-lz:<directive>`, but they could just as well be `data-myapp:<directive>` or even `myapp:<directive>`.
+
+In some cases, the documentation will use `TypeScript` notation to make APIs clear, however, `lazui` is not written in
+`TypeScript`.
+
+Most of the JSON in this document is in [JSON5](https://json5.org/) format. This makes JSON easier to write and less error
+prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your version of `lazui` to use JSON5, 
+you will need to modify the JSON in the examples to be valid JSON.
+
+Any time you see a CDN URL for `lazui` you could use just `/lazui` if you are running the [basic lazui server](#basic-server).
+
 ## Leveraging Attribute Directives
 
 Attribute directives take the form `<namespace>:<directive>=<value>`. The default `lazui` namespace is `lz`.
 
 Attribute directives are each stored in their own JavaScript file using the name of the directive as the file name. 
 By convention, the files are in a directory called `directives` with subdirectories for each namespace. 
-Hence, `lazui` directive, `lz:src` should be in `/directives/lz/src.js`.
+Hence, `lz:src` should be in `/directives/lz/src.js`.
 
 If this convention is followed, `lazui` will lazy load only those directives that are used. If you want to preload
 directives or use a different naming/filesystem convention, you can [load the directives directly using JavaScript](#loading-attribute-directives).
@@ -193,8 +183,8 @@ or, if you have a local copy of JSON5:
 Being able to insert a date and time or do inline math may with templates in HTML be useful, but you will probably want 
 to include general data.
 
-The `data-lz:state` attribute can be used to define a model. The value of the attribute is the name of the state/model. 
-The state is defined as a JSON object inside an element (typically a `<template>`) or loaded from a file:
+The `data-lz:state` attribute can be used to define a state/model. The value of the attribute is the name of the state/model. 
+The state/model is defined as a JSON object inside an element (typically a `<template>`) or [loaded from a file](#loading-content):
 
 <template data-lz:state="person" data-lz:showsource="beforeBegin">
 {
@@ -203,12 +193,11 @@ The state is defined as a JSON object inside an element (typically a `<template>
 }
 </template>
 
-
 Now you can do this:
 
 <div data-lz:usestate="person" data-lz:showsource="beforeBegin">${name} is ${age} years old.</div>
 
-You can also set a state as the default state for a `document` or `global` (stored on the `window` object):
+You can also set a state as the default state for a `document` or globally using `global` (stored on the `window` object):
 
 ```html
 <template data-lz:state:document="person">
@@ -219,11 +208,11 @@ You can also set a state as the default state for a `document` or `global` (stor
 </template>
 ```
 
-There are more [advanced use of state](#advanced-use-of-state) to support storing it in a database or remote server 
-synchronization [documented later](#advanced-use-of-state).
+There are more [advanced use of state](#advanced-use-of-state) to support storing it in a database or remote server synchronization
+[documented later](#advanced-use-of-state).
 
-*Markdown Hint*: Setting state at the document level can be useful with Markdown. Below is the content of the file `using-state-with-markdown.md`,
-followed by the `HTML` loading the file and the `IFrame` generated.
+*Markdown Hint*: Setting state at the document level can be useful with Markdown. Below is the content of the file 
+`using-state-with-markdown.md`, followed by the `HTML` loading the file and the `IFrame` generated.
 
 ```html
 <template data-lz:state:document="person">
@@ -249,6 +238,14 @@ Modifying a state will cause any elements using the state to be updated.
 <div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
     Click Count:${clickCount}
 </div>
+
+##### Dependency Tracking
+
+`lazui` does not use a virtual DOM, it uses direct dependency tracking. A special updating function wrapped around
+the normal browser screen refresh handler tracks state use. When a state changes, the nodes that depend on that state
+are updated. The nodes are typically text nodes, but can also be attributes. This is automatic when working at the
+no JavaScript level. You can take a more functional approach by using the [html](#html) template literal and 
+[render](#render) function if you write JavaScript.
 
 #### Inline State
 
@@ -305,26 +302,26 @@ If the `lz:src` value starts with a `#` it is treated as an element id and the `
 </div>
 
 *Markdown Hint*: Except for your main `.md` file, you do not have to add the `lazui.js` script to your `markdown` files, 
-it will be added automatically for any content loaded using `lz-src`.
+it will be added automatically used for any content loaded using `lz-src`.
 
 #### Targets
 
 Anything with a `src`, `action` (forms), or `data-lz:src`, attribute can have a `data-lz:target` attribute. The value
-can be `_beforeBegin`, `_afterBegin`, `_beforeEnd`, `_afterEnd`, `_inner`, `_outer`, `_firstChild`, `_lastChild`, `_parent`, `_top`
-`_blank` or a CSS selectable target.
+can be `beforeBegin`, `previousSibling`, `afterBegin`, `beforeEnd`, `nextSibling`, `afterEnd`, `inner`, `outer`, 
+`firstChild`, `lastChild`, `body`, `parent`, `_top`, `_blank` or a CSS selectable target.
 
-The targets `_inner`, `_outer`, `_parent` and `_body` can also have a `.<css-selector>` suffix. This means you can update multiple
+The targets `inner`, `outer`, `parent` and `body` can also have a `.<css-selector>` suffix. This means you can update multiple
 elements with a single anchor or form submission.
 
-- `_outer.<css>` `_inner.<css>` and are effectively `this.querySelectorAll(<css>)`
-- `_parent.<css>` is effectively `this.parentElement.querySelectorAll(<css>)`
-- `_body.<css>` is effectively `document.querySelectorAll(<css>)`
+- `outer.<css>` and `inner.<css>` are effectively `this.querySelectorAll(<css>)`
+- `parent.<css>` is effectively `this.parentElement.querySelectorAll(<css>)`
+- `body.<css>` is effectively `document.body.querySelectorAll(<css>)`
 
 If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
 
 #### State and Loaded Content
 
-If `lz:usestate` is used with `lz:src`, the state will be applied to the loaded content.
+If `lz:usestate` is used with or in a parent element of one with `lz:src`, the state will be applied to the loaded content.
 
 *Markdown Hint:* Super useful! No need to put HTML into your Markdown files:
 
@@ -385,15 +382,14 @@ the rest of the page.
 </template>
 <div data-lz:src="https://lazui.org/path/to/element.html" data-lz:mode="open" data-lz:showsource="beforeBegin"></div>
 
-
-In the example above you can see the attribute `data-lz:url`, this is covered later in [Lazui Router](#lazui-router).
+In the example above you can see the attribute `data-lz:url:get`, this is covered later in [Lazui Router](#lazui-router).
 
 If the file has the same origin as the requesting document, scripts will be processed; otherwise, they will be
 ignored. In the case above, they are ignored. However, if we mount a similar file locally, they
 will be executed.
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url="/element.html">
+<template data-lz:url:get="/element.html">
     <style>
         p {
             color: red;
@@ -432,8 +428,8 @@ Note, if you are viewing the JavaScript console you may see a warning like this:
 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing 
 ```
 
-When lazui inserts content into an `iframe` it also sets the parent and global scope of the IFrame's content to
-itself to prevent navigating out of the iframe.
+When `lazui` inserts content into an `<iframe>` it also sets the parent and global scope of the `<iframe>'s` content to
+itself to prevent navigation out of the iframe.
 
 #### Client Side Routing
 
@@ -465,6 +461,10 @@ an absolute path on the current server.
 Although it is theoretically possible to associate the `lz:url` attribute with almost any element, it should typically be 
 associated with a `<template>`.
 
+Except for examples requiring server interaction, e.g. [Server Sent Events](#server-sent-events) and 
+[Web Sockets](#web-sockets), all the examples in this document depend on files simulated by `<template>s` with a
+`lz:url` attribute and a client side router.
+
 ##### get
 
 <div data-lz:showsource:inner="beforeBegin">
@@ -493,9 +493,7 @@ Not Found
 </div>
 
 If the source element is a `template` you can include `head` and `body` sections. Any `meta http-equiv` content in 
-the `head` section will be treated as a header and included in the router response. We mislead you before; although it
-did not make a difference in the rendering, below is the actual template used for the [Single Page Components](#single-page-components)
-example above.
+the `head` section will be treated as a header and included in the router response.
 
 ```html
 <template id="element" data-lz:url="https://lazui.org/path/to/element.html">
@@ -522,14 +520,14 @@ example above.
 ##### put and post
 
 Elements with `lz:url:put` and `lz:url-post` should be empty. The content is ignored. They are simply used to indicate
-to the router that it is OK to create a element with the URL if one does not exist and update the content of an element
+to the router that it is OK to create an element with the URL if one does not exist and update the content of an element
 with the corresponding `lz:url:get` if it does exist and set its `lz:status` to `200`.
 
 See the next section [Enhanced Requests](#enhanced-requests) for an example.
 
 ##### delete
 
-Removes the content from the element with the corresponding `lz:url:get` URL and sets its `lz:status` to `200`.
+Removes the content from the element with the corresponding `lz:url:get` URL and sets its `lz:status` to `404`.
 
 #### Enhanced Requests
 
@@ -544,6 +542,8 @@ not be forwarded to a server under any circumstances. If the `mode` is not `docu
 be treated like a cache entry and cache control headers will be respected. And, all requests other than `GET` will be
 forwarded to the server (if any).
 
+The `lz:mode` attribute can also be applied to the fake urls elements, in which case if will always be respected and mode in the requests will be ignored.
+
 As a demonstration, this series tries to load a path that does not exist, i.e. the content is empty, then creates the 
 content using `POST`, then loads it again. The delay on the second `GET` request is because it may take a moment 
 for asynchronous updates of the page to occur.
@@ -555,6 +555,7 @@ for asynchronous updates of the page to occur.
 <div data-lz:src="/path/to/newelement.html" data-lz:on="load delay:1000"></div>
 ```
 
+<template data-lz:url:get="/path/to/newelement.html" data-lz:mode="document" data-lz:status="404"></template>
 <template data-lz:url:post="/path/to/newelement.html"></template>
 <div data-lz:src="/path/to/newelement.html"></div>
 <div data-lz:src='{"url":"/path/to/newelement.html","method":"POST","body":"name=John","mode":"document"}'></div>
@@ -842,10 +843,9 @@ The example below just returns the body it was sent.
    <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
       <input name="name" data-lz:bind="name" type="text" placeholder="name">
       <input name="age" data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
       <button type="submit">Submit</button><br>
    </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+   <div>${name}'s age is ${age}.</div>
 </div>
 ```
 
@@ -898,7 +898,7 @@ Any scripts in the template are executed. *Note*: Although the form contents are
    <form action="/form-template-example"  data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
       <input name="name" type="text" placeholder="name">
       <input name="age" type="number" placeholder="age">
-      <input name="married" type="checkbox"> Married<br>
+      <input name="married" type="checkbox"> Married
       <button type="submit">Submit</button>
    </form>
 </div>

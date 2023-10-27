@@ -264,6 +264,7 @@ const ittyServer = createServerAdapter(
                 Object.entries(CSP).forEach(([csp,values]) => {
                     response.headers.append("Content-Security-Policy",[csp,...values].join(" "));
                 });
+                response.headers.append("Access-Control-Allow-Origin","*");
                 //response.headers.append("Content-Security-Policy","object-src 'none'");
                 //response.headers.append("Content-Security-Policy",`default-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://img.shields.io ${req.URL.origin.replace(req.URL.protocol,"ws:")}`);
             }

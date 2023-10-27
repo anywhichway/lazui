@@ -373,7 +373,7 @@
         __HTML_CACHE__ = new Map();
     const html = function (strings, ...values) {
         const {state, root} = isHTMLScope(this) ? this : {state: {}, root: document},
-        locator = "__LOCATOR__",
+        locator = "__LCTR__",
         result = {
             strings,
             values,
@@ -425,9 +425,9 @@
                             if (node.value === "undefined") removeAttribute(node);
                         }
                     } else if (node.nodeType == Node.TEXT_NODE) {
-                        if (node.data.trim().length === 0 || !node.data.includes("__LOCATOR__")) return;
-                        const parts = node.data.split(/(?=__LOCATOR__\d+)/g).reduce((acc, cur) => { //\s|\S__LOCATOR__\d+
-                            if (/\S__LOCATOR__\d+/.test(cur)) {
+                        if (node.data.trim().length === 0 || !node.data.includes("__LCTR__")) return;
+                        const parts = node.data.split(/(?=__LCTR__\d+)/g).reduce((acc, cur) => { //\s|\S__LCTR__\d+
+                            if (/\S__LCTR__\d+/.test(cur)) {
                                 acc.push(cur[0]);
                                 acc.push(cur.slice(1));
                             } else {
@@ -438,7 +438,7 @@
                         node.data = "";
                         let currentNode = node;
                         const parent = node.parentElement;
-                        for (const part of parts) {
+                        parts.forEach((part,i) => {
                             if (part.startsWith(locator)) {
                                 const index = parseInt(part.substring(locator.length)),
                                     value = values[index],
@@ -460,14 +460,14 @@
                                         currentNode.data += (Array.isArray(item) ? item.join(",") : JSON.stringify(item)) + " "
                                     }
                                     else {
-                                        currentNode.data += item + restPart + " ";
+                                        currentNode.data += item + restPart;
                                     }
                                     restPart = "";
                                 }
                             } else {
-                                currentNode.data += (part === "" ? " " : part)
+                                currentNode.data += (part === "" && i<parts.length-1 ? " " : part)
                             }
-                        }
+                        })
                     }
                 });
                 //sanitize
@@ -695,7 +695,7 @@
             if (endIndex !== -1) {
                 const textBetweenDelimiters = inputString.substring(startIndex + delimiterStart.length, endIndex);
                 const replacementText = replacementCallback(textBetweenDelimiters);
-                const placeholder = `__PLACEHOLDER_${placeholders.length}__`;
+                const placeholder = `__PLCHLDR__${placeholders.length}__`;
                 placeholders.push({ placeholder, replacementText });
                 inputString = inputString.substring(0, startIndex) + placeholder + inputString.substring(endIndex + delimiterEnd.length);
             } else {
@@ -705,7 +705,7 @@
             startIndex = inputString.indexOf(delimiterStart, endIndex+1);
         }
         // Perform the replacements
-        while(inputString.includes("__PLACEHOLDER_")) {
+        while(inputString.includes("__PLCHLDR__")) {
             placeholders.forEach(({ placeholder, replacementText }) => inputString = inputString.replace(placeholder, delimiterStart + replacementText + delimiterEnd));
         }
         return inputString;
