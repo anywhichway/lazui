@@ -40,7 +40,7 @@
 </div>
 <script>
     function generateLinkMarkup(contentElement) {
-        const headings = [...contentElement.querySelectorAll('h2, h3, h4')];
+        const headings = [...contentElement.querySelectorAll('h2, h3, h4, h5')];
         const parsedHeadings = headings.map(heading => {
             return {
                 title: heading.innerText,

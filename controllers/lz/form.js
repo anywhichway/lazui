@@ -34,7 +34,7 @@ const init = async ({el,root,lazui,options})=> {
     const {getContext,JSON,router,render,interpolate} = lazui;
     for(const input of el.querySelectorAll("input,select,textarea")) {
         let property = input.getAttribute("data-lz:bind:read") || input.getAttribute("data-lz:bind:write") || input.getAttribute("data-lz:bind");
-        if(property===null && (input.hasAttribute("data-lz:bind:read") || input.hasAttribute("data-lz:bind:write") || input.hasAttribute("data-lz:bind"))) {
+        if(!property && (input.hasAttribute("data-lz:bind:read") || input.hasAttribute("data-lz:bind:write") || input.hasAttribute("data-lz:bind"))) {
             property = input.getAttribute("name");
         }
         if(property) {

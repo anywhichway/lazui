@@ -30,6 +30,9 @@ const useHighlighter = (hljs,css) => {
             els.push(el);
         }
     }
+    for(const el of document.querySelectorAll('[data-highlighted="yes"]')) {
+        el.removeAttribute("data-highlighted");
+    }
     hljs.highlightAll();
     for (const el of els) {
         if (el.innerHTML.includes("__BACKTICK__")) {

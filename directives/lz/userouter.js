@@ -37,9 +37,9 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
         if(isLocal || allowRemote) {
             let node;
             if (isLocal) {
-                node = root.querySelector(`[${prefix}\\:url\\:${method}="${c.req.url}"],[${prefix}\\:url\\:${method}="${url.pathname}"]`);
+                node = root.querySelector(`template[${prefix}\\:url\\:${method}="${c.req.url}"],template[${prefix}\\:url\\:${method}="${url.pathname}"]`);
             } else if (allowRemote && /^(http|https):/i.test(c.req.url)) {
-                node = root.querySelector(`[${prefix}\\:url\\:${method}="${c.req.url}"]`);
+                node = root.querySelector(`template[${prefix}\\:url\\:${method}="${c.req.url}"]`);
             }
             if(node) {
                 if(typeof node[method] === "function") {
@@ -75,7 +75,7 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
                     target.setAttribute(`${prefix}:content-type`,response?.status===200 ? response.headers.get("content-type") : c.req.headers.get("content-type")||"text/plain");
                     target.setAttribute(`${prefix}:status`,response?.status===200 ? response.status : 200);
                     target.innerHTML = response?.status===200 ? await response.text() : await c.req.text();
-                    return new Response("ok",{status:200, headers:response?.status===200 ? response.status.headers : headers});
+                    return new Response("ok",{status:200, headers:response?.status===200 ? response.status.headers : headers}); // should return contents of the POST or put element
                 } else if (method === "get") {
                     let response;
                     if(mode!=="document") {

@@ -1,9 +1,27 @@
-<!-- https://www.unpkg.com/@anywhichway/lazui@0.0.16-a -->
-<script src='/lazui' autofocus 
-    data-lz:usejson="https://esm.sh/json5"
-    data-lz:usehighlighter="https://esm.sh/highlight.js"
-    data-lz:userouter="https://esm.sh/hono"
-    data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
+<script>
+(() => {
+   let src;
+   try {
+      src = new URL(document.location).searchParams.get("lazui");
+      new URL(lazuiURL);
+   } catch(e) {
+      src = new URL(document.location).searchParams.has("cdn") ? "https://www.unpkg.com/@anywhichway/lazui" : "/lazui";
+   }
+   const attributes = {
+      src,
+      "data-lz:usejson":"https://esm.sh/json5",
+      "autofocus":"",
+      "data-lz:userouter":"https://esm.sh/hono",
+      "data-lz:usehighlighter":"https://esm.sh/highlight.js",
+      "data-lz:options":"{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}"
+      },
+      script = document.createElement("script");
+   for(let [key,value] of Object.entries(attributes)) {
+     script.setAttribute(key,value);
+   }
+   document.currentScript.remove();
+   document.write(script.outerHTML);
+})();
 </script>
 <title>lazui: Web UI's with less work</title>
 <div style="width:500px;margin:auto" data-lz:src="./docs/header.html"></div>
@@ -16,10 +34,9 @@
 
 ## introduction
 
-`lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
-
-It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript, so
-you don't have to.
+- A JavaScript library that allows you to create interactive websites and single page apps with less work.
+- Extends the attribute space of typical HTML to provide a rich set of functionality. 
+- Provides the JavaScript, so you don't have to.
 
 ## all the things
 
@@ -100,7 +117,7 @@ you don't have to.
         "${templates in HTML}":"how-to-be-lazui",
         "server sent events":"server-sent-events",
         "web sockets":"web-sockets",
-        "form processing":"form",
+        "form processing":"with-forms",
         "client side routing":"client-side-routing",
         "charts and gauges":"charts",
         "document table of contents":"document-table-of-contents",

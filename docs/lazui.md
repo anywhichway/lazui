@@ -1,9 +1,30 @@
-<script src='/lazui'   
-    data-lz:usejson="https://esm.sh/json5" autofocus
-    data-lz:userouter="https://esm.sh/hono"
-    data-lz:usehighlighter="https://esm.sh/highlight.js"
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
+<script>
+(() => {
+   let src;
+   try {
+      src = new URL(document.location).searchParams.get("lazui");
+      new URL(lazuiURL);
+   } catch(e) {
+      src = new URL(document.location).searchParams.has("cdn") ? "https://www.unpkg.com/@anywhichway/lazui" : "/lazui";
+   }
+   const attributes = {
+      src,
+      "data-lz:usejson":"https://esm.sh/json5",
+      "autofocus":"",
+      "data-lz:userouter":"https://esm.sh/hono",
+      "data-lz:usehighlighter":"https://esm.sh/highlight.js",
+      "data-lz:options":"{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}"
+      },
+      script = document.createElement("script");
+   for(let [key,value] of Object.entries(attributes)) {
+     script.setAttribute(key,value);
+   }
+   document.currentScript.remove();
+   document.write(script.outerHTML);
+})();
 </script>
+
+
 <title>lazui Documentation</title>
 <a href="../index.md">lazui</a>
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
@@ -13,10 +34,17 @@
 
 `lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
 
-It extends the attribute space of typical HTML to provide a rich set of functionality. It provides the JavaScript, so
-you don't have to.
+It extends the attribute space of typical HTML to provide a rich set of functionality. 
+
+It provides the JavaScript, so you don't have to.
+
+`lazui` is in the early stages of development. The first major release is functionaly complete; however it needs more 
+testing, optimization, and improved documentation. In this case, don't be lazy ... join us and help out by 
+[creating issues on GitHub](https://www.github.com/anywhichway/lazui/issues).
 
 ## Installation
+
+### CDN
 
 Unless you need your own attribute directives, you can use the CDN version of `lazui`. Place the following script tag 
 in the head of your HTML:
@@ -30,10 +58,30 @@ in the head of your HTML:
 
 Attribute Directive
 : A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance, 
-`lz:src` is an attribute directive that loads content into an element.
+`lz:src` is an attribute directive that loads content into an element. Elements can have multiple attribute directives.
 
 Unless you are willing to [write your own JavaScript](#using-javascript), you should always provide the `autofocus` attribute. It 
 tells `lazui` to process all the custom attribute directives and template substitutions in the document.
+
+### Local
+
+You can also install `lazui` from `npm`:
+
+```bash
+npm install @anywhichway/lazui
+```
+
+Then run:
+
+```bash
+npm run serve
+```
+
+Access `lazui` and this documentation at `http://localhost:3000/`.
+
+See [Basic Server](#basic-server) for more information on the `lazui` server you can customize.
+
+[https://lazui.org](https://lazui.org) uses this basic server and is hosted on [Render](https://redner.com/).
 
 ## How To Be Lazui
 
@@ -62,9 +110,10 @@ Hello, the date and time is ${new Date().toLocaleTimeString()}
 
 renders as:
 
-<div data-lz:src="./working-with-markdown.md" data-lz:mode="open"></div>
-
-Throughout the rest of the documentation, hints are provided on how to use `lazui` with Markdown.
+<template data-lz:url:get="/working-with-markdown.md" data-lz:mode="document">
+Hello, the date and time is ${new Date().toLocaleTimeString()}
+</template>
+<div data-lz:src="/working-with-markdown.md" data-lz:mode="open"></div>
 
 ### Lazy Loading
 
@@ -106,7 +155,7 @@ attribute directives and JavaScript controller files.
 
 If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScript. Since writing HTML is easier than
 JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before
-the more [JavaScript focused](#using-javascript) [html](#html) and [render](#render) functions.
+the more [JavaScript focused](#using-javascript) [html](#html) and [render](#render()) functions.
 
 ## Documentation Conventions
 
@@ -211,8 +260,10 @@ You can also set a state as the default state for a `document` or globally using
 There are more [advanced use of state](#advanced-use-of-state) to support storing it in a database or remote server synchronization
 [documented later](#advanced-use-of-state).
 
-*Markdown Hint*: Setting state at the document level can be useful with Markdown. Below is the content of the file 
-`using-state-with-markdown.md`, followed by the `HTML` loading the file and the `IFrame` generated.
+#### With Markdown
+
+Setting state at the document level can be useful with Markdown. Below is the content of the file 
+`using-state-with-markdown.md`, followed by the `HTML` loading the file into an `<iframe>` (which is optional).
 
 ```html
 <template data-lz:state:document="person">
@@ -223,7 +274,17 @@ There are more [advanced use of state](#advanced-use-of-state) to support storin
 </template>
 ${name} is ${age} years old.
 ```
-<div data-lz:src="./using-state-with-markdown.md" data-lz:mode="frame" data-lz:showsource="beforeBegin" title="Lazui: Markdown Example"></div>
+
+<template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
+   <template data-lz:state:document="person">
+   {
+       "name": "Mary",
+       "age": 21
+   }
+   </template>
+   ${name} is ${age} years old.
+</template>
+<div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" data-lz:showsource="beforeBegin" title="Lazui: Markdown Example"></div>
 
 #### Reactive State
 
@@ -231,12 +292,12 @@ Modifying a state will cause any elements using the state to be updated.
 
 ```html
 <div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
-    Click Count:${clickCount}
+    Click Count: ${clickCount}
 </div>
 ```
 
 <div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
-    Click Count:${clickCount}
+    Click Count: ${clickCount}
 </div>
 
 ##### Dependency Tracking
@@ -245,7 +306,7 @@ Modifying a state will cause any elements using the state to be updated.
 the normal browser screen refresh handler tracks state use. When a state changes, the nodes that depend on that state
 are updated. The nodes are typically text nodes, but can also be attributes. This is automatic when working at the
 no JavaScript level. You can take a more functional approach by using the [html](#html) template literal and 
-[render](#render) function if you write JavaScript.
+[render](#render()) function if you write JavaScript.
 
 #### Inline State
 
@@ -282,6 +343,119 @@ States are inherited down the DOM and shadow the values of properties with the s
     <div data-lz:state="{age:21}">
         ${name} is ${age} years old.
     </div>
+</div>
+
+#### With Forms
+
+To bind form elements to state, use the `lz:bind` attribute. The value of the attribute is the name 
+of the property in the state. If `lz:bind` has no value, but the `name` attribute is provided, the value of the `name` 
+attribute is used as the property in the state.
+
+*Note*: Proceesing forms requires the use of a directive not yet covered, `lz:controller`. See 
+[Pre-Built Controllers](#pre-built-controllers) for more information. Forms are covered here because it is likely the next
+thing you will want to use after understanding state.
+
+##### Form With No Submit
+
+```html
+<div data-lz:usestate="formexamplestate">
+   <form data-lz:controller="/controllers/lz/form.js">
+      <input name="name" data-lz:bind type="text" placeholder="name">
+      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+```
+
+<template data-lz:state="formexamplestate">
+   {
+   name: "Mary",
+   age: 21,
+   married: false
+   }
+</template>
+<div data-lz:usestate="formexamplestate">
+   <form data-lz:controller="/controllers/lz/form.js">
+      <input name="name" data-lz:bind type="text" placeholder="name">
+      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+
+##### Form With Standard Submit
+
+Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
+to the form. The form does not need to be submitted for its filed to impact the UI. If it is submitted, the submit is trapped
+and `fetch` is used to get the response for updating the target(s) of the form. A template to format
+the results, the method and encoding, and the expected type of the response can be controlled via `lz:options`.
+
+The example below just returns the body it was sent.
+
+```html
+<div data-lz:usestate="formexamplestate">
+   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
+      <input name="name" data-lz:bind="name" type="text" placeholder="name">
+      <input name="age" data-lz:bind="age" type="number" placeholder="age">
+      <button type="submit">Submit</button><br>
+   </form>
+   <div>${name}'s age is ${age}.</div>
+</div>
+```
+
+<script data-lz:url:post="/reflectbody">
+   document.currentScript.post = async (req) => {
+         return new Response(await req.text());
+   }
+</script>
+
+<div data-lz:usestate="formexamplestate">
+   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
+      <input name="name" data-lz:bind="name" type="text" placeholder="name">
+      <input name="age" data-lz:bind="age" type="number" placeholder="age">
+      <button type="submit">Submit</button><br>
+   </form>
+   <div>${name}'s age is ${age}.</div>
+</div>
+
+##### Form With Templates
+
+<div data-lz:showsource:inner="beforeBegin">
+<template id="formresponse">
+    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
+</template>
+<form action="/reflectbody" data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
+   <input name="name" type="text" placeholder="name">
+   <input name="age" type="number" placeholder="age">
+   <button type="submit">Submit</button>
+</form>
+</div>
+
+You can use `lz:bind` with forms that use template output. The above example does not, just for clarity.
+
+If a template is provided, then `expect:"json"` is assumed for the `lz:options` controller configuration, other expect types will throw an error.
+
+If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
+
+If `expect:"html"` is provided, scripts are not run and only the body is used.
+
+If `expect:"template"` is provided, the HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
+Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is not updated unless `lz:bind` has been used.
+
+<template data-lz:url:get="/form-template-example" data-lz:mode="document">
+    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
+</template>
+
+<div data-lz:showsource:inner="beforeBegin">
+<div data-lz:usestate="formexamplestate">
+   <form action="/form-template-example"  data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
+      <input name="name" type="text" placeholder="name">
+      <input name="age" type="number" placeholder="age">
+      <input name="married" type="checkbox"> Married
+      <button type="submit">Submit</button>
+   </form>
+</div>
 </div>
 
 ### Loading Content
@@ -331,7 +505,10 @@ The source of `markdowntemplate.md` is:
 ${name} is ${age} years old.
 ```
 
-<div data-lz:src="./markdowntemplate.md" data-lz:usestate="person" data-ls:showsource="beforeBegin"></div>
+<template data-lz:url:get="/markdowntemplate.md" data-lz:mode="document">
+    ${name} is ${age} years old.
+</template>
+<div data-lz:src="/markdowntemplate.md" data-lz:usestate="person" data-ls:showsource="beforeBegin"></div>
 
 #### Single Page Components
 
@@ -339,8 +516,10 @@ If the attribute `data-lz:mode` has the value `open`, content will load into a `
 the need for a custom element. Hence, the HTML can include `<style>` tags that will be isolated from
 the rest of the page.
 
+Consider a file with these contents:
+
 ```html
-<script id="element" data-lz:url:get="https://lazui.org/path/to/element.html">
+<html>
     <head>
         <meta http-equiv="my-custom-header" content="my-custom-value">
         <style>
@@ -358,10 +537,10 @@ the rest of the page.
              (document.currentScript||currentScript).insertAdjacentText("afterEnd","This was inserted by a script");
         </script>
     </body>
-</script>
+</html>
 ```
 
-<template id="element" data-lz:url:get="https://lazui.org/path/to/element.html">
+<template id="element" data-lz:url:get="https://lazui.org/path/to/element.html" data-lz:mode="document">
     <head>
         <meta http-equiv="my-custom-header" content="my-custom-value">
         <style>
@@ -382,14 +561,12 @@ the rest of the page.
 </template>
 <div data-lz:src="https://lazui.org/path/to/element.html" data-lz:mode="open" data-lz:showsource="beforeBegin"></div>
 
-In the example above you can see the attribute `data-lz:url:get`, this is covered later in [Lazui Router](#lazui-router).
-
 If the file has the same origin as the requesting document, scripts will be processed; otherwise, they will be
 ignored. In the case above, they are ignored. However, if we mount a similar file locally, they
 will be executed.
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url:get="/element.html">
+<template data-lz:url:get="/element.html" data-lz:mode="document">
     <style>
         p {
             color: red;
@@ -433,8 +610,6 @@ itself to prevent navigation out of the iframe.
 
 #### Client Side Routing
 
-If you create a router it will be used to load content first from elements with `lz:url` attributes and then from a server.
-
 The directive and value `lz:controller="/controllers/lz/router.js"` will let you create a router without writing any Javascript.
 
 ```html
@@ -451,24 +626,28 @@ The directive and value `lz:controller="/controllers/lz/router.js"` will let you
 
 Alternatively, see [Specifying A Router](#specifying-a-router), which requires a few lines of JavaScript.
 
-With a `lazui` router in place, elements with a `lz:url` attribute can be treated as files. This is useful for creating 
-true single page apps, demonstrations or for testing the client with stubbed out responses when a server is not available.
+With a `lazui` router in place, `<templates>s` with a `lz:url` attribute can be treated as files. This is useful for 
+creating single page apps, documentation, demonstrations or testing the client with stubbed out responses when a server 
+capability is not available.
 
 The `lz:url` attribute always has a second component of `get`, `put`, `post`, or `delete` to indicate the HTTP method for
 which a response is supported. The value of the attribute is the URL of the file. The path must always be a full URL or 
 an absolute path on the current server.
 
-Although it is theoretically possible to associate the `lz:url` attribute with almost any element, it should typically be 
-associated with a `<template>`.
+The `lz:url` attribute should only be associated with a `<template>`. It will be ignored elsewhere.
 
-Except for examples requiring server interaction, e.g. [Server Sent Events](#server-sent-events) and 
+When associated with a `<template>` having a `lz:url` attribute, `lz:mode="document"` can be used to tell the router to 
+never forward requests to a server. If the `mode` is not `document`, the local copy will be treated like a cache entry 
+and all requests will also be forwarded to a server. Currently, cache control headers will not be respected.
+
+Except for examples currently requiring server interaction, e.g. [Server Sent Events](#server-sent-events) and 
 [Web Sockets](#web-sockets), all the examples in this document depend on files simulated by `<template>s` with a
 `lz:url` attribute and a client side router.
 
 ##### get
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url:get="/path/to/somefile.html">
+<template data-lz:url:get="/path/to/somefile.html" data-lz:mode="document">
     <style>
         p {
             color: red;
@@ -486,17 +665,17 @@ You can even simulate headers and status codes by adding `data-lz:header`, `data
 attributes to the source elements.
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url:get="/404.html" data-lz:status="404">
+<template data-lz:url:get="/404.html" data-lz:status="404" data-lz:mode="document">
 Not Found
 </template>
 <div data-lz:src="/404.html"></div>
 </div>
 
-If the source element is a `template` you can include `head` and `body` sections. Any `meta http-equiv` content in 
-the `head` section will be treated as a header and included in the router response.
+You can include `head` and `body` sections. Any `meta http-equiv` content in the `head` section will be treated as a 
+header and included in the router response headers.
 
 ```html
-<template id="element" data-lz:url="https://lazui.org/path/to/element.html">
+<template data-lz:url="https://lazui.org/path/to/element.html" data-lz:mode="document">
     <head>
         <meta http-equiv="my-custom-header" content="my-custom-value">
         <style>
@@ -520,8 +699,8 @@ the `head` section will be treated as a header and included in the router respon
 ##### put and post
 
 Elements with `lz:url:put` and `lz:url-post` should be empty. The content is ignored. They are simply used to indicate
-to the router that it is OK to create an element with the URL if one does not exist and update the content of an element
-with the corresponding `lz:url:get` if it does exist and set its `lz:status` to `200`.
+to the router that it is should update the content of the `<template>` with the corresponding `lz:url:get`. If it does 
+not exist, the `<template>` will be created with attribute `lz:url:get="<someurl>"`.
 
 See the next section [Enhanced Requests](#enhanced-requests) for an example.
 
@@ -537,12 +716,9 @@ Removes the content from the element with the corresponding `lz:url:get` URL and
 <div data-lz:src='{"url":"/path/to/element.html","method":"POST","body":"name=John","mode":"document"}'></div>
 ```
 
-The request makes local use of a non-standard `mode` value of `document`. If mode is `document`, then the request will
-not be forwarded to a server under any circumstances. If the `mode` is not `document`, then the local copy, if any, will
-be treated like a cache entry and cache control headers will be respected. And, all requests other than `GET` will be
-forwarded to the server (if any).
-
-The `lz:mode` attribute can also be applied to the fake urls elements, in which case if will always be respected and mode in the requests will be ignored.
+The `lz:mode` attribute can have the value `document` in addition to `cors` and `no-cors`. This tells the router
+not to forward a request to a server if the resource does not exist locally in the form of a `<template>` element
+with a `lz:url` attribute.
 
 As a demonstration, this series tries to load a path that does not exist, i.e. the content is empty, then creates the 
 content using `POST`, then loads it again. The delay on the second `GET` request is because it may take a moment 
@@ -555,11 +731,11 @@ for asynchronous updates of the page to occur.
 <div data-lz:src="/path/to/newelement.html" data-lz:on="load delay:1000"></div>
 ```
 
-<template data-lz:url:get="/path/to/newelement.html" data-lz:mode="document" data-lz:status="404"></template>
-<template data-lz:url:post="/path/to/newelement.html"></template>
-<div data-lz:src="/path/to/newelement.html"></div>
-<div data-lz:src='{"url":"/path/to/newelement.html","method":"POST","body":"name=John","mode":"document"}'></div>
-<div data-lz:src="/path/to/newelement.html" data-lz:on="load delay:1000"></div>
+<!--template data-lz:url:get="/path/to/newelement.html" data-lz:mode="document" data-lz:status="404"></template-->
+<template data-lz:url:post="/path/to/newelement.html" data-lz:mode="document"></template>
+<div data-lz:src='{url:"/path/to/newelement.html",method:"GET",mode:"document"}'></div>
+<div data-lz:src='{url:"/path/to/newelement.html",method:"POST",body:"name=John"}'></div>
+<div data-lz:src='{url:"/path/to/newelement.html",method:"GET",mode:"document"}' data-lz:on="load delay:1000"></div>
 
 The `GET`, `DELETE`, `PUT`, `PATCH`, `HEAD` methods are respected:
 
@@ -617,7 +793,7 @@ A repeating load can be established with `every`, e.g. `data-lz:on="load every:1
 the content every second.
 
 <div data-lz:showsource:inner="beforeBegin">
-<template id="clock" data-lz:url:get="/clock">
+<template id="clock" data-lz:url:get="/clock" data-lz:mode="document">
     <p>
         The time is ${new Date().toLocaleTimeString()}
     </p>
@@ -774,135 +950,24 @@ the `style` attributes as keys and the values as values. The keys can be in eith
 
 ## Pre-Built Controllers
 
-The above sections have covered the use of pre-built attribute directives. You can define your own attribute directives
-using JavaScript. See [Creating Custom Attribute Directives](#creating-custom-attribute-directives).
-
+Except for [State and Forms](#state-and-forms), the above sections have covered the use of pre-built attribute 
+directives. If you need more attribute directives, see [Creating Custom Attribute Directives](#creating-custom-attribute-directives). This section covers 
+the use of pre-built controllers.
 
 Controller
 : A JavaScript file that is loaded to provide additional sophisticated functionality to an element. For instance, [chart.js](#charts)
 can be loaded by the attribute `lz:controller` to support rendering of charts and graphs with configuration data provided
-by the element. 
+by the element. Elements can only have one controller.
 
-There are a number of pre-built controllers; however, you can also [create your own controllers](#creating-custom-controllers). You can use custom controllers, even with the
-CDN version.
+There are a number of pre-built controllers; however, you can also [create your own controllers](#creating-custom-controllers). You can use custom 
+controllers, even with the CDN version of `lazui`.
 
 Controllers are always loaded using the attribute directive `lz:controller=<location>`. The `location` can be relative to
 the current document or an absolute URL including starting with a `/`, `http:` or `https:`.
 
-Controllers can accept configuration data through the attribute `lz:options`. The value of the attribute is a JSON object
-with the key `controller`. This key should contain an object with the configuration data, which will be different for each controller. 
-One options object can contain configuration data for a controller and any attributes attached to an element. The attribute 
-names are also keys in the options object.
-
-### Form Processing
-
-Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
-to the form. The form does not need to be sumitted for its filed to impact the UI. If it is submitted, the submit is trapped
-and `fetch` is used to get the response for updating the target(s) of the form. A template to format
-the results, the method and encoding, and the expected type of the response can be controller via `lz:options`.
-
-To bind form elements to state, use the `lz:bind` attribute with form elements. The value of the attribute is the name of the property in the state.
-If `lz:bind` has no value, but the attribute is provided, the value of the `name` attribute is used.
-
-#### Form With No Submit
-
-```html
-<div data-lz:usestate="formexamplestate">
-   <form data-lz:controller="/controllers/lz/form.js">
-      <input name="name" data-lz:bind type="text" placeholder="name">
-      <input name="age"data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
-   </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-```
-
-<template data-lz:state="formexamplestate">
-   {
-   name: "Mary",
-   age: 21,
-   married: false
-   }
-</template>
-<div data-lz:usestate="formexamplestate">
-   <form data-lz:controller="/controllers/lz/form.js">
-      <input name="name" data-lz:bind type="text" placeholder="name">
-      <input name="age"data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
-   </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-
-
-#### Form With Standard Submit
-
-The example below just returns the body it was sent.
-
-```html
-<div data-lz:usestate="formexamplestate">
-   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
-      <input name="name" data-lz:bind="name" type="text" placeholder="name">
-      <input name="age" data-lz:bind="age" type="number" placeholder="age">
-      <button type="submit">Submit</button><br>
-   </form>
-   <div>${name}'s age is ${age}.</div>
-</div>
-```
-
-<script data-lz:url:post="/reflectbody">
-   document.currentScript.post = async (req) => {
-         return new Response(await req.text());
-   }
-</script>
-
-<div data-lz:usestate="formexamplestate">
-   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
-      <input name="name" data-lz:bind="name" type="text" placeholder="name">
-      <input name="age" data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
-      <button type="submit">Submit</button><br>
-   </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-
-#### Form With Templates
-
-<div data-lz:showsource:inner="beforeBegin">
-<template id="formresponse">
-    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
-</template>
-<form action="/reflectbody" data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
-   <input name="name" type="text" placeholder="name">
-   <input name="age" type="number" placeholder="age">
-   <button type="submit">Submit</button>
-</form>
-</div>
-
-You can use `lz:bind` with forms that use template output. The above example does not, just for clarity.
-
-If a template is provided, then `expect:json` is assumed, other expect types will throw an error.
-
-If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
-
-If `expect:"html"` is provided, scripts are not run and only the body is used.
-
-If `expect:"template"` is provided, the HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution. 
-Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is not updated unless `lz:bind` has been used.
-
-<template data-lz:url:get="/form-template-example">
-    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
-</template>
-
-<div data-lz:showsource:inner="beforeBegin">
-<div data-lz:usestate="formexamplestate">
-   <form action="/form-template-example"  data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
-      <input name="name" type="text" placeholder="name">
-      <input name="age" type="number" placeholder="age">
-      <input name="married" type="checkbox"> Married
-      <button type="submit">Submit</button>
-   </form>
-</div>
-</div>
+Like attribute directives, controllers can accept configuration data through the attribute `lz:options`. Since there can
+only be one controller per element, the key in the options object is `controller` not the name of the controller. This 
+key should contain an object with the configuration data, which will be different for each controller.
 
 ### Charts
 
@@ -911,18 +976,12 @@ Currently supported chart types are those in the Google library, just some of wh
 - bar,
 - column,
 - donut,
-- combo,
-- candlestick,
-- histogram,
-- scatter
+- combo
 
-You can see examples in the Google [chart gallery](https://developers.google.com/chart/interactive/docs/gallery).
-
-The core library is automatically loaded. You can add special packages with the `lz:options` attribute, e.g.
-`lz:options="{controller:{packages:['wordtree']}}"`.
+You can see examples in the Google [chart gallery](https://developers.google.com/chart/interactive/docs/gallery). The core library is automatically loaded. You can add special 
+packages with the `lz:options` attribute, e.g. `lz:options="{controller:{packages:['wordtree']}}"`.
 
 The chart definitions always use a `type`, `options`, and `data` property in the state defining the chart.
-
 
 ```html
 <template data-lz:state="pizza">
@@ -986,13 +1045,13 @@ Three types of pushed content are supported:
 
 #### PubSub
 
-<div data-lz:controller="/controllers/lz/pubsub?/docs/hello-pubsub.js" data-lz:options="{controller:{src:'/docs/hello-pubsub.js'}}" data-lz:showsource="beforeBegin"></div>
+<div data-lz:controller="/controllers/lz/pubsub" data-lz:options="{controller:{src:'/docs/hello-pubsub.js'}}" data-lz:showsource="beforeBegin"></div>
 
 Typically, you will want to subscribe to a channel. The `lz:config` attribute can be used to provide configuration
 data to the controller. If the `channel` property in the configuration starts with a `#`, then it is treated as the target
 element identifier for the message. Otherwise, you can just use `lz-target` to specify the target element for all content.
 
-A template with a `message` block can also be provided to format the messages. The template can be at the scope of the
+A template with a `{message}` block can also be provided to format the messages. The template can be at the scope of the
 `pubsub` enabled element, or at the scope of a channel element.
 
 For convenience, elements enhanced with a `pubsub` controller have `subscribe`and `unsubscribe`  methods added that can be called from
@@ -1472,17 +1531,17 @@ render(document.getElementById('classic-render'), html`<div onclick=${clicked}>C
 </script>
 </div>
 
-#### Using Render With Strings
+#### With Strings
 
 ```javascript
 ```
 
-#### Using Render With Nodes and NodeLists
+#### With Nodes and NodeLists
 
 ```javascript
 ```
 
-#### Using Render With DocumentFragments
+#### With DocumentFragments
 
 ```javascript
 ```

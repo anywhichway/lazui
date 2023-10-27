@@ -17,7 +17,7 @@ const parseTrigger = (text) => {
 }
 async function on({el,attribute,state,root,lazui})  {
     let throttle,debounce;
-    const {render,update,router,prefix,replaceBetween,url} = lazui,
+    const {render,update,router,prefix,replaceBetween,url,JSON} = lazui,
         {loadController} = await import(url + "/directives/lz/controller.js"),
         triggers = attribute.value.split(",").map((text) => text.trim())
         .reduce((acc,text) => {
