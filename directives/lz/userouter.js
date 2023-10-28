@@ -124,6 +124,23 @@ function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documen
         if(next) await next();
     });
     if (all) router.all("*", all);
+    const fetch = router.fetch;
+    router.fetch = async (request) => {
+        if(typeof request === "string") {
+            if(request.startsWith("{")) {
+                const json = JSON.parse(request);
+                const mode = json.mode;
+                if(mode==="document") delete json.mode;
+                request = new Request(json.url,json);
+                if(mode==="document") {
+                    Object.defineProperty(request,"mode",{value:mode});
+                }
+            } else {
+                request = new Request(request);
+            }
+        }
+        return fetch(request)
+    }
     return this.router = router;
 }
 

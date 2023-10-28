@@ -315,14 +315,15 @@
         }
     }
 
-    const handleHook = (node,value) => {
-        let {hook,placeholder,delay,interval,where="outer"} = value;
+    const handleHook = async (node,value) => {
+        let {hook,placeholder,delay,interval,where="inner"} = value;
         placeholder = typeof placeholder === "function" ? placeholder() : placeholder||node.value||node.data||"...";
-        let toreplace = node.nodeType===Node.ATTRIBUTE_NODE ? [] : render(node,placeholder,{where});
+        let toreplace = node.nodeType===Node.ATTRIBUTE_NODE ? [] : await render(node,placeholder,{where});
         (interval ? setInterval : setTimeout)(async () => {
             const node = toreplace[0];
+            let content = await hook(node);
+            if(content===undefined) return;
             if(where==="outer" && toreplace.length>0) animate(() => toreplace.forEach((node) => node.remove()));
-            let content = await hook();
             if(isObject(content)) {
                 try {
                     content = JSON.stringify(content);
@@ -336,7 +337,7 @@
                 if(node.name.startsWith("on") || node.name.includes("on:")) handleOnAttribute(node,content)
                 else node.value = content;
             } else {
-                toreplace = render(node,content,{where})
+                toreplace = await render(node,content,{where})
             }
         },interval || delay || 1000)
     }
@@ -455,7 +456,7 @@
                                             last.after(currentNode = nextnode);
                                         }
                                     } else if(isHook(value)) {
-                                        handleHook(node,value)
+                                        handleHook(parent,value)
                                     } else if (isObject(item)) {
                                         currentNode.data += (Array.isArray(item) ? item.join(",") : JSON.stringify(item)) + " "
                                     }

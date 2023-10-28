@@ -170,17 +170,10 @@ Unless a [custom bundle is created](#creating-a-custom-bundle), all the attribut
 non-blocking manner when a page first loads and some are loaded just the first time the attribute is found in the HTML.
 This gets the page to its first meaningful paint faster.
 
-### Avoiding Page Flicker
-
-If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is 
-because the browser will render the page before `lazui` has a chance to process all the templates and custom elements. 
-You can avoid this by setting the attribute `hidden` in the `<html>` tag in your file. This is handled automatically for 
-Markdown files. `lazui` will remove the `hidden` attribute when it is done processing.
-
 ### Choose Your Development Paradigm
 
 `lazui` draws its inspiration from the varied capabilities of [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),
-[Knockout](https://knockoutjs.com/), [Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
+[Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
 [Vue](https://vuejs.org/), and [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
 You are free to choose your preferred development paradigm. If it is just that of one library, you may be better off
 sticking with that library, but if you yearn for capability from more than one library, `lazui` may be for you.
@@ -452,14 +445,16 @@ In `lazui` supports an `enctype="application/json"` for forms to facilitate temp
 <template id="formresponse">
     <div>Thank you for letting us know ${name}'s age, ${age}.</div>
 </template>
-<form action="/reflectbody" enctype="application/json" data-lz:state="{name:'Harry',age:22}" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
+<form action="/reflectbody" enctype="application/json" 
+   data-lz:state="{name:'Harry',age:22}" 
+   data-lz:controller="/controllers/lz/form.js" 
+   data-lz:target="nextSibling" 
+   data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
    <input data-lz:bind="name" type="text" placeholder="name">
    <input data-lz:bind="age" type="number" placeholder="age">
    <button type="submit">Submit</button>
 </form>
 </div>
-
-You can use `lz:bind` with forms that use template output. The above example does not, just for clarity.
 
 If a template is provided, then `expect:"json"` is assumed for the `lz:options` controller configuration, other expect types will throw an error.
 
@@ -475,7 +470,11 @@ Any scripts in the template are executed. *Note*: Although the form contents are
 </template>
 
 <div data-lz:showsource:inner="beforeBegin">
-<form action="/form-template-example"  data-lz:state="{name:'Harry',age:22}" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
+<form action="/form-template-example"  
+   data-lz:state="{name:'Harry',age:22}" 
+   data-lz:controller="/controllers/lz/form.js" 
+   data-lz:target="nextSibling" 
+   data-lz:options="{controller:{expect:'template'}}">
    <input data-lz:bind="name" type="text" placeholder="name">
    <input data-lz:bind="age"  type="number" placeholder="age">
    <button type="submit">Submit</button>
@@ -1064,6 +1063,32 @@ You can optionally provide a `type` to the controller options to override the ch
 
 <div data-lz:controller="/controllers/lz/chart.js" data-lz:options="{controller:{type:'BarChart'}}" data-lz:usestate="pizza"></div>
 
+You could also load the state from a remote source:
+
+<template data-lz:url:get="/donuts.json" data-lz:header="{'content-type':'application/json'}" data-lz:mode="document">
+{
+    type: 'PieChart',
+    options:{
+         title:'How Many Donuts We Ate Today',
+         width:400,
+         height:300,
+         pieHole: 0.4
+    },
+    data: [
+        ["Type","Number"],
+        ["Chocolate",3],
+        ["Blueberry",1],
+        ["Plain",5],
+        ["Whole Wheat",1]
+    ]
+}
+</template>
+<div data-lz:showsource:inner="beforeBegin">
+<template data-lz:state="remotedonuts" data-lz:options="{state:{src:'/donuts.json'}}">
+</template>
+<div data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="remotedonuts"></div>
+</div>
+
 ### Pushed Content
 
 Although content can be polled using `lz:on="load interval:<ms>"`, it is often more efficient to use pushed content.
@@ -1208,7 +1233,19 @@ Components are loaded into `<template>` elements via the `lz:src` attribute with
 
 ### GitHub Issue Reference
 
+```html
+<template data-lz:src="/components/git-issue-ref.html" data-lz:tagname="git-issue-ref"></template>
+```
 
+```html
+<git-issue-ref data-lz:src=":account/:repository/:issue-number"></git-issue-ref>
+```
+
+For example:
+
+```html
+<git-issue-ref data-lz:src="anywhichway/lazui/1"></git-issue-ref>
+```
 
 ## Start Up Options
 
@@ -1573,6 +1610,36 @@ function is called with `<style>` and `<template>` elements in a `<head>` sectio
   document.currentScript.after(...content.nodes());
 })()
 </script>
+
+#### Template Hooks
+
+It is also possible to insert hooks into templates. Hooks run after the template has been processed and allow updating
+of the node at the location of the hook.
+
+```html
+<script>
+const myhook = (node) => {
+         return new Date().toLocaleTimeString();
+     },
+     content = lazui.html`<div>Timestamp: <span>${{hook:myhook,interval:1000}}</span></div>`;
+document.currentScript.after(...content.nodes());
+</script>
+```
+
+<script>
+const myhook = (node) => {
+         return new Date().toLocaleTimeString();
+     },
+     content = lazui.html`<div>Timestamp: <span>${{hook:myhook,interval:1000}}</span></div>`;
+document.currentScript.after(...content.nodes());
+</script>
+
+The properties of a hook are:
+- `hook` the function to call. It takes the node and the hook definition as an argument. It can modify the node and 
+return `undefined` or return a value to render.
+- `placeholder` the value to display until the hook is first called
+- `delay` or `interval` the delay in milliseconds before the hook is called or the interval in milliseconds between calls
+- `where` the location to target the return value if it is not undefined
 
 ### render()
 
@@ -1943,21 +2010,33 @@ it is included to serve as a foundation for your use.
 
 ### htmx
 
-### lighterHTML
+### lighterHTML and lit
 
-### lit-element
+[html](#html)
+- [raw](#raw())
+- [nodes](#nodes())
 
-### Knockout
+[render](#render())
+
+[template hooks](#template-hooks)
 
 ### Turbo and Stimulus
 
 ### Riot
+
+[Single file components](creating-custom-elements)
 
 ### Vue
 
 
 
 ## FAQs
+
+My web page flickers with unresolved templates when first loaded. How can I avoid this?
+: If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is
+because the browser will render the page before `lazui` has a chance to process all the templates and custom elements.
+You can avoid this by setting the attribute `hidden` in the `<html>` tag in your file. This is handled automatically for
+Markdown files. `lazui` will remove the `hidden` attribute when it is done processing.
 
 Why isn't `lazui.js` a module? 
 : Modules do not fully resolve until a page is fully loaded, which makes it harder
