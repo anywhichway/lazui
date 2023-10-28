@@ -18,27 +18,25 @@ const useHighlighter = (hljs,css) => {
             target.removeAttribute("data-highlighted");
         }
         let html = target.innerHTML;
-        if(html.includes("`")) html = html.replaceAll(/`/g, "__BACKTICK__");
+        if(html.includes("`")) html = html.replaceAll(/`/g, "_BACKTICK_");
         const {value,language} = hljs.highlightAuto(html,languages);
         target.className += ` language-${language} hljs`;
-        target.innerHTML = value.replaceAll(/__BACKTICK__/g, "`");
+        target.innerHTML = value.replaceAll(/_BACKTICK_/g, "`");
     }
-    const els = [];
     for(const el of document.querySelectorAll("code")) {
         if (el.innerHTML.includes("`")) {
-            el.innerHTML = el.innerHTML.replaceAll(/`/g, "__BACKTICK__");
-            els.push(el);
+            el.innerHTML = el.innerHTML.replaceAll(/`/g, "_BACKTICK_");
         }
     }
     for(const el of document.querySelectorAll('[data-highlighted="yes"]')) {
         el.removeAttribute("data-highlighted");
     }
     hljs.highlightAll();
-    for (const el of els) {
-        if (el.innerHTML.includes("__BACKTICK__")) {
+    for (const el of document.querySelectorAll("[class*='hljs']")) {
+        if (el.innerHTML.includes("_BACKTICK_")) {
             for (const child of el.childNodes) {
-                if (child.nodeType === Node.TEXT_NODE && child.data.includes("__BACKTICK__")) {
-                    child.data = child.data.replaceAll(/__BACKTICK__/g, "`");
+                if (child.nodeType === Node.TEXT_NODE && child.data.includes("_BACKTICK_")) {
+                    child.data = child.data.replaceAll(/_BACKTICK_/g, "`");
                 }
             }
         }

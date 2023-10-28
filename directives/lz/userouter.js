@@ -17,7 +17,7 @@ function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documen
     if(c.req.URL.pathname.endsWith(".md")) {
         c.req.raw.headers.set("Accept-Include","true");
     }
-    return fetch(c.req.raw);
+    return globalThis.fetch(c.req.raw);
 }}={}) {
     // (req,resp)
     // (req,resp,next)

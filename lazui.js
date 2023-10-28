@@ -1,6 +1,5 @@
 (() => {
     "use strict"
-    let __OPTIONS__ = {};
     if(document?.currentScript && !window.lazuiLoaded) {
         window.lazuiLoaded = true;
         const url = new URL(document.currentScript.src),
@@ -44,7 +43,7 @@
     }
 
     const useDirectives = (namespace, ...directives) => {
-        const space = __DIRECTIVES__[namespace] ||= {};
+        const space = _DIRECTIVES_[namespace] ||= {};
         directives.forEach((directive) => {
             if (typeof directive === "function") {
                 const name = directive.name;
@@ -70,19 +69,19 @@
         return node===document.documentElement ? document : node;
     }
 
-    const __STATES__ = new WeakMap();
-    let __OBSERVED_ELEMENT__;
+    const _STS_ = new WeakMap();
+    let _OBSRVD_EL_;
     const observeNodes = (observation,cb=()=>{}) => {
         if(!Array.isArray(observation.observe)) observation.observe = observation.observe ? observation.observe.split(",") : [];
-        let previous = __OBSERVED_ELEMENT__;
-        __OBSERVED_ELEMENT__ = observation; //{el,observe,root};
+        let previous = _OBSRVD_EL_;
+        _OBSRVD_EL_ = observation; //{el,observe,root};
         cb()
-        __OBSERVED_ELEMENT__ = previous;
+        _OBSRVD_EL_ = previous;
     }
 
     const activate = (object,el,path=[],ancestors=[]) => {
         if(!isObject(object)) throw new TypeError(`${typeof(object)}: ${object} can't be activated. It is not an object`);
-        if(object.__isActivated__) return object;
+        if(object._isActivated_) return object;
         const subscribers = new Map(),
             proxy =  new Proxy(object,{
                 deleteProperty(target,property) {
@@ -112,7 +111,7 @@
                                 return true;
                             }
                         }
-                        const subscriberSet = new Set([...(subscribers.get(property)||[]),...(subscribers.get("__all__")||[])]);
+                        const subscriberSet = new Set([...(subscribers.get(property)||[]),...(subscribers.get("_all_")||[])]);
                         for(const observation of subscriberSet) {
                             const {nodes,observe,root,string,recurse,state} = observation;
                             // should we filter for connected nodes and drop others?
@@ -152,11 +151,11 @@
                         if(!el || !el.isConnected) throw new Error("removeEventListener not available. State not bound to a connected element");
                         return el.removeEventListener.bind(el);
                     }
-                    if(property==="__isActivated__") return true;
+                    if(property==="_isActivated_") return true;
                     if(typeof property=== "symbol") return value;
                     if(isObject(value)) value = target[property] = activate(value,el,[...path,property],[...ancestors,proxy]);
-                    if(__OBSERVED_ELEMENT__) {
-                        const observation = __OBSERVED_ELEMENT__,
+                    if(_OBSRVD_EL_) {
+                        const observation = _OBSRVD_EL_,
                             observe = observation.observe || [];
                         if(observe.includes(property) || observe.includes("*")) {
                             let subscriberSet = subscribers.get(property);
@@ -172,12 +171,12 @@
     const getState = (idOrEl, {root = document,options={},throws}={}) => {
         let {storage,stringify} = options;
         if (!isObject(idOrEl) || !(idOrEl instanceof HTMLElement)) idOrEl = getTop(root).getElementById(idOrEl);
-        const _state = __STATES__.get(idOrEl);
+        const _state = _STS_.get(idOrEl);
         if(storage||=_state?.storage) {
             let state = globalThis[storage||_state?.storage].getItem(idOrEl.id);
             if(state) {
                 state = activate((stringify||=_state.stringify) ? JSON.parse(state) : state,idOrEl);
-                __STATES__.set(idOrEl, {state,storage,stringify});
+                _STS_.set(idOrEl, {state,storage,stringify});
                 state.addEventListener("change",({detail}) => {
                     globalThis[storage||_state.storage].setItem(idOrEl.id,stringify ? JSON.stringify(detail.state) : detail.state);
                 })
@@ -207,7 +206,7 @@
         if(storage) globalThis[storage].setItem(el.id,stringify ? JSON.stringify(state) : state);
         //if (!isObject(el) || el.constructor.name!=="HTMLTemplateElement") throw new TypeError(`${idOrEl} is not a valid HTMLTemplateElement or element id`);
         state = activate(state,el);
-        __STATES__.set(el, {state,storage,stringify});
+        _STS_.set(el, {state,storage,stringify});
         el.state = state;
         return state;
     }
@@ -370,11 +369,11 @@
         return node;
     };
 
-    const __DIRECTIVES__ = {},
-        __HTML_CACHE__ = new Map();
+    const _DIRECTIVES_ = {},
+        _HTM_CACHE_ = new Map();
     const html = function (strings, ...values) {
         const {state, root} = isHTMLScope(this) ? this : {state: {}, root: document},
-        locator = "__LCTR__",
+        locator = "_LCTR_",
         result = {
             strings,
             values,
@@ -395,13 +394,13 @@
             },
             toDocumentFragment() {
                 const removeAttribute = (attribute) => !attribute.isConnected || attribute.ownerElement.removeAttribute(attribute.name);
-                let html = (__HTML_CACHE__.get(strings) || strings.reduce((html, string, i) => {
+                let html = (_HTM_CACHE_.get(strings) || strings.reduce((html, string, i) => {
                         if (i >= values.length) return html + string;
                         html += string + locator + i;
                         return html;
                     }, "")),
                     templateOutsideHead = html.startsWith("<template>") && !html.startsWith("<head>");
-                __HTML_CACHE__.set(strings, html);
+                _HTM_CACHE_.set(strings, html);
                 if (templateOutsideHead) html = "<div>" + html.slice(10).slice(0, -11) + "</div>";
                 const parsed = new DOMParser().parseFromString(html, "text/html");
                 walkSync(parsed, (node) => {
@@ -426,9 +425,9 @@
                             if (node.value === "undefined") removeAttribute(node);
                         }
                     } else if (node.nodeType == Node.TEXT_NODE) {
-                        if (node.data.trim().length === 0 || !node.data.includes("__LCTR__")) return;
-                        const parts = node.data.split(/(?=__LCTR__\d+)/g).reduce((acc, cur) => { //\s|\S__LCTR__\d+
-                            if (/\S__LCTR__\d+/.test(cur)) {
+                        if (node.data.trim().length === 0 || !node.data.includes("_LCTR_")) return;
+                        const parts = node.data.split(/(?=_LCTR_\d+)/g).reduce((acc, cur) => { //\s|\S_LCTR_\d+
+                            if (/\S_LCTR_\d+/.test(cur)) {
                                 acc.push(cur[0]);
                                 acc.push(cur.slice(1));
                             } else {
@@ -488,6 +487,10 @@
         };
         return result;
     }
+    html.nodes = (strings, ...values) => html(strings, ...values).nodes();
+    html.raw = (strings, ...values) => html(strings, ...values).raw();
+    html.toString = (strings, ...values) => html(strings, ...values).toString();
+    html.documentFragment = (strings, ...values) => html(strings, ...values).toDocumentFragment();
     const compile = (escaped, root,all) => {
         const unescaped = all ? escaped.replaceAll(/&gt;/g, ">").replaceAll(/&lt;/g, "<").replaceAll(/&amp;/g, "&").replaceAll(/&quot;/g, '""').replaceAll(/&apos;/g, "'")
             : replaceBetween(escaped, "${", "}", (text) => text.replaceAll(/&gt;/g, ">").replaceAll(/&lt;/g, "<").replaceAll(/&amp;/g, "&").replaceAll(/&quot;/g, '""').replaceAll(/&apos;/g, "'"));
@@ -559,14 +562,14 @@
                     recurse,
                     lazui: directiveExports
                 };
-            if(__DIRECTIVES__[namespace] && __DIRECTIVES__[namespace][handler]) {
-                await __DIRECTIVES__[namespace][handler](arg);
+            if(_DIRECTIVES_[namespace] && _DIRECTIVES_[namespace][handler]) {
+                await _DIRECTIVES_[namespace][handler](arg);
             } else {
                 try {
                     const directive = await import(/* webpackIgnore: true */ `${lazui.url.href}/directives/${namespace}/${handler}.js`);
                     if(directive) {
                         const f = directive[handler] || directive.default;
-                        (__DIRECTIVES__[namespace] ||={})[handler] = f;
+                        (_DIRECTIVES_[namespace] ||={})[handler] = f;
                         try {
                             await f(arg)
                         } catch(e) {
@@ -696,7 +699,7 @@
             if (endIndex !== -1) {
                 const textBetweenDelimiters = inputString.substring(startIndex + delimiterStart.length, endIndex);
                 const replacementText = replacementCallback(textBetweenDelimiters);
-                const placeholder = `__PLCHLDR__${placeholders.length}__`;
+                const placeholder = `_PLCHLDR_${placeholders.length}_`;
                 placeholders.push({ placeholder, replacementText });
                 inputString = inputString.substring(0, startIndex) + placeholder + inputString.substring(endIndex + delimiterEnd.length);
             } else {
@@ -706,7 +709,7 @@
             startIndex = inputString.indexOf(delimiterStart, endIndex+1);
         }
         // Perform the replacements
-        while(inputString.includes("__PLCHLDR__")) {
+        while(inputString.includes("_PLCHLDR_")) {
             placeholders.forEach(({ placeholder, replacementText }) => inputString = inputString.replace(placeholder, delimiterStart + replacementText + delimiterEnd));
         }
         return inputString;
@@ -824,7 +827,7 @@
     }
 
     const directiveExports = {render,update,html,compile,interpolate,getState,setState,getContext,observeNodes,handleDirective,replaceBetween,router:window,JSON,prefix:"data-lz"},
-        exported = {...directiveExports,useDirectives};
+        exported = {...directiveExports,useDirectives,usePrefix};
     if(typeof module !== "undefined") {
         module.exports = exported;
     } else if(typeof window !== "undefined") {

@@ -1,4 +1,4 @@
-const MODE = "development"; //production, development
+let MODE = "development"; //production, development
 import JSON5 from 'json5';
 import { createServerAdapter } from '@whatwg-node/server'
 import { createServer } from 'http'
@@ -54,7 +54,6 @@ const contentTypes = {
     ".txt": {encoding:"utf8",type:"text/plain"}
 }
 async function sendFile(pathname,{mangle=true}={}) {
-    //console.log(pathname);
     const headers = {},
         options = {};
     try {
@@ -88,6 +87,7 @@ const serveStatic = ({root}) => {
 const app = Router();
 app.all("*", (req) => {
     req.URL = new URL(req.url);
+    if(!["127.0.0.1","localhost"].includes(req.URL.hostname)) MODE = "production"
     if(!req.url.includes("datetime")) console.log(req.method,req.url)
 });
 

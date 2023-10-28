@@ -25,6 +25,7 @@ const state = async({el,attribute,root,options,window,document,lazui,args}) => {
     if(!state) {
         if(options.src) { //el.hasAttribute('data-lz:src')
             const text = await router.fetch(options.src).then((response) => response.text()); //el.getAttribute('data-lz:src')
+            // should handle server errors before trying to parse
             state = JSON.parse(text);
         } else {
             state = JSON.parse(el.innerText||el.innerHTML.trim())

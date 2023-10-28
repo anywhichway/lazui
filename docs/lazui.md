@@ -196,7 +196,7 @@ attribute directives and JavaScript controller files.
 
 If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScript. Since writing HTML is easier than
 JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before
-the more [JavaScript focused](#using-javascript) [html](#html) and [render](#render()) functions.
+the more [JavaScript focused](#using-javascript) [html](#html) and [render](#render) functions.
 
 ## Leveraging Attribute Directives
 
@@ -332,7 +332,7 @@ Modifying a state will cause any elements using the state to be updated.
 the normal browser screen refresh handler tracks state use. When a state changes, the nodes that depend on that state
 are updated. The nodes are typically text nodes, but can also be attributes. This is automatic when working at the
 no JavaScript level. You can take a more functional approach by using the [html](#html) template literal and 
-[render](#render()) function if you write JavaScript.
+[render](#render) function if you write JavaScript.
 
 #### Inline State
 
@@ -1321,6 +1321,7 @@ You can use `sessionStorage` in addition to `localStorage`.
 
 The `data-lz:options` attribute value can also take a `src` key and HTTP verb settings to load and manage JSON at a remote location, e.g.
 
+
 <div data-lz:showsource:inner="beforeBegin">
 <template data-lz:state="someuniqueremoteid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
 </template>
@@ -1449,7 +1450,7 @@ console.log(values); // ["John"]
 
 See the [MDN documentation on tagged templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) for more information.
 
-The `lazui` implementation of `html` is a bit more sophisticated than the above, it returns an object with three additional properties:
+The `lazui` implementation of `html` is a bit more sophisticated than the above, it returns an object with three additional functions:
 
 ```typescript
 {
@@ -1461,9 +1462,9 @@ The `lazui` implementation of `html` is a bit more sophisticated than the above,
 }
 ```
 
-#### raw()
+However, you will do not need to call the functions directly unless you need specialized sanitation processing, instead use the following:
 
-`raw(): string`
+#### html.raw
 
 Returns raw HTML and ensures that nested templates are processed correctly along the way. Also note, `toString()` is an alias for `raw()`.
 
@@ -1475,11 +1476,11 @@ This allows the expedient but potentially unsafe processing of templates to deli
 
    const list = ['some', '<b>nasty</b>', 'list'];
 
-   const content = html`
+   const content = html` // or add a .raw before the backtick
     <ul>${list.map(text => html`
     <li>${text}</li>
     `)}
-    </ul>`; // or add a .raw() after the closing backtick
+    </ul>`; 
 
    document.currentScript.insertAdjacentHTML("afterEnd",content);
 })()
@@ -1488,27 +1489,22 @@ This allows the expedient but potentially unsafe processing of templates to deli
 <script>
 (() => {
   const {html} = lazui;
-  
   const list = ['some', '<b>nasty</b>', 'list'];
-  
   const content = html`
     <ul>${list.map(text => html`
     <li>${text}</li>
     `)}
-    </ul>`; // or add a .raw() after the closing backtick
-    
+    </ul>`;
   document.currentScript.insertAdjacentHTML("afterEnd",content);
 })()
 </script>
 
-#### toDocumentFragment()
-
-`toDocumentFragment(sanitize?:(fragment:DocumentFragment)=>DocumentFragment):DocumentFragment`
+#### html.documentFragment
 
 Returns a `DocumentFragment` where the `strings` and `values` have been inserted at appropriate points. This
-takes a little more computational effort, but is far safer. During this processing, any strings passed in
-will be inserted as text not HTML, `<template>` placement and boolean attributes are normalized, and functions
-assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bound to the DOM nodes properly.
+takes a little more computational effort, but is far safer than just `html` or `html.raw`. During this processing, 
+any strings passed in will be inserted as text not HTML, `<template>` placement and boolean attributes are normalized, 
+and functions assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bound to the DOM nodes properly.
 
 ```javascript
 (() => {
@@ -1516,14 +1512,13 @@ assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bo
   
   const list = ['some', '<b>nasty</b>', 'list'];
   
-  const content = html`
+  const content = html.documentFragment`
     <ul>${list.map(text => html`
     <li>${text}</li>
     `)}
     </ul>`;
   
-  const fragment = content.toDocumentFragment();
-  document.currentScript.after(...fragment.childNodes);
+  document.currentScript.after(...content.childNodes);
 })()
 ```
 
@@ -1533,22 +1528,18 @@ assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bo
   
   const list = ['some', '<b>nasty</b>', 'list'];
   
-  const content = html`
+  const content = html.documentFragment`
     <ul>${list.map(text => html`
     <li>${text}</li>
     `)}
     </ul>`;
-  const fragment = content.toDocumentFragment();
-  document.currentScript.after(...fragment.childNodes);
+  document.currentScript.after(...content.childNodes);
 })()
 
 </script>
 
-`toDocumentFragment` is pretty safe as is, however; it also takes an optional argument `sanitize` that can be used to 
-sanitize the HTML. If provided, the `sanitize` function should accept a `DocumentFragment` and return a `DocumentFragment`.
-node.
-
-In Chrome you can enable the [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) by enabling 
+`toDocumentFragment` is pretty safe as is, however; if you want more sanitation, you can call `toDocumentFragment` with a
+sanitizer function. In Chrome you can enable the [Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API) by enabling 
 the `Experimental Web Platform features` flag in `chrome://flags`. Then you pass in a bound `sanitize` function:
 
 ```javascript
@@ -1573,11 +1564,9 @@ explicitly supports this, so `lazui` creates a fragment internally with both a `
 function is called with `<style>` and `<template>` elements in a `<head>` section, then they are moved and just the 
 `<body>` child nodes are returned as the child nodes of the fragment.
 
-#### nodes()
+#### html.nodes
 
-`nodes(sanitize?):NodeList`
-
-`nodes` is just a convenience wrapper around `toDocumentFragment`.
+`nodes` is just a convenience wrapper around `html.documentFragment`. It returns the child node list instead of the fragment.
 
 ```javascript
 (() => {
@@ -1601,13 +1590,13 @@ function is called with `<style>` and `<template>` elements in a `<head>` sectio
   
   const list = ['some', '<b>nasty</b>', 'list'];
   
-  const content = html`
+  const content = html.nodes`
     <ul>${list.map(text => html`
     <li>${text}</li>
     `)}
     </ul>`;
   
-  document.currentScript.after(...content.nodes());
+  document.currentScript.after(...content);
 })()
 </script>
 
@@ -1641,7 +1630,7 @@ return `undefined` or return a value to render.
 - `delay` or `interval` the delay in milliseconds before the hook is called or the interval in milliseconds between calls
 - `where` the location to target the return value if it is not undefined
 
-### render()
+### render
 
 `render(node:Node,content:Interpolation|string|Node|NodeList|DocumentFragment|null,{where="inner",state:object})`
 
@@ -2013,10 +2002,10 @@ it is included to serve as a foundation for your use.
 ### lighterHTML and lit
 
 [html](#html)
-- [raw](#raw())
-- [nodes](#nodes())
+- [raw](#html.raw)
+- [nodes](#html.nodes)
 
-[render](#render())
+[render](#render)
 
 [template hooks](#template-hooks)
 

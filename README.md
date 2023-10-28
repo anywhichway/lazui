@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-28 v0.0.28a documentation updates, fixed issues that appeared when minification was turned on
+
 2023-10-28 v0.0.27a documentation updates, fixed issue with sourcing state remotely, fixed issue with template hooks
 
 2023-10-28 v0.0.26a documentation updates, client side routing refinements, fixed toc nesting issue, added custom element
