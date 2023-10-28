@@ -6,11 +6,11 @@ async function userouter({attribute,lazui,options}) {
     await import(attribute.value).then((module) => {
         const Router = module[importName],
             router = isClass ? new Router(options) : Router(options);
-        lazui.useRouter(router, {allowRemote,prefix});
+        lazui.useRouter(router, {allowRemote,prefix,JSON});
     })
 }
 
-function useRouter(router,{prefix,root = document.documentElement,allowRemote=__OPTIONS__.allowRemote,all=(c) => {
+function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(c) => {
     if(c.req.raw.mode==="document") {
         return new Response("Not Found",{status:404})
     }
@@ -42,13 +42,18 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
                 node = root.querySelector(`template[${prefix}\\:url\\:${method}="${c.req.url}"]`);
             }
             if(node) {
+                if(node.hasAttribute(`${prefix}:options`)) {
+                    const options = JSON.parse(node.getAttribute(`${prefix}:options`));
+                    if(options?.url?.handlers) {
+                        const handlers = globalThis[options?.url?.handlers] || (await import(options.url.handlers)).default;
+                        ["get","post","put","delete","head","patch","options"].forEach((key) => {
+                            if(typeof handlers[key] === "function") node[key] = handlers[key];
+                        })
+                    }
+                }
                 if(typeof node[method] === "function") {
-                    const resp = await node[method](c.req);
-                    node.setAttribute(`${prefix}:status`,resp.status);
-                    resp.headers.forEach((value,key) => {
-                        node.setAttribute(`${prefix}:header-${key}`,value);
-                    });
-                    return resp;
+                    const resp = await node[method](c.req.raw);
+                    if(resp) return resp;
                 }
                 if(node.hasAttribute(`${prefix}:mode`)) mode = node.getAttribute(`${prefix}:mode`); // overwrites
                 const status = node.getAttribute(`${prefix}:status`) || 200,
@@ -75,7 +80,8 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
                     target.setAttribute(`${prefix}:content-type`,response?.status===200 ? response.headers.get("content-type") : c.req.headers.get("content-type")||"text/plain");
                     target.setAttribute(`${prefix}:status`,response?.status===200 ? response.status : 200);
                     target.innerHTML = response?.status===200 ? await response.text() : await c.req.text();
-                    return new Response("ok",{status:200, headers:response?.status===200 ? response.status.headers : headers}); // should return contents of the POST or put element
+                    if(node.innerHTML.trim()) return new Response(node.innerHTML,{status:status||200,headers})
+                    return new Response(target.innerHTML,{status:200, headers:response?.status===200 ? response.status.headers : headers}); // should return contents of the POST or put element
                 } else if (method === "get") {
                     let response;
                     if(mode!=="document") {
@@ -87,7 +93,15 @@ function useRouter(router,{prefix,root = document.documentElement,allowRemote=__
                     }
                     const value = response?.status===200 ? await response.text() : node.innerHTML;
                     if(value.length!==0) {
-                        return new Response(value,{status:response ? response.status : status, headers:response?.status===200 ? response.status.headers : headers})
+                        const status = response?.status===200 ? response.status : 200;
+                        node.setAttribute(`${prefix}:status`,status);
+                        if(response) {
+                            node.setAttribute(`${prefix}:content-type`,response.headers.get("content-type"));
+                            for(const [key,value] of response.headers.entries()) {
+                                node.setAttribute(`${prefix}:header-${key}`,value);
+                            }
+                        }
+                        return new Response(value,{status, headers:response?.status===200 ? response.status.headers : headers})
                     }
                 } else if(method === "delete") {
                     let response;

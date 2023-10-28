@@ -53,9 +53,11 @@
             const heading = parsedHeadings[i];
             if(i>0) {
                 if(heading.depth>parsedHeadings[i-1].depth) {
-                    html+="<ul>"
+                    let diff = heading.depth-parsedHeadings[i-1].depth;
+                    while(diff--) html+="<ul>";
                 } else if(heading.depth<parsedHeadings[i-1].depth) {
-                    html+="</ul>"
+                    let diff = parsedHeadings[i-1].depth-heading.depth;
+                    while(diff--) html+="</ul>";
                 }
                 html += `<li><a href="#${heading.id}">${heading.title}</a></li>`;
             } else {

@@ -1,0 +1,28 @@
+<style>
+   .issue {
+       margin-left: 20px;
+       margin-bottom: 10px;
+       color: rgba(255,0,0,0.85);
+   }
+   .issue::before {
+       content: "Issue: ";
+   }
+</style>
+<span class="issue" id="title"></span>
+<a target="_issue"></a>
+<script>
+    self.connected = function() {
+        const src = this.getAttribute('src'),
+            shadowRoot = this.shadowRoot,
+            url = new URL(src,document.baseURI),
+            [_,owner, repo, number] = url.pathname.split('/');
+        (async () => {
+            const issue = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${number}`).then(r => r.json()),
+                a = shadowRoot.querySelector('a'),
+                title = shadowRoot.getElementById("title");
+            a.href = `https://www.github.com/${owner}/${repo}/issues/${issue.number}`;
+            a.innerText = `#${number}`;
+            title.innerText = issue.title;
+        })();
+    }
+</script>

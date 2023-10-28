@@ -1,4 +1,19 @@
 <script>
+document.addEventListener("DOMContentLoaded", async () => {
+   const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
+   issues.filter((issue) => issue.assignee).forEach((issue) => {
+      const parts = issue.body ? issue.body.split(" ") : [],
+         ids = parts.filter((item) => item.startsWith("#"));
+      ids.forEach((id) => {
+         const el = document.getElementById(id.slice(1));
+         if(el) {
+            const ref = document.createElement("git-issue-ref");
+            ref.setAttribute("src",`/anywhichway/lazui/${issue.number}`);
+            el.after(ref);
+         }
+      });
+   })
+});
 (() => {
    let src;
    try {
@@ -26,7 +41,18 @@
 
 
 <title>lazui Documentation</title>
+<style>
+   .issue {
+      margin-left: 20px;
+      margin-bottom: 10px;
+      color: rgba(255,0,0,0.85);
+   }
+   .issue::before {
+      content: "Issue: ";
+   }
+</style>
 <a href="../index.md">lazui</a>
+<template data-lz:src="/components/git-issue-ref.html" data-lz:tagname="git-issue-ref"></template>
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
 <lz-toc></lz-toc>
 
@@ -42,6 +68,31 @@ It provides the JavaScript, so you don't have to.
 testing, optimization, and improved documentation. In this case, don't be lazy ... join us and help out by 
 [creating issues on GitHub](https://www.github.com/anywhichway/lazui/issues).
 
+## Documentation Conventions
+
+It is possible to completely modify the `lazui` namespace. Throughout the documentation, references
+to attribute directives will take the form `lz:<directive>` and sample code will use the standards compliant form
+`data-lz:<directive>`, but they could just as well be `data-myapp:<directive>` or even `myapp:<directive>`.
+
+Attribute Directive
+: A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance,
+`lz:src` is an attribute directive that loads content into an element. Elements can have multiple attribute directives.
+
+In some cases, the documentation will use `TypeScript` notation to make APIs clear, however, `lazui` is not written in
+`TypeScript`.
+
+Most of the JSON in this document is in [JSON5](https://json5.org/) format. This makes JSON easier to write and less error
+prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your version of `lazui` to use JSON5,
+you will need to modify the JSON in the examples to be valid JSON.
+
+Any time you see a CDN URL for `lazui` you could use just `/lazui` if you are running the [basic lazui server](#basic-server).
+
+If there are known issues, the document will describe the issue and provide a link to the details on GitHub.
+
+The document has realtime integration with GitHub. Any issues that have been logged and assigned where an anchor id
+in this document is referenced in the issue description will be highlighted in the document along with a link back to the 
+issue on GitHub. This is accomplisged with the `lazui` component `git-issue-ref`. See [Single Page Components](#single-page-components)
+
 ## Installation
 
 ### CDN
@@ -56,9 +107,6 @@ in the head of your HTML:
 `lazui` has a core size of less that 8K minimized and Brotli compressed and can be used without a build process, but
 [enhanced with one](#creating-a-custom-bundle).
 
-Attribute Directive
-: A custom attribute that is used to make relatively minor modifications to the behavior of an element. For instance, 
-`lz:src` is an attribute directive that loads content into an element. Elements can have multiple attribute directives.
 
 Unless you are willing to [write your own JavaScript](#using-javascript), you should always provide the `autofocus` attribute. It 
 tells `lazui` to process all the custom attribute directives and template substitutions in the document.
@@ -81,7 +129,7 @@ Access `lazui` and this documentation at `http://localhost:3000/`.
 
 See [Basic Server](#basic-server) for more information on the `lazui` server you can customize.
 
-[https://lazui.org](https://lazui.org) uses this basic server and is hosted on [Render](https://redner.com/).
+[https://lazui.org](https://lazui.org) uses this basic server and is hosted on [Render](https://render.com/).
 
 ## How To Be Lazui
 
@@ -156,21 +204,6 @@ attribute directives and JavaScript controller files.
 If you are a fan of `Turbo` or `htmx`, you probably want to write less JavaScript. Since writing HTML is easier than
 JavaScript, the documentation uses the `lazui` (lazy) approach and covers the use of directives and controllers before
 the more [JavaScript focused](#using-javascript) [html](#html) and [render](#render()) functions.
-
-## Documentation Conventions
-
-It is possible to completely modify the `lazui` namespace. Throughout the documentation, references
-to attribute directives will take the form `lz:<directive>` and sample code will use the standards compliant form 
-`data-lz:<directive>`, but they could just as well be `data-myapp:<directive>` or even `myapp:<directive>`.
-
-In some cases, the documentation will use `TypeScript` notation to make APIs clear, however, `lazui` is not written in
-`TypeScript`.
-
-Most of the JSON in this document is in [JSON5](https://json5.org/) format. This makes JSON easier to write and less error
-prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your version of `lazui` to use JSON5, 
-you will need to modify the JSON in the examples to be valid JSON.
-
-Any time you see a CDN URL for `lazui` you could use just `/lazui` if you are running the [basic lazui server](#basic-server).
 
 ## Leveraging Attribute Directives
 
@@ -370,7 +403,7 @@ thing you will want to use after understanding state.
 
 <template data-lz:state="formexamplestate">
    {
-   name: "Mary",
+   name: "Tom",
    age: 21,
    married: false
    }
@@ -379,55 +412,49 @@ thing you will want to use after understanding state.
    <form data-lz:controller="/controllers/lz/form.js">
       <input name="name" data-lz:bind type="text" placeholder="name">
       <input name="age"data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
+      <input data-lz:bind="married" type="checkbox"> Married
    </form>
    <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
 </div>
 
+If `lz:bind` has no value, but the `name` attribute is provided, the value of the `name` attribute is used as the property in the state.
+
+If `lz:bind` has a value and the `name` attribute is missing, the name attribute is added to the element.
+
 ##### Form With Standard Submit
 
 Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
-to the form. The form does not need to be submitted for its filed to impact the UI. If it is submitted, the submit is trapped
-and `fetch` is used to get the response for updating the target(s) of the form. A template to format
-the results, the method and encoding, and the expected type of the response can be controlled via `lz:options`.
+to the form. When submitted, the event is trapped and `fetch` is used to get the response for updating the target(s) of 
+the form. A template to format the results can be controlled via `lz:options`. Encoding and method are handled by the
+standard `enctype` and `method` attributes.
 
 The example below just returns the body it was sent.
 
-```html
-<div data-lz:usestate="formexamplestate">
-   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
-      <input name="name" data-lz:bind="name" type="text" placeholder="name">
-      <input name="age" data-lz:bind="age" type="number" placeholder="age">
+<template data-lz:url:post="/reflectbody" data-lz:mode="document"></template>
+
+<div data-lz:state="{name:'Dick',age:25}" data-lz:showsource="beforeBegin">
+   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" enctype="multipart/form-data">
+      <input data-lz:bind="name" type="text" placeholder="name">
+      <input data-lz:bind="age" type="number" placeholder="age">
       <button type="submit">Submit</button><br>
    </form>
-   <div>${name}'s age is ${age}.</div>
-</div>
-```
-
-<script data-lz:url:post="/reflectbody">
-   document.currentScript.post = async (req) => {
-         return new Response(await req.text());
-   }
-</script>
-
-<div data-lz:usestate="formexamplestate">
-   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling">
-      <input name="name" data-lz:bind="name" type="text" placeholder="name">
-      <input name="age" data-lz:bind="age" type="number" placeholder="age">
-      <button type="submit">Submit</button><br>
-   </form>
-   <div>${name}'s age is ${age}.</div>
 </div>
 
 ##### Form With Templates
+
+In `lazui` supports an `enctype="application/json"` for forms to facilitate template completion and database operations on the server, in addition to the standard:
+
+- `application/x-www-form-urlencoded`
+- `multipart/form-data`
+- `text/plain`
 
 <div data-lz:showsource:inner="beforeBegin">
 <template id="formresponse">
     <div>Thank you for letting us know ${name}'s age, ${age}.</div>
 </template>
-<form action="/reflectbody" data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
-   <input name="name" type="text" placeholder="name">
-   <input name="age" type="number" placeholder="age">
+<form action="/reflectbody" enctype="application/json" data-lz:state="{name:'Harry',age:22}" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
+   <input data-lz:bind="name" type="text" placeholder="name">
+   <input data-lz:bind="age" type="number" placeholder="age">
    <button type="submit">Submit</button>
 </form>
 </div>
@@ -438,24 +465,21 @@ If a template is provided, then `expect:"json"` is assumed for the `lz:options` 
 
 If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
 
-If `expect:"html"` is provided, scripts are not run and only the body is used.
+If `expect:"html"` is provided, the response is parsed at HTML, scripts are not run and only the body is used.
 
 If `expect:"template"` is provided, the HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
 Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is not updated unless `lz:bind` has been used.
 
-<template data-lz:url:get="/form-template-example" data-lz:mode="document">
+<template data-lz:url:post="/form-template-example" data-lz:mode="document">
     <div>Thank you for letting us know ${name}'s age, ${age}.</div>
 </template>
 
 <div data-lz:showsource:inner="beforeBegin">
-<div data-lz:usestate="formexamplestate">
-   <form action="/form-template-example"  data-lz:usestate="formexamplestate" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
-      <input name="name" type="text" placeholder="name">
-      <input name="age" type="number" placeholder="age">
-      <input name="married" type="checkbox"> Married
-      <button type="submit">Submit</button>
-   </form>
-</div>
+<form action="/form-template-example"  data-lz:state="{name:'Harry',age:22}" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" data-lz:options="{controller:{expect:'template'}}">
+   <input data-lz:bind="name" type="text" placeholder="name">
+   <input data-lz:bind="age"  type="number" placeholder="age">
+   <button type="submit">Submit</button>
+</form>
 </div>
 
 ### Loading Content
@@ -698,15 +722,22 @@ header and included in the router response headers.
 
 ##### put and post
 
-Elements with `lz:url:put` and `lz:url-post` should be empty. The content is ignored. They are simply used to indicate
-to the router that it is should update the content of the `<template>` with the corresponding `lz:url:get`. If it does 
-not exist, the `<template>` will be created with attribute `lz:url:get="<someurl>"`.
+Elements with `lz:url:put` and `lz:url-post` are used to indicate to the router that it is should update the content 
+of the `<template>` with the corresponding `lz:url:get`. If it does not exist, the `<template>` will be created with 
+the attribute `lz:url:get="<someurl>"`. If the `put` or `post` `<element>` has content and the `lz:mode` is `document`,
+then the content will used ad the response body; otherwise, the body of the request is reflected back.
 
 See the next section [Enhanced Requests](#enhanced-requests) for an example.
 
 ##### delete
 
 Removes the content from the element with the corresponding `lz:url:get` URL and sets its `lz:status` to `404`.
+
+##### More Sophisticated Routing
+
+If you wish to use more sophisticated client side routing, you can use the `lz:options` attribute to specify
+handlers that will be loaded. The value of the attribute is the path to a JavaScript file. See 
+[Advanced Client Side Routing](#advanced-client-side-routing) for more information.
 
 #### Enhanced Requests
 
@@ -1130,7 +1161,6 @@ page hosting it is served over `https`.
   </div>
 </div>
 
-<ul id="messages"></ul>
 <form id="form" action="">
 <table>
   <tr><td style="text-align:right">To:</td><td><input id="to" placeholder="comma separated names" title="Comma separated recipients" /></td></tr>
@@ -1175,6 +1205,9 @@ Components are loaded into `<template>` elements via the `lz:src` attribute with
 ```html
 <template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
 ```
+
+### GitHub Issue Reference
+
 
 
 ## Start Up Options
@@ -1279,10 +1312,11 @@ In the above example you can see the line `state["^"].mtime = Date.now() + 2000`
 The special attribute `^` is used to store metadata about the state, e.g. who created it, access controls, timeouts, etc. 
 You can store anything you wish in this attribute. `lazui` focuses on `mtime` and `timeout`.
 
-The `mtime` property is used to store the last modified time of the state. If the state is loaded from a remote source, 
-this may actually be ignored, it is only present in the example to make it easy to talk about. `lazui` uses time based versioning
-where the server is the sole arbiter of the time to ensure the browser always has the most recent copy of the data, even if
-it is being updated by multiple people. Here is the algorithm:
+The `mtime` property is used to store the last modified time of the state. See algorithm below for how spoofing the server
+and overwriting data is prevented.
+
+`lazui` uses time based versioning where the server is the sole arbiter of the time to ensure the browser always has 
+the most recent copy of the data, even if it is being updated by multiple people. Here is the algorithm:
 
 - If the request is a `delete`
   - retrieve the server copy of the data
@@ -1295,22 +1329,23 @@ it is being updated by multiple people. Here is the algorithm:
   - retrieve the server copy of the data
   - If there is a server copy
     - If a timeout value on the server copy is less than or equal to the server time
-      - respond with 404
-    - Else respond with 200 and server copy
+      - Respond with 404
+    - Else 
+      - Respond with 200 and server copy
   - Else Respond with 404
 - Otherwise, for `put` and `post`
   - If `timeout` from the browser copy is less than or equal to the current server time
     - delete the `^.timeout` on the browser copy
   - If the `mtime` received from the browser is greater than that on the server
-    - wait until the server time matches the `mtime` from the browser
+    - wait until server time matches the `mtime` from the browser (prevents spoofing, penalizes requestor with delay)
   - If the `mtime` for an update is less than or equal to that on the server
     - retrieve the server copy of the data
-    - set browser copy `mtime` to its current time
+    - set browser copy `mtime` to server current time
     - If there is no current server copy
       - create a server copy using the browser data
     - Else
       - update the server copy using the browser data
-    - respond with 200 and server copy
+    - Respond with 200 and server copy
 
 There are some security issues with the above, browser requests can completely overwrite data or make it look like it is
 gone by making delete requests, but there are limits to what can be achieved without writing JavaScript.
@@ -1397,7 +1432,23 @@ Returns raw HTML and ensures that nested templates are processed correctly along
 
 This allows the expedient but potentially unsafe processing of templates to deliver HTML to a browser:
 
-<script data-lz:showsource:inner="beforeBegin">
+```javascript
+(() => {
+   const {html} = lazui;
+
+   const list = ['some', '<b>nasty</b>', 'list'];
+
+   const content = html`
+    <ul>${list.map(text => html`
+    <li>${text}</li>
+    `)}
+    </ul>`; // or add a .raw() after the closing backtick
+
+   document.currentScript.insertAdjacentHTML("afterEnd",content);
+})()
+```
+
+<script>
 (() => {
   const {html} = lazui;
   
@@ -1422,7 +1473,7 @@ takes a little more computational effort, but is far safer. During this processi
 will be inserted as text not HTML, `<template>` placement and boolean attributes are normalized, and functions
 assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bound to the DOM nodes properly.
 
-<script data-lz:showsource:inner="beforeBegin">
+```javascript
 (() => {
   const {html} = lazui;
   
@@ -1434,6 +1485,22 @@ assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bo
     `)}
     </ul>`;
   
+  const fragment = content.toDocumentFragment();
+  document.currentScript.after(...fragment.childNodes);
+})()
+```
+
+<script>
+(() => {
+  const {html} = lazui;
+  
+  const list = ['some', '<b>nasty</b>', 'list'];
+  
+  const content = html`
+    <ul>${list.map(text => html`
+    <li>${text}</li>
+    `)}
+    </ul>`;
   const fragment = content.toDocumentFragment();
   document.currentScript.after(...fragment.childNodes);
 })()
@@ -1475,7 +1542,23 @@ function is called with `<style>` and `<template>` elements in a `<head>` sectio
 
 `nodes` is just a convenience wrapper around `toDocumentFragment`.
 
-<script data-lz:showsource:inner="beforeBegin">
+```javascript
+(() => {
+  const {html} = lazui;
+  
+  const list = ['some', '<b>nasty</b>', 'list'];
+  
+  const content = html`
+    <ul>${list.map(text => html`
+    <li>${text}</li>
+    `)}
+    </ul>`;
+  
+  document.currentScript.after(...content.nodes());
+})()
+```
+
+<script>
 (() => {
   const {html} = lazui;
   
@@ -1672,11 +1755,81 @@ export {
 The above is somewhat blunt, but it demonstrates the ability to add controllers to specific elements within a form. See
 the [MDN documentation on form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) for more information on how to do this properly.
 
+### Advanced Client Side Routing
+
+Most server routers let you add routes by using something like `app.get("/some/path",handler)`. With `lazui` you can
+use `<template data-lz:url:get="/some/path" data-lz:options="{url:{handler:"myhandler.js"}}>` to add a JavaScript
+handler for a route. The handler should export a function that takes a `Request` object. If the handler returns a
+`Response` object, it will be sent to the client. Otherwise, the router will continue to its next option.
+
+Assume the file `docs/helloworld.js` contains:
+
+```javascript
+const handlers = {
+    get(request) {
+        return new Response("Hello world!",{status:200,headers:{"Content-Type":"text/plain"}})
+    }
+}
+export {handlers as default};
+```
+
+<div data-lz:showsource:inner="beforeBegin">
+<template data-lz:url:get="/hello/world" data-lz:options="{url:{handlers:'/docs/helloworld.js'}}" data-lz:mode="document">
+test
+</template>
+<div data-lz:src="/hello/world"></div>
+</div>
+
+It is also possible to avoid going to a server by using a global variable to store the handlers.
+
+<div data-lz:showsource:inner="beforeBegin">
+<script>
+var helloWorldHandlers = {
+    get(request) {
+        return new Response("Hello local world!",{status:200,headers:{"Content-Type":"text/plain"}})
+    }
+}
+</script>
+<template data-lz:url:get="/hello/localworld" data-lz:options="{url:{handlers:'helloWorldHandlers'}}" data-lz:mode="document">
+test
+</template>
+<div data-lz:src="/hello/localworld"></div>
+</div>
+
+The declarative router does not support the wild card or `app.any(...)` method. However, you can add a route that
+matches `any` behavior by implementing a handler that exports an object with all the possible handlers as properties, e.g.
+
+```javascript
+const handlers = {
+    get: (request) => {
+        return new Response("Hello, World!");
+    },
+    post: (request) => {
+        return new Response("Hello, World!");
+    },
+    put: (request) => {
+        return new Response("Hello, World!");
+    },
+    delete: (request) => {
+        return new Response("Hello, World!");
+    },
+    patch: (request) => {
+        return new Response("Hello, World!");
+    },
+    head: (request) => {
+        return new Response("Hello, World!");
+    },
+    options: (request) => {
+        return new Response("Hello, World!");
+    }
+};
+````
+
 ### Advanced Storage
 
 ### Advanced Configuration
 
-The first place you may wish to use JavaScript is for the configuration of `alzui`. In a module script immediately after
+The first place you may wish to use JavaScript is for the configuration of `lazui`. In a module script immediately after
 the script that loads `lazui` you can do things like define which attribute directives, JSON parser and router to use.
 
 #### Setting The Attribute Namespace
@@ -1687,7 +1840,9 @@ the script that loads `lazui` you can do things like define which attribute dire
 
 #### Specifying A JSON Parser
 
-#### Creating A Custom Bundle
+### Creating A Custom Bundle
+
+This section assumes you have read [Advanced Configuration](#advanced-configuration).
 
 If you prefer a single http connection to get all or most of the `lazui` capability loaded when a web page loads,
 creating a custom bundle is easy if you know how to use `webpack`.
@@ -1773,8 +1928,14 @@ And, <a href="./my-custom-lazui.html" target="_tab">access the file!</a>.
 A server supporting Markdown, web sockets and server side events, had to be written to support this documentation, so
 it is included to serve as a foundation for your use.
 
-- serves files from the `docs` directory,
-supports Markdown files with the `.md` extension.
+- runs with the command `npm run serve`
+- based on [itty-router](https://itty.dev/itty-router)
+- will serve this documentation by default
+- supports Markdown files with the `.md` extension.
+- has a minimal number of files in the docs directory to support the documentation
+- has a basic web sockets implementation
+- has basic server sent events middleware
+
 
 ## Inspiration
 
@@ -1796,8 +1957,6 @@ supports Markdown files with the `.md` extension.
 
 
 
-
-
 ## FAQs
 
 Why isn't `lazui.js` a module? 
@@ -1806,6 +1965,9 @@ to intercept display of the page to prevent flicker on initial rendering. Provid
 will cause `lazui` to start processing the page for template literals embedded in HTML and process many `lazui` directives as
 soon as the `DOMContent` is loaded, but before it is displayed to the user. However, all `lazui` directives and controllers
 are modules.
+
+Why itty-router for the server?
+: It is small, fast, platform agnostic (can run on Bun, Cloudflare, Node, etc.), and far easier to use than Express.
 
 <div style="width:100%;text-align:center" data-lz:src="/docs/footer.html"></div>
 

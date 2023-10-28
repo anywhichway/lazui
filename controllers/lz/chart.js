@@ -66,6 +66,9 @@ const init = async ({el,root,state,options}, )=> {
                 el.dispatchEvent(new CustomEvent("ready", {detail: {chart}}));
             });
             chart.draw(data, state.options);
+            window.addEventListener("resize", () => {
+                chart.draw(data, state.options);
+            })
         }
         drawChart()
     });

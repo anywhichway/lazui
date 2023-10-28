@@ -199,9 +199,12 @@ app.delete('/data/%id.json', async (req) => {
     return new Response("ok",{status:200});
 })
 
+/*
 app.post('/reflectbody', async (req) => {
     return new Response(await req.text(),{status:200});
 })
+*/
+
 app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
@@ -241,7 +244,7 @@ const CSP = {
         "https://lazui.org",
         "https://www.gstatic.com",
         "https://img.shields.io",
-        "https://github.com",
+        "https://*.github.com",
         "https://buttons.github.io",
         "https://www.unpkg.com",
         "https://esm.sh"

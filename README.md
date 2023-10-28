@@ -95,6 +95,9 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-28 v0.0.26a documentation updates, client side routing refinements, fixed toc nesting issue, added custom element
+git-issue-ref.
+
 2023-10-27 v0.0.25a documentation updates, client side routing refinements, form binding refinements
 
 2023-10-26 v0.0.23a documentation updates, client side routing refinements, form binding refinements

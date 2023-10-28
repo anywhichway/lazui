@@ -87,12 +87,15 @@ const init = async ({el,root,lazui,options})=> {
         const action = el.getAttribute("action");
         if(!action) throw new Error("Form must have an action attribute in order to submit");
         let config;
-        options.format ||= "formdata";
-        if(options.format==="json") config = {contentType:"application/json",format(){ return JSON.stringify(formToJSON(el,JSON))}};
-        else if(options.format==="urlencoded") config = {contentType:"application/x-www-form-urlencoded",format(){ return new URLSearchParams(new FormData(el)).toString()}};
-        else if(options.format==="formdata") config = {contentType:"multipart/form-data",format() { return new FormData(el)}};
-        else throw new TypeError("Form options.format must be one of json, urlencoded, or formdata not "+options.format);
-        const response = await router.fetch(new Request(action,{method:el.getAttribute("method")||"POST",body:config.format(),headers:{"Content-Type":config.contentType}}));
+        const enctype = el.getAttribute("enctype")||"application/x-www-form-urlencoded",
+            headers = {"Content-Type":enctype};
+        let format;
+        if(enctype==="application/json") format = () => JSON.stringify(formToJSON(el,JSON));
+        else if(enctype==="application/x-www-form-urlencoded") format = () => new URLSearchParams(new FormData(el)).toString();
+        else if(enctype==="multipart/form-data") format = () => new FormData(el);
+        else if(enctype==="text/plain")format = () => el.innerText;
+        else throw new TypeError(`Form options.format must be one of "application/x-www-form-urlencoded", "application/json", "multipart/form-data", "text/plain" not ${enctype}.`);
+        const response = await router.fetch(new Request(action,{method:el.getAttribute("method")||"POST",body:format(),headers}));
         let content;
         if(response.ok) {
             content = await response.text();
