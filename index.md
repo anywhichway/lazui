@@ -236,14 +236,17 @@ render(document.currentScript,
 ```
 
 <script>
-document.addEventListener("lz:loaded",() => {
-    const {render,html} = lazui;
-    let count = 0;
-    const clicked = (event) => {
-        count++;
-        event.target.innerText = `Click count: ${count}`;
-    };
-    render(document.currentScript, html`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
+(() => {
+    const script = document.currentScript;
+    document.addEventListener("lz:loaded",() => {
+        const {render,html} = lazui;
+        let count = 0;
+        const clicked = (event) => {
+            count++;
+            event.target.innerText = `Click count: ${count}`;
+        };
+        render(script, html.nodes`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
+    });
 });
 </script>
 
