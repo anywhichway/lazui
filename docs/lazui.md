@@ -1,4 +1,4 @@
-<script src="/lazui"
+<script src="https://www.unpkg.com/@anywhichway/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
@@ -66,16 +66,17 @@ In some cases, the documentation will use `TypeScript` notation to make APIs cle
 `TypeScript`.
 
 Most of the JSON in this document is in [JSON5](https://json5.org/) format. This makes JSON easier to write and less error
-prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your version of `lazui` to use JSON5,
-you will need to modify the JSON in the examples to be valid JSON.
+prone. See [Relaxed JSON Parser](#relaxed-json-parser) for more information. Unless you configure your version of `lazui` 
+to use JSON5, you will need to modify the JSON in the examples to be valid JSON.
 
 Any time you see a CDN URL for `lazui` you could use just `/lazui` if you are running the [basic lazui server](#basic-server).
 
 If there are known issues, the document will describe the issue and provide a link to the details on GitHub.
 
-The document has realtime integration with GitHub. Any issues that have been logged and assigned where an anchor id
-in this document is referenced in the issue description will be highlighted in the document along with a link back to the 
-issue on GitHub. This is accomplisged with the `lazui` component `git-issue-ref`. See [Single Page Components](#single-page-components)
+If you view the documentation from a locally installed `lazui` [server](#basic-server), it has realtime integration with 
+GitHub. Any issues that have been logged and assigned where an anchor id in this document is referenced in the issue description 
+will be highlighted in the document along with a link back to the issue on GitHub. This is accomplished with the `lazui` 
+component `git-issue-ref`. See [Single Page Components](#single-page-components)
 
 ## Installation
 
