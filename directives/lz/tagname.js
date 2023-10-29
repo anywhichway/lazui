@@ -11,7 +11,8 @@ async function tagname({el,attribute,root,state,lazui}) {
             adopted: null
         };
     let initialized,
-        observedAttributes = [];
+        observedAttributes = [],
+        shadow;
     if(el.hasAttribute(`${prefix}:src`)) {
         div.innerHTML = await fetch(new Request(el.getAttribute(`${prefix}:src`))).then((response) => response.text());
     } else {
@@ -20,8 +21,11 @@ async function tagname({el,attribute,root,state,lazui}) {
     class CustomElement extends HTMLElement {
         constructor() {
             super();
-            const shadow = this.attachShadow({mode});
-            this.shadowRoot.append(...div.cloneNode(true).childNodes);
+            shadow = this.attachShadow({mode});
+            shadow.append(...div.cloneNode(true).childNodes);
+        }
+
+        connectedCallback() {
             if(!initialized) {
                 for(const script of shadow.querySelectorAll("script")) {
                     const clone = document.createElement("script");
@@ -43,9 +47,6 @@ async function tagname({el,attribute,root,state,lazui}) {
                 })
             }
             initialized = true;
-        }
-
-        connectedCallback() {
             if(callbacks.connected) callbacks.connected.call(this);
         }
 

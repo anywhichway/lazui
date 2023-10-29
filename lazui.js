@@ -1,12 +1,13 @@
-(() => {
+(async () => {
     "use strict"
     if(document?.currentScript && !window.lazuiLoaded) {
-        window.lazuiLoaded = true;
         const url = new URL(document.currentScript.src),
             autofocus = document.currentScript.hasAttribute("autofocus"),
             docEl = document.documentElement;
-        if(document.location.pathname.endsWith(".md")) docEl.setAttribute("hidden","");
-        document.addEventListener("DOMContentLoaded",async () => {
+        //if(document.location.pathname.endsWith(".md")) docEl.setAttribute("hidden","");
+        document.currentScript.addEventListener("load",async (event) => {
+            if(window.lazuiLoaded ||!document.body) return;
+            window.lazuiLoaded = true;
             lazui.url = new URL(url.href);
             lazui.url.hash = "";
             lazui.url.search = "";

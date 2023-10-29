@@ -1,5 +1,5 @@
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("lz:loaded", async () => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
    issues.filter((issue) => issue.assignee).forEach((issue) => {
       const parts = issue.body ? issue.body.split(" ") : [],
@@ -34,8 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
    for(let [key,value] of Object.entries(attributes)) {
      script.setAttribute(key,value);
    }
-   document.currentScript.remove();
-   document.write(script.outerHTML);
+   document.currentScript.after(script);
 })();
 </script>
 
@@ -1121,10 +1120,12 @@ JavaScript and also respond to `subscribe` and `unsubscribe` events.
 <div id="joe"></div>
 </div>
 <script>
+document.addEventListener("lz:loaded", () => {
   setTimeout(() => {
     const el = document.querySelector("#pubsub-example");
     el.unsubscribe();
     }, 10000);
+})
 </script>
 </div>
 
@@ -1160,10 +1161,12 @@ JavaScript and also respond to `subscribe` and `unsubscribe` events.
   <template><div>${message}</div></template>
 </div>
 <script>
+document.addEventListener("lz:loaded", () => {
   setTimeout(() => {
     const element = document.getElementById("sse-example");
     element.unsubscribe();
   }, 10000);
+});
 </script>
 </div>
 
@@ -1488,15 +1491,21 @@ This allows the expedient but potentially unsafe processing of templates to deli
 
 <script>
 (() => {
-  const {html} = lazui;
-  const list = ['some', '<b>nasty</b>', 'list'];
-  const content = html`
-    <ul>${list.map(text => html`
-    <li>${text}</li>
-    `)}
-    </ul>`;
-  document.currentScript.insertAdjacentHTML("afterEnd",content);
-})()
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+      const {html} = lazui;
+   
+      const list = ['some', '<b>nasty</b>', 'list'];
+   
+      const content = html` // or add a .raw before the backtick
+       <ul>${list.map(text => html`
+       <li>${text}</li>
+       `)}
+       </ul>`; 
+   
+      script.insertAdjacentHTML("afterEnd",content);
+   });
+})();
 </script>
 
 #### html.documentFragment
@@ -1508,34 +1517,40 @@ and functions assigned to event handlers, attributes starting with `on`, e.g. `o
 
 ```javascript
 (() => {
-  const {html} = lazui;
-  
-  const list = ['some', '<b>nasty</b>', 'list'];
-  
-  const content = html.documentFragment`
-    <ul>${list.map(text => html`
-    <li>${text}</li>
-    `)}
-    </ul>`;
-  
-  document.currentScript.after(...content.childNodes);
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+       const {html} = lazui;
+
+       const list = ['some', '<b>nasty</b>', 'list'];
+
+       const content = html.documentFragment`
+       <ul>${list.map(text => html`
+       <li>${text}</li>
+       `)}
+       </ul>`;
+
+        script.after(...content.childNodes);
+   })
 })()
 ```
 
 <script>
 (() => {
-  const {html} = lazui;
-  
-  const list = ['some', '<b>nasty</b>', 'list'];
-  
-  const content = html.documentFragment`
-    <ul>${list.map(text => html`
-    <li>${text}</li>
-    `)}
-    </ul>`;
-  document.currentScript.after(...content.childNodes);
-})()
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+       const {html} = lazui;
 
+       const list = ['some', '<b>nasty</b>', 'list'];
+
+       const content = html.documentFragment`
+       <ul>${list.map(text => html`
+       <li>${text}</li>
+       `)}
+       </ul>`;
+
+    script.after(...content.childNodes);
+   })
+})()
 </script>
 
 `toDocumentFragment` is pretty safe as is, however; if you want more sanitation, you can call `toDocumentFragment` with a
@@ -1570,33 +1585,39 @@ function is called with `<style>` and `<template>` elements in a `<head>` sectio
 
 ```javascript
 (() => {
-  const {html} = lazui;
-  
-  const list = ['some', '<b>nasty</b>', 'list'];
-  
-  const content = html`
-    <ul>${list.map(text => html`
-    <li>${text}</li>
-    `)}
-    </ul>`;
-  
-  document.currentScript.after(...content.nodes());
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+       const {html} = lazui;
+
+       const list = ['some', '<b>nasty</b>', 'list'];
+
+       const content = html`
+       <ul>${list.map(text => html`
+       <li>${text}</li>
+       `)}
+       </ul>`;
+
+       script.after(...content.nodes());
+   });
 })()
 ```
 
 <script>
 (() => {
-  const {html} = lazui;
-  
-  const list = ['some', '<b>nasty</b>', 'list'];
-  
-  const content = html.nodes`
-    <ul>${list.map(text => html`
-    <li>${text}</li>
-    `)}
-    </ul>`;
-  
-  document.currentScript.after(...content);
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+       const {html} = lazui;
+
+       const list = ['some', '<b>nasty</b>', 'list'];
+
+       const content = html`
+       <ul>${list.map(text => html`
+       <li>${text}</li>
+       `)}
+       </ul>`;
+
+    script.after(...content.nodes());
+   });
 })()
 </script>
 
@@ -1616,11 +1637,16 @@ document.currentScript.after(...content.nodes());
 ```
 
 <script>
-const myhook = (node) => {
-         return new Date().toLocaleTimeString();
-     },
-     content = lazui.html`<div>Timestamp: <span>${{hook:myhook,interval:1000}}</span></div>`;
-document.currentScript.after(...content.nodes());
+(() => {
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+   const myhook = (node) => {
+            return new Date().toLocaleTimeString();
+        },
+        content = lazui.html`<div>Timestamp: <span>${{hook:myhook,interval:1000}}</span></div>`;
+   script.after(...content.nodes());
+   })
+});
 </script>
 
 The properties of a hook are:
@@ -1660,13 +1686,18 @@ The classic use of render takes an interpolation and replaces the inner contents
 <div data-lz:showsource:inner="beforeBegin">
 <div id="classic-render"></div>
 <script>
-const {render,html} = lazui;
-let count = 0;
-const clicked = (event) => {
-    count++;
-    event.target.innerText = `Click count: ${count}`;
-};
-render(document.getElementById('classic-render'), html`<div onclick=${clicked}>Click count: ${count}</div>`);
+(() => {
+   const script = document.currentScript;
+   document.addEventListener("lz:loaded",() => {
+      const {render,html} = lazui;
+      let count = 0;
+      const clicked = (event) => {
+          count++;
+          event.target.innerText = `Click count: ${count}`;
+      };
+      render(document.getElementById('classic-render'), html`<div onclick=${clicked}>Click count: ${count}</div>`);
+   });
+});
 </script>
 </div>
 

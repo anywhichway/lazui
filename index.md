@@ -19,8 +19,7 @@
    for(let [key,value] of Object.entries(attributes)) {
      script.setAttribute(key,value);
    }
-   document.currentScript.remove();
-   document.write(script.outerHTML);
+   document.currentScript.after(script);
 })();
 </script>
 <title>lazui: Web UI's with less work</title>
