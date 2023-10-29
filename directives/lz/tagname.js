@@ -1,6 +1,6 @@
 async function tagname({el,attribute,root,state,lazui}) {
     if(customElements.get(attribute.value)) return;
-    const {prefix} = lazui,
+    const {prefix,router} = lazui,
         className = attribute.value.split("-").map((word,index) => word[0].toUpperCase()+word.slice(1)).join(""),
         mode = el.getAttribute(`${prefix}:mode`) || "open",
         div = document.createElement("div"),
@@ -14,7 +14,7 @@ async function tagname({el,attribute,root,state,lazui}) {
         observedAttributes = [],
         shadow;
     if(el.hasAttribute(`${prefix}:src`)) {
-        div.innerHTML = await fetch(new Request(el.getAttribute(`${prefix}:src`))).then((response) => response.text());
+        div.innerHTML = await router.fetch(new Request(el.getAttribute(`${prefix}:src`))).then((response) => response.text());
     } else {
         div.innerHTML = el.innerHTML;
     }

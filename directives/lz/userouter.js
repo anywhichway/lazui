@@ -1,11 +1,14 @@
 async function userouter({attribute,lazui,options}) {
     lazui.useRouter = useRouter;
-    const {prefix,JSON} = lazui,
+    const {prefix,JSON,url} = lazui,
         el = attribute.ownerElement,
         {importName="default",isClass,allowRemote,markdownProcessor} = options;
     await import(attribute.value).then(async (module) => {
         const Router = module[importName],
-            router = isClass ? new Router(options) : Router(options);
+            router = isClass ? new Router(options) : Router(options),
+            parts = prefix.split("-"),
+            lazuiProtocol = (parts[0]==="data" ? parts[1] : parts[0]) + ":",
+            host = url.href;
         let markdown = markdownProcessor ? (await import(markdownProcessor.src))[markdownProcessor.importName||"default"] : undefined;
         if(markdown && markdownProcessor.isClass) {
             const instance = new markdown(markdownProcessor.options);
@@ -13,11 +16,11 @@ async function userouter({attribute,lazui,options}) {
         } else if(markdown && markdownProcessor.call) {
             markdown = markdown[markdownProcessor.call].bind(markdown);
         }
-        lazui.useRouter(router, {allowRemote,prefix,JSON,markdown});
+        lazui.useRouter(router, {allowRemote,prefix,JSON,markdown,lazuiProtocol,host});
     })
 }
 
-function useRouter(router,{prefix,markdown,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(c) => {
+function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(c) => {
     if(c.req.raw.mode==="document") {
         return new Response("Not Found",{status:404})
     }
@@ -36,6 +39,11 @@ function useRouter(router,{prefix,markdown,JSON = globalThis.JSON,root = documen
         const url = c.req.URL = new URL(c.req.url, document.baseURI),
             method = c.req.method.toLowerCase(),
             isLocal = c.req.url.startsWith(document.location.origin);
+        if(url.protocol===lazuiProtocol) {
+            const pathname = url.pathname.slice(1),
+                src = host + pathname;
+            return window.fetch(src);
+        }
         let mode = c.req.raw.mode;
         if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
             const el = document.getElementById(url.hash.slice(1));

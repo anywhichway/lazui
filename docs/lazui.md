@@ -1,4 +1,4 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui"
+<script src="/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
@@ -54,8 +54,8 @@ document.addEventListener("lz:loaded", async () => {
    }
 </style>
 <a href="../index.md">lazui</a>
-<template data-lz:src="/components/git-issue-ref.html" data-lz:tagname="git-issue-ref"></template>
-<template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
+<template data-lz:src="lz://components/git-issue-ref.html" data-lz:tagname="git-issue-ref"></template>
+<template data-lz:src="lz://components/toc.html" data-lz:tagname="lz-toc"></template>
 <lz-toc></lz-toc>
 
 ## Introduction
@@ -1273,13 +1273,13 @@ Components are loaded into `<template>` elements via the `lz:src` attribute with
 ### Document Table of Contents
 
 ```html
-<template data-lz:src="/components/toc.html" data-lz:tagname="lz-toc"></template>
+<template data-lz:src="lz://toc.html" data-lz:tagname="lz-toc"></template>
 ```
 
 ### GitHub Issue Reference
 
 ```html
-<template data-lz:src="/components/git-issue-ref.html" data-lz:tagname="git-issue-ref"></template>
+<template data-lz:src="lz://git-issue-ref.html" data-lz:tagname="git-issue-ref"></template>
 ```
 
 ```html
