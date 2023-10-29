@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-29 v0.0.34a added client side markdown support
+
 2023-10-29 v0.0.32a-33a performance optimizations
 
 2023-10-28 v0.0.31a another index.md bug fix post speed improvements

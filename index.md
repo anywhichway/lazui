@@ -1,4 +1,4 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui"
+<script src="/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
@@ -55,6 +55,7 @@
         ['lazui features without writing JavaScript web sockets'],
         ['lazui features without writing JavaScript form processing'],
         ['lazui features without writing JavaScript client side routing'],
+        ['lazui features without writing JavaScript Markdown transformation'],
         ['lazui features without writing JavaScript charts and gauges'],
         ['lazui features without writing JavaScript document table of contents'],
         ['lazui features without writing JavaScript remote data synchronization'],
@@ -100,6 +101,7 @@
         "web sockets":"web-sockets",
         "form processing":"with-forms",
         "client side routing":"client-side-routing",
+        "Markdown transformation":"client-side-routing",
         "charts and gauges":"charts",
         "document table of contents":"document-table-of-contents",
         "remote data synchronization":"remote-data-synchronization",

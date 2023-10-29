@@ -2,15 +2,22 @@ async function userouter({attribute,lazui,options}) {
     lazui.useRouter = useRouter;
     const {prefix,JSON} = lazui,
         el = attribute.ownerElement,
-        {importName="default",isClass,allowRemote} = options;
-    await import(attribute.value).then((module) => {
+        {importName="default",isClass,allowRemote,markdownProcessor} = options;
+    await import(attribute.value).then(async (module) => {
         const Router = module[importName],
             router = isClass ? new Router(options) : Router(options);
-        lazui.useRouter(router, {allowRemote,prefix,JSON});
+        let markdown = markdownProcessor ? (await import(markdownProcessor.src))[markdownProcessor.importName||"default"] : undefined;
+        if(markdown && markdownProcessor.isClass) {
+            const instance = new markdown(markdownProcessor.options);
+            markdown = instance[markdownProcessor.call].bind(instance);
+        } else if(markdown && markdownProcessor.call) {
+            markdown = markdown[markdownProcessor.call].bind(markdown);
+        }
+        lazui.useRouter(router, {allowRemote,prefix,JSON,markdown});
     })
 }
 
-function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(c) => {
+function useRouter(router,{prefix,markdown,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(c) => {
     if(c.req.raw.mode==="document") {
         return new Response("Not Found",{status:404})
     }
@@ -83,6 +90,9 @@ function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documen
                     if(node.innerHTML.trim()) return new Response(node.innerHTML,{status:status||200,headers})
                     return new Response(target.innerHTML,{status:200, headers:response?.status===200 ? response.status.headers : headers}); // should return contents of the POST or put element
                 } else if (method === "get") {
+                    if(url.pathname.endsWith(".md") && !node.hasAttribute(`${prefix}:content-type`)) {
+                        node.setAttribute(`${prefix}:content-type`,"text/markdown");
+                    }
                     let response;
                     if(mode!=="document") {
                         try {
@@ -91,7 +101,7 @@ function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documen
 
                         }
                     }
-                    const value = response?.status===200 ? await response.text() : node.innerHTML;
+                    let value = response?.status===200 ? await response.text() : node.innerHTML;
                     if(value.length!==0) {
                         const status = response?.status===200 ? response.status : 200;
                         node.setAttribute(`${prefix}:status`,status);
@@ -100,6 +110,9 @@ function useRouter(router,{prefix,JSON = globalThis.JSON,root = document.documen
                             for(const [key,value] of response.headers.entries()) {
                                 node.setAttribute(`${prefix}:header-${key}`,value);
                             }
+                        }
+                        if(node.getAttribute(`${prefix}:content-type`)==="text/markdown") {
+                            value = markdown(value);
                         }
                         return new Response(value,{status, headers:response?.status===200 ? response.status.headers : headers})
                     }

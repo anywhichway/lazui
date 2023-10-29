@@ -1,9 +1,27 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui"
+<script src="/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
    data-lz:usehighlighter="https://esm.sh/highlight.js"
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
+   data-lz:options="{
+      userouter: {
+         importName:'Hono',
+         isClass:true,
+         allowRemote:true,
+         markdownProcessor: {
+            src:'https://esm.sh/markdown-it',
+            call:'render',
+            isClass:true,
+            options: {
+               html:true,
+               linkify:true
+            }
+         }
+      },
+      usehighlighter:{
+         style:'/styles/default.css'
+      }
+   }">
 </script>
 <script>
 document.addEventListener("lz:loaded", async () => {
@@ -148,6 +166,39 @@ Hello, the date and time is ${new Date().toLocaleTimeString()}
 </template>
 <div data-lz:src="/working-with-markdown.md" data-lz:mode="open"></div>
 
+You can also configure `lazui` to:
+- use a [relaxed JSON parser](#relaxed-json-parser),
+- highlight code [highlighter](#code-highlighting),
+- handle [client side routes](#client-side-routing) with optional Markdown transformation.
+
+```html
+<script src="https://www.unpkg.com/@anywhichway/"
+      autofocus
+      data-lz:usejson="https://esm.sh/json5"
+      data-lz:usehighlighter="https://esm.sh/highlight.js"
+      data-lz:userouter="https://esm.sh/hono"
+      data-lz:options="{
+         userouter: {
+            importName:'Hono',
+            isClass:true,
+            allowRemote:true,
+            markdownProcessor: {
+               src:'https://esm.sh/markdown-it',
+               call:'render',
+               isClass:true,
+               options: {
+                  html:true,
+                  linkify:true
+               }
+            }
+         },
+         usehighlighter:{
+            style:'/styles/default.css'
+         }
+      }">
+</script>
+```
+
 ### Lazy Loading
 
 Unless a [custom bundle is created](#creating-a-custom-bundle), all the attribute directive functionality provided by
@@ -162,18 +213,6 @@ This gets the page to its first meaningful paint faster.
 [Vue](https://vuejs.org/), and [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
 You are free to choose your preferred development paradigm. If it is just that of one library, you may be better off
 sticking with that library, but if you yearn for capability from more than one library, `lazui` may be for you.
-
-You can also configure `lazui` to use a [relaxed JSON parser](#relaxed-json-parser), a [client side router](#client-side-routing), and if you are 
-documenting code, a [highlighter](#code-highlighting).
-
-```html
-<script src='https://www.unpkg.com/@anywhichway/lazui@0.0.15-a'  autofocus 
-   data-lz:usejson="https://esm.sh/json5" 
-   data-lz:userouter="https://esm.sh/hono"
-   data-lz:usehighlighter="https://esm.sh/highlight.js"
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
-</script>
-```
 
 Although `lazui` can be used as a powerful JavaScript rendering engine, it really shines at reducing the amount of
 JavaScript required to create an interactive website or single page app. This shininess is provided through a set of
@@ -277,27 +316,29 @@ Setting state at the document level can be useful with Markdown. Below is the co
 `using-state-with-markdown.md`, followed by the `HTML` loading the file into an `<iframe>` (which is optional).
 
 ```html
+*${name}* is *${age}* years old.
 <template data-lz:state:document="person">
 {
     name: "Mary",
     age: 21
 }
 </template>
-${name} is ${age} years old.
 ```
+
+*Note*: Due to issues with some Markdown parsers, you must put the `<template>` at the end.
 
 ```html
 <div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
 ```
 
 <template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
-   <template data-lz:state:document="person">
-   {
-       "name": "Mary",
-       "age": 21
-   }
-   </template>
-   ${name} is ${age} years old.
+*${name}* is *${age}* years old.
+<template data-lz:state:document="person">
+{
+    "name": "Mary",
+    "age": 21
+}
+</template>
 </template>
 <div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
 
@@ -622,16 +663,27 @@ itself to prevent navigation out of the iframe.
 
 #### Client Side Routing
 
-The directive and value `lz:controller="/controllers/lz/router.js"` will let you create a router without writing any Javascript.
+The directive and value `lz:userouter="<urltorouter>"` will let you create a router without writing any Javascript. The
+only router that has been well tested for `lazui` in the browser is [Hono](https://hono.dev), so use `lz:userouter="https://esm.sh/hono"`
+for now.
 
 ```html
-<template data-lz:controller="/controllers/lz/router.js">
+<template data-lz:userouter="/controllers/lz/router.js">
 {
-    "router": "https://esm.sh/hono", // path to router code, must be ESM module file
-    "import": "Hono", // name of import from module file
-    "create": "new", // optional, provide only if creating router requires a call to "new"
-    "options": {}, // options to pass to router
-    "allowRemote": true // optional, default is false, use true to allow spoofing of remote content
+   importName: "Hono", // name of import from module file
+   isClass: true, // optional, provide only if creating router requires a call to "new"
+   options: {}, // options to pass to router
+   allowRemote": true // optional, default is false, use true to allow spoofing of remote content,
+   allowRemote:true,
+   markdownProcessor: { // optional, only required is you expect to have untranslated Markdown delivered to the browser
+      src:'https://esm.sh/markdown-it',
+      call:'render',
+      isClass:true,
+      options: {
+         html:true,
+         linkify:true
+      }
+   }
 }
 </template>
 ```
@@ -644,7 +696,7 @@ capability is not available.
 
 The `lz:url` attribute always has a second component of `get`, `put`, `post`, or `delete` to indicate the HTTP method for
 which a response is supported. The value of the attribute is the URL of the file. The path must always be a full URL or 
-an absolute path on the current server.
+an absolute path on the current server. Relative paths are not supported.
 
 The `lz:url` attribute should only be associated with a `<template>`. It will be ignored elsewhere.
 
@@ -1283,14 +1335,6 @@ The model name can be followed by a space and the word `eager` to force updates 
     <span>You are ${age} years old.</span>
 </div>
 ```
-
-## Lazui Router
-
-The `lazui` router is a simple router that can be used to load content from a server. It is easily enabled by loading `lazui.js`
-with the query string `?router=<globalVariable>&allowRemote=true|false`. The router will then attempt to load content 
-from elements with `lz:url` attributes and fall back to a server.
-
-Advanced use of the router can be made at the JavaScript level. See [Specifying A Router](#specifying-a-router).
 
 ## Advanced Use Of State
 
