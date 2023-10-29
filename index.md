@@ -236,13 +236,15 @@ render(document.currentScript,
 ```
 
 <script>
-const {render,html} = lazui;
-let count = 0;
-const clicked = (event) => {
-    count++;
-    event.target.innerText = `Click count: ${count}`;
-};
-render(document.currentScript, html`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
+document.addEventListener("lz:loaded",() => {
+    const {render,html} = lazui;
+    let count = 0;
+    const clicked = (event) => {
+        count++;
+        event.target.innerText = `Click count: ${count}`;
+    };
+    render(document.currentScript, html`<div onclick=${clicked}>Click count: ${count}</div>`,{where:"afterEnd"});
+});
 </script>
 
 Ok, now it's time to [dive in](/docs/lazui.md)!

@@ -4,7 +4,7 @@
         const url = new URL(document.currentScript.src),
             autofocus = document.currentScript.hasAttribute("autofocus"),
             docEl = document.documentElement;
-        //if(document.location.pathname.endsWith(".md")) docEl.setAttribute("hidden","");
+        if(document.location.pathname.endsWith(".md")) docEl.setAttribute("hidden","");
         document.currentScript.addEventListener("load",async (event) => {
             if(window.lazuiLoaded ||!document.body) return;
             window.lazuiLoaded = true;

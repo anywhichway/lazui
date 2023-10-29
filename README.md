@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-28 v0.0.30a fixed example bug on index.md
+
 2023-10-28 v0.0.29a page load speed improvements
 
 2023-10-28 v0.0.28a documentation updates, fixed issues that appeared when minification was turned on
