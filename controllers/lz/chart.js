@@ -68,7 +68,7 @@ const init = async ({el,root,state,options}, )=> {
             chart.draw(data, state.options);
             window.addEventListener("resize", () => {
                 chart.draw(data, state.options);
-            })
+            }, {passive: true})
         }
         drawChart()
     });

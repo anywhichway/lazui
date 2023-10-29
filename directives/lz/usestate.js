@@ -1,4 +1,4 @@
-const __ORIGINAL_CONTENT__ = new WeakMap();
+const sleep = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const parseState = (text,JSON) => {
     const ref = {};
     if(text) {
@@ -14,10 +14,15 @@ const parseState = (text,JSON) => {
     return ref;
 }
 const usestate = async({el,attribute,root,lazui,recurse})  => {;
-    const {getState,JSON} = lazui,
-        {id=el.id,observe,json} = parseState(attribute.value,JSON),
+    await window.lazuiStatesReady;
+    const {getState,JSON,handleDirective} = lazui,
+        {id=el.id,observe,json} = parseState(attribute.value,JSON);
+    let state = getState(id,{root});
+    if(!state && id) {
+        await sleep(250);
         state = getState(id,{root});
-    if(!state && id) throw new Error(`Can't find state: ${id}`);
+        if(!state) throw new Error(`Can't find state: ${id}`);
+    }
     el.state = state;
 };
 

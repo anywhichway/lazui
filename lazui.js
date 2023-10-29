@@ -2,10 +2,8 @@
     "use strict"
     if(document?.currentScript && !window.lazuiLoaded) {
         const url = new URL(document.currentScript.src),
-            autofocus = document.currentScript.hasAttribute("autofocus"),
-            docEl = document.documentElement;
-        //if(document.location.pathname.endsWith(".md")) docEl.setAttribute("hidden","");
-        document.currentScript.addEventListener("load",async (event) => {
+            autofocus = document.currentScript.hasAttribute("autofocus");
+        document.addEventListener("DOMContentLoaded",async (event) => {
             if(window.lazuiLoaded ||!document.body) return;
             window.lazuiLoaded = true;
             lazui.url = new URL(url.href);
@@ -14,29 +12,23 @@
             directiveExports.url = lazui.url;
             const usejson = document.querySelector(`[${directiveExports.prefix}\\:usejson]`);
             if(usejson) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usejson`]);
-            const userouter = document.querySelector(`[${directiveExports.prefix}\\:userouter]`),
-                routerVariable = url.searchParams.get("router"),
-                allowRemote = url.searchParams.get("allowRemote");
+            const userouter = document.querySelector(`[${directiveExports.prefix}\\:userouter]`);
             if(userouter) {
                 const attribute = userouter.attributes[`${directiveExports.prefix}:userouter`];
-                if(routerVariable && document[routerVariable]) console.warn(`Global router with name '${routerVariable}' being overruled by 'userouter=\"${attribute.value}\"'`);
                 await handleDirective(attribute);
-            } else {
-                const router = routerVariable && document[routerVariable] ? document[routerVariable]() : null;
-                if(router) lazui.useRouter(router,{allowRemote});
             }
-            const usehighlighter = document.querySelector(`[${directiveExports.prefix}\\:usehighlighter]`);
-            if(usehighlighter) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usehighlighter`]);
-            for(const state of [...document.querySelectorAll(`[${directiveExports.prefix}\\:state],[${directiveExports.prefix}\\:state\\:global],[${directiveExports.prefix}\\:state\\:document]`)]) {
-                for(const attr of [...state.attributes]) {
-                    if(attr.name.startsWith(`${directiveExports.prefix}:state`)) await handleDirective(attr)
+            for (const state of [...document.querySelectorAll(`[${directiveExports.prefix}\\:state],[${directiveExports.prefix}\\:state\\:global],[${directiveExports.prefix}\\:state\\:document]`)]) {
+                for (const attr of [...state.attributes]) {
+                    if (attr.name.startsWith(`${directiveExports.prefix}:state`)) await handleDirective(attr)
                 }
             }
             for(const customElement of [...document.querySelectorAll(`[${directiveExports.prefix}\\:tagname]`)]) {
                 await handleDirective(customElement.attributes[`${directiveExports.prefix}:tagname`]);
             }
-            if(autofocus) await resolve(document.body,{root:document,state:{}})
-            docEl.removeAttribute("hidden");
+            const usehighlighter = document.querySelector(`[${directiveExports.prefix}\\:usehighlighter]`);
+            if(usehighlighter) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usehighlighter`]);
+            if(autofocus) await resolve(document.body,{root:document,state:{}});
+            document.documentElement.removeAttribute("hidden");
             if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
             const namespace = directiveExports.prefix.split("-").pop();
             document.dispatchEvent(new CustomEvent(`${namespace}:loaded`));

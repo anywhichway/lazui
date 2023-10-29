@@ -1,3 +1,10 @@
+<script src="/lazui"
+   data-lz:usejson="https://esm.sh/json5"
+   autofocus
+   data-lz:userouter="https://esm.sh/hono"
+   data-lz:usehighlighter="https://esm.sh/highlight.js"
+   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
+</script>
 <script>
 document.addEventListener("lz:loaded", async () => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
@@ -14,28 +21,6 @@ document.addEventListener("lz:loaded", async () => {
       });
    })
 });
-(() => {
-   let src;
-   try {
-      src = new URL(document.location).searchParams.get("lazui");
-      new URL(lazuiURL);
-   } catch(e) {
-      src = new URL(document.location).searchParams.has("cdn") ? "https://www.unpkg.com/@anywhichway/lazui" : "/lazui";
-   }
-   const attributes = {
-      src,
-      "data-lz:usejson":"https://esm.sh/json5",
-      "autofocus":"",
-      "data-lz:userouter":"https://esm.sh/hono",
-      "data-lz:usehighlighter":"https://esm.sh/highlight.js",
-      "data-lz:options":"{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}"
-      },
-      script = document.createElement("script");
-   for(let [key,value] of Object.entries(attributes)) {
-     script.setAttribute(key,value);
-   }
-   document.currentScript.after(script);
-})();
 </script>
 
 
@@ -300,6 +285,10 @@ Setting state at the document level can be useful with Markdown. Below is the co
 ${name} is ${age} years old.
 ```
 
+```html
+<div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
+```
+
 <template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
    <template data-lz:state:document="person">
    {
@@ -309,7 +298,7 @@ ${name} is ${age} years old.
    </template>
    ${name} is ${age} years old.
 </template>
-<div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" data-lz:showsource="beforeBegin" title="Lazui: Markdown Example"></div>
+<div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
 
 #### Reactive State
 
@@ -2055,8 +2044,8 @@ it is included to serve as a foundation for your use.
 My web page flickers with unresolved templates when first loaded. How can I avoid this?
 : If you have a page with a lot of templates in HTML or custom elements, you may see a flicker as the page loads. This is
 because the browser will render the page before `lazui` has a chance to process all the templates and custom elements.
-You can avoid this by setting the attribute `hidden` in the `<html>` tag in your file. This is handled automatically for
-Markdown files. `lazui` will remove the `hidden` attribute when it is done processing.
+You can avoid this by setting the attribute `hidden` in the `<html>` tag in your file using 
+`document.documentElement.setAttribute("hidden")`. `lazui` will remove the `hidden` attribute when it is done processing.
 
 Why isn't `lazui.js` a module? 
 : Modules do not fully resolve until a page is fully loaded, which makes it harder

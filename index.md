@@ -1,29 +1,12 @@
-<script>
-(() => {
-   let src;
-   try {
-      src = new URL(document.location).searchParams.get("lazui");
-      new URL(lazuiURL);
-   } catch(e) {
-      src = new URL(document.location).searchParams.has("cdn") ? "https://www.unpkg.com/@anywhichway/lazui" : "/lazui";
-   }
-   const attributes = {
-      src,
-      "data-lz:usejson":"https://esm.sh/json5",
-      "autofocus":"",
-      "data-lz:userouter":"https://esm.sh/hono",
-      "data-lz:usehighlighter":"https://esm.sh/highlight.js",
-      "data-lz:options":"{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}"
-      },
-      script = document.createElement("script");
-   for(let [key,value] of Object.entries(attributes)) {
-     script.setAttribute(key,value);
-   }
-   document.currentScript.after(script);
-})();
+<script src="/lazui"
+   data-lz:usejson="https://esm.sh/json5"
+   autofocus
+   data-lz:userouter="https://esm.sh/hono"
+   data-lz:usehighlighter="https://esm.sh/highlight.js"
+   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
 </script>
 <title>lazui: Web UI's with less work</title>
-<div style="width:500px;margin:auto" data-lz:src="./docs/header.html"></div>
+<div style="min-height:2em;width:500px;margin:auto" data-lz:src="./docs/header.html"></div>
 
 <p style="width:100%;text-align:center;font-size:20px">The lazy UI framework. Get lazui ... do less ... deliver more.</p>
 
