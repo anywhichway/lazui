@@ -60,7 +60,7 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
                 if(node.hasAttribute(`${prefix}:options`)) {
                     const options = JSON.parse(node.getAttribute(`${prefix}:options`));
                     if(options?.url?.handlers) {
-                        const handlers = globalThis[options?.url?.handlers] || (await import(options.url.handlers)).default;
+                        const handlers = globalThis[options?.url?.handlers] || (await import(new URL(options.url.handlers,document.baseURI).href)).default;
                         ["get","post","put","delete","head","patch","options"].forEach((key) => {
                             if(typeof handlers[key] === "function") node[key] = handlers[key];
                         })

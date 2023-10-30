@@ -1,4 +1,4 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui"
+<script src="/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
@@ -1879,7 +1879,7 @@ export {handlers as default};
 ```
 
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url:get="/hello/world" data-lz:options="{url:{handlers:'/docs/helloworld.js'}}" data-lz:mode="document">
+<template data-lz:url:get="/hello/world" data-lz:options="{url:{handlers:'./helloworld.js'}}" data-lz:mode="document">
 test
 </template>
 <div data-lz:src="/hello/world"></div>
