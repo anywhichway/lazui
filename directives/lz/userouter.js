@@ -1,4 +1,4 @@
-import {examplify} from "examplify.js";
+import {examplify} from "./examplify.js";
 
 async function userouter({attribute,lazui,options}) {
     lazui.useRouter = useRouter;

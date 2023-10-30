@@ -1,6 +1,6 @@
 {
   "name": "@anywhichway/lazui",
-  "version": "0.0.38-a",
+  "version": "0.0.39-a",
   "description": "Single page apps and lazy loading sites with minimal JavaScript or client build processes.",
   "main": "lazui.js",
   "type": "module",
@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "npx markdown-it-cli index.md -o index.html",
     "serve": "node server.js"
   },
   "repository": {
@@ -46,6 +47,7 @@
     "terser": "^5.22.0"
   },
   "devDependencies": {
+    "markdown-it-cli": "^1.0.0",
     "terser-webpack-plugin": "^5.3.9",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"

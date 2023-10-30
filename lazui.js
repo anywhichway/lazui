@@ -569,8 +569,8 @@
                             console.warn(`Directive: ${namespace}/${handler} threw an error ${e}`);
                         }
                     }
-                } catch {
-                    console.warn(`Can't find directive: ${namespace}/${handler}`);
+                } catch(e) {
+                    console.warn(`Can't find directive: ${namespace}/${handler} ${e}`);
                 }
             }
         }
