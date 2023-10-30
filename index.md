@@ -153,6 +153,8 @@
 
 ## quick start
 
+Load `lazui` from a CDN
+
 ```html
 <script src="https://www.unpkg.com/@anywhichway/lazui"></script>
 ```
@@ -164,8 +166,6 @@
     Click Count: ${clickCount}
 </div>
 ```
-
-
 
 ```html
 <template id="goodbye">
