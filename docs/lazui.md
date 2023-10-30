@@ -903,14 +903,19 @@ element will be removed. If the original value is a boolean or number, it is use
 period, it is used as a property of the closest state. If the original value is of the form `#<id>.<property>?`, it is
 resolved using the state with the id. If the `property` portion is left off, then the state itself is used.
 
+```!html
+<div data-lz:if=".name" data-lz:usestate="person">Hello, ${name}!</div>
+```
 
-<div data-lz:if=".name" data-lz:usestate="person" data-lz:showsource="beforeBegin">Hello, ${name}!</div>
+```!html
+<div data-lz:if="${age < 21}">Hello, ${name}!</div>
+```
 
-<div data-lz:if="${age < 21}"  data-lz:usestate="person" data-lz:showsource="beforeBegin">Hello, ${name}!</div>
+does not render at all because `age >= 21`.
 
-does not render at all.
-
-<div data-lz:if="${age >= 21}" data-lz:usestate="person" data-lz:showsource="beforeBegin">Welcome to the bar, ${name}!</div>
+```!html
+<div data-lz:if="${age >= 21}" data-lz:usestate="person">Welcome to the bar, ${name}!</div>
+```
 
 
 #### forEach
@@ -926,9 +931,13 @@ The `innerHTML` will be cloned for each element in the array resulting from a ca
 `Object.entries`, i.e. `Object[what](<resolvedAttributeValue>)`, and the array element will be used as the context for the
 cloned element.
 
-<div data-lz:foreach:value:name:i='["Peter","Paul","Mary"]' data-lz:showsource="beforeBegin"><template><p>${i+1}: Hello, ${name}!</p></template></div>
+```!html
+<div data-lz:foreach:value:name:i='["Peter","Paul","Mary"]'><template><p>${i+1}: Hello, ${name}!</p></template></div>
+```
 
-<div data-lz:foreach:entry='["Peter","Paul","Mary"]' data-lz:showsource="beforeBegin"><template><p>${parseInt(entry[0])+1}: Hello, ${entry[1]}!</p></template></div>
+```!html
+<div data-lz:foreach:entry='["Peter","Paul","Mary"]'><template><p>${parseInt(entry[0])+1}: Hello, ${entry[1]}!</p></template></div>
+```
 
 #### show
 
