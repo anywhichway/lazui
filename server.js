@@ -20,10 +20,36 @@ const md = new MarkdownIt({
     }
 }).use(MarkdownItDeflist);
 
+import {examplify} from 'examplify';
 import { parse } from 'node-html-parser';
 import { minify } from "terser";
 import brotli from './brotli.cjs';
 const {compress} = brotli;
+
+function replaceBetween(inputString, delimiterStart, delimiterEnd, replacementCallback,inclusive) {
+    const placeholders = [];
+    let startIndex = inputString.indexOf(delimiterStart),
+        endIndex;
+    while (startIndex !== -1) {
+        endIndex = inputString.indexOf(delimiterEnd, startIndex + (inclusive ? delimiterStart.length : 0));
+        if (endIndex !== -1) {
+            const textBetweenDelimiters = inputString.substring(startIndex + (inclusive ? 0 : delimiterStart.length), endIndex + (inclusive ? delimiterEnd.length : 0));
+            const replacementText = replacementCallback(textBetweenDelimiters);
+            const placeholder = `_PLCHLDR_${placeholders.length}_`;
+            placeholders.push({ placeholder, replacementText });
+            inputString = inputString.substring(0, startIndex) + placeholder + inputString.substring(endIndex+(inclusive ? delimiterEnd.length : 0));
+        } else {
+            // If the end delimiter is not found, break the loop
+            break;
+        }
+        startIndex = inputString.indexOf(delimiterStart, endIndex+1+(inclusive ? delimiterEnd.length : 0))
+    }
+    // Perform the replacements
+    while(inputString.includes("_PLCHLDR_")) {
+        placeholders.forEach(({ placeholder, replacementText }) => inputString = inputString.replace(placeholder, inclusive ? replacementText : delimiterStart + replacementText + delimiterEnd));
+    }
+    return inputString;
+}
 
 const sleep = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -199,19 +225,19 @@ app.delete('/data/%id.json', async (req) => {
     return new Response("ok",{status:200});
 })
 
-/*
-app.post('/reflectbody', async (req) => {
-    return new Response(await req.text(),{status:200});
-})
-*/
-
 app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
         try {
             const data = await fs.readFile(process.cwd() + req.URL.pathname),
-                markedDown = `<html><head></head><body>${md.render(data.toString())}</body></html>`
-            const markedDOM = parse(markedDown),
+                replacementCallback = (text) => {
+                    text = text.replace("```!html","").replace("```","");
+                    return "```html" + text + "```\n" + text;
+                },
+                //string = replaceBetween(data.toString(),"```!html","```",replacementCallback,true),
+                string = examplify(data.toString()),
+                markedDown = `<html><head></head><body>${md.render(string)}</body></html>`,
+                markedDOM = parse(markedDown),
                 head = markedDOM.querySelector("head"),
                 body = markedDOM.querySelector("body");
             // move meta, link, title tags to head (leave style and template in body)

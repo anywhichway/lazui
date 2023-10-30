@@ -1,4 +1,4 @@
-<script src="/lazui"
+<script src="https://www.unpkg.com/@anywhichway/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
@@ -59,6 +59,7 @@ document.addEventListener("lz:loaded", async () => {
 <lz-toc></lz-toc>
 
 ## Introduction
+
 
 `lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
 
@@ -495,8 +496,10 @@ If `expect:"html"` is provided, the response is parsed at HTML, scripts are not 
 If `expect:"template"` is provided, the HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
 Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is not updated unless `lz:bind` has been used.
 
-<template data-lz:url:post="/form-template-example" data-lz:mode="document">
-    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
+Assume the server returns this when a `post` is made to `/form-template-example`.
+
+<template data-lz:url:post="/form-template-example" data-lz:mode="document" data-lz:showsource:inner="beforeBegin">
+<div>${name}'s age is ${age}.</div>
 </template>
 
 <div data-lz:showsource:inner="beforeBegin">
@@ -1508,19 +1511,15 @@ Returns raw HTML and ensures that nested templates are processed correctly along
 This allows the expedient but potentially unsafe processing of templates to deliver HTML to a browser:
 
 ```javascript
-(() => {
-   const {html} = lazui;
+const {html} = lazui;
 
-   const list = ['some', '<b>nasty</b>', 'list'];
+const list = ['some', '<b>nasty</b>', 'list'];
 
-   const content = html` // or add a .raw before the backtick
-    <ul>${list.map(text => html`
-    <li>${text}</li>
-    `)}
-    </ul>`; 
-
-   document.currentScript.insertAdjacentHTML("afterEnd",content);
-})()
+const content = html` // or add a .raw before the backtick
+ <ul>${list.map(text => html`
+ <li>${text}</li>
+ `)}
+ </ul>`;
 ```
 
 <script>
@@ -1550,23 +1549,14 @@ any strings passed in will be inserted as text not HTML, `<template>` placement 
 and functions assigned to event handlers, attributes starting with `on`, e.g. `onclick` are bound to the DOM nodes properly.
 
 ```javascript
-(() => {
-   const script = document.currentScript;
-   document.addEventListener("lz:loaded",() => {
-       const {html} = lazui;
+const {html} = lazui;
 
-       const list = ['some', '<b>nasty</b>', 'list'];
+const list = ['some', '<b>nasty</b>', 'list'];
 
-       const content = html.documentFragment`
-       <ul>${list.map(text => html`
-       <li>${text}</li>
-       `)}
-       </ul>`;
-
-        script.after(...content.childNodes);
-   })
-})()
+const content = html.documentFragment`<ul>${list.map(text => html`<li>${text}</li>`)}</ul>`;
 ```
+
+As you can see `<b>nasty</b>` is now text not HTML:
 
 <script>
 (() => {
@@ -1605,7 +1595,6 @@ const content = html`
 const sanitizer = new Sanitizer();
   
 const fragment = content.toDocumentFragment(sanitizer.sanitize.bind(sanitizer));
-document.currentScript.after(...fragment.childNodes);
 ```
 
 **Note**: Technically `<style>` and `<template>` tags are not allowed outside a document `<head>` element. However, `lazui`
@@ -1618,23 +1607,18 @@ function is called with `<style>` and `<template>` elements in a `<head>` sectio
 `nodes` is just a convenience wrapper around `html.documentFragment`. It returns the child node list instead of the fragment.
 
 ```javascript
-(() => {
-   const script = document.currentScript;
-   document.addEventListener("lz:loaded",() => {
-       const {html} = lazui;
+const {html} = lazui;
 
-       const list = ['some', '<b>nasty</b>', 'list'];
+const list = ['some', '<b>nasty</b>', 'list'];
 
-       const content = html`
-       <ul>${list.map(text => html`
-       <li>${text}</li>
-       `)}
-       </ul>`;
-
-       script.after(...content.nodes());
-   });
-})()
+const content = html`
+<ul>${list.map(text => html`
+<li>${text}</li>
+`)}
+</ul>`;
 ```
+
+Once again, `<b>nasty</b>` is now text not HTML:
 
 <script>
 (() => {
@@ -1717,7 +1701,7 @@ value for the content.*
 
 The classic use of render takes an interpolation and replaces the inner contents of a node with the result of the interpolation.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <div id="classic-render"></div>
 <script>
 (() => {
@@ -1731,9 +1715,9 @@ The classic use of render takes an interpolation and replaces the inner contents
       };
       render(document.getElementById('classic-render'), html`<div onclick=${clicked}>Click count: ${count}</div>`);
    });
-});
+})();
 </script>
-</div>
+```
 
 #### With Strings
 
