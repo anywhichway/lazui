@@ -159,6 +159,14 @@
 
 ### for HTML
 
+```!html
+<div data-lz:state="{clickCount:0}" onclick="this.state.clickCount++">
+    Click Count: ${clickCount}
+</div>
+```
+
+
+
 ```html
 <template id="goodbye">
     Goodbye ${userName}
@@ -207,7 +215,7 @@
 
 ### for JavaScript
 
-```javascript
+```!html
 <script>
 const {render,html} = lazui;
 let count = 0;
@@ -220,6 +228,7 @@ render(document.currentScript,
     {where:"afterEnd"});
 </script>
 ```
+
 
 <script>
 (() => {

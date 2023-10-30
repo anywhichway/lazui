@@ -347,15 +347,12 @@ Setting state at the document level can be useful with Markdown. Below is the co
 
 Modifying a state will cause any elements using the state to be updated.
 
-```html
-<div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
+```!html
+<div data-lz:state="{clickCount:0}" onclick="this.state.clickCount++">
     Click Count: ${clickCount}
 </div>
 ```
 
-<div data-lz:state="{clickCount:0}" data-lz:mode="open" onclick="this.state.clickCount++">
-    Click Count: ${clickCount}
-</div>
 
 ##### Dependency Tracking
 
@@ -678,7 +675,7 @@ for now.
    options: {}, // options to pass to router
    allowRemote": true // optional, default is false, use true to allow spoofing of remote content,
    allowRemote:true,
-   markdownProcessor: { // optional, only required is you expect to have untranslated Markdown delivered to the browser
+   markdownProcessor: { // optional, only required if you expect to have untranslated Markdown delivered to the browser
       src:'https://esm.sh/markdown-it',
       call:'render',
       isClass:true,
@@ -850,7 +847,8 @@ Events can be separated by commas, e.g. `data-lz:on="click dispatch:load, mouseo
 The event modifiers `debounce:<ms>` and `throttle:<ms>` can be used to control responsiveness to user interaction. The
 below will effectively ignore clicks at less than 2 second increments.
 
-<div data-lz:src="/path/to/somefile.html" data-lz:on="click debounce:2000 dispatch:load" data-lz:showsource="beforeBegin" data-lz:mode="open">Click Me</div>
+<template data-lz:url:get="/thanks.html" data-lz:mode="document">Thanks for clicking!</template>
+<div data-lz:src="/thanks.html" data-lz:on="click debounce:2000 dispatch:load" data-lz:showsource="beforeBegin" data-lz:target="nextSibling">Click Me</div>
 
 ##### Loading Just Once
 
@@ -979,6 +977,9 @@ Here, the source is the `inner` HTML of the element:
     Content stored in a template
 </template>
 </div>
+
+If you are receiving unprocessed Markdown, it can also include the [examplify](https://github.com/anywhichway/examplify)
+notation for code blocks, i.e. &grave;&grave;&grave;!html to replicate the code block content into the source.
 
 ### Dataset Management
 
@@ -1701,11 +1702,19 @@ value for the content.*
 
 The classic use of render takes an interpolation and replaces the inner contents of a node with the result of the interpolation.
 
-```!html
+```javascript
+const {render,html} = lazui;
+let count = 0;
+const clicked = (event) => {
+    count++;
+    event.target.innerText = `Click count: ${count}`;
+};
+render(document.getElementById('classic-render'), html`<div onclick=${clicked}>Click count: ${count}</div>`);
+```
+
 <div id="classic-render"></div>
 <script>
 (() => {
-   const script = document.currentScript;
    document.addEventListener("lz:loaded",() => {
       const {render,html} = lazui;
       let count = 0;
@@ -1717,7 +1726,6 @@ The classic use of render takes an interpolation and replaces the inner contents
    });
 })();
 </script>
-```
 
 #### With Strings
 

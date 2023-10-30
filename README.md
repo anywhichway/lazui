@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-30 v0.0.38a fixed issue backtick substitution and highlightjs, documented examplify
+
 2023-10-29 v0.0.37a fixed issue with handler loading for routes
 
 2023-10-29 v0.0.36a added use of examplify

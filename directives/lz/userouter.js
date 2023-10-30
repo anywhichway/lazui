@@ -1,3 +1,5 @@
+import {examplify} from "examplify.js";
+
 async function userouter({attribute,lazui,options}) {
     lazui.useRouter = useRouter;
     const {prefix,JSON,url} = lazui,
@@ -120,7 +122,7 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
                             }
                         }
                         if(node.getAttribute(`${prefix}:content-type`)==="text/markdown") {
-                            value = markdown(value);
+                            value = markdown(examplify(value));
                         }
                         return new Response(value,{status, headers:response?.status===200 ? response.status.headers : headers})
                     }

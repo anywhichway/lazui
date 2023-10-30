@@ -39,11 +39,18 @@ async function on({el,attribute,state,root,lazui})  {
                 } else if (trigger.debounce && !event.detail.debounced) {
                     event.preventDefault();
                     event.stopPropagation();
-                    if (debounce) clearTimeout(debounce);
-                    debounce = setTimeout(() => {
-                        debounce = null; // need to copy event data
-                        setTimeout(() => el.dispatchEvent(new CustomEvent(event.type, {detail: {debounced: trigger.debounce}})), trigger.delay);
-                    }, trigger.debounce);
+                    if (debounce) {
+                        clearTimeout(debounce);
+                        debounce = setTimeout(() => {
+                            debounce = null; // need to copy event data
+                            setTimeout(() => el.dispatchEvent(new CustomEvent(event.type, {detail: {debounced: trigger.debounce}})), trigger.delay);
+                        }, trigger.debounce);
+                    } else {
+                        debounce = setTimeout(() => {
+                            debounce = null; // need to copy event data
+                            setTimeout(() => el.dispatchEvent(new CustomEvent(event.type, {detail: {debounced: trigger.debounce}})), trigger.delay);
+                        });
+                    }
                     return;
                 }
                 if (trigger.delay && !event.detail.timeout) {
