@@ -15,7 +15,7 @@ const parseTrigger = (text) => {
         return trigger;
     }
 }
-async function on({el,attribute,state,root,lazui})  {
+async function trigger({el,attribute,state,root,lazui})  {
     let throttle,debounce;
     const {render,update,router,prefix,replaceBetween,url,JSON} = lazui,
         {loadController} = await import(url + "/directives/lz/controller.js"),
@@ -80,8 +80,9 @@ async function on({el,attribute,state,root,lazui})  {
                     if (trigger.once) triggers.splice(triggers.indexOf(trigger), 1);
                     if (trigger.dispatch==="load" || event.type==="load") {
                         event.stopImmediatePropagation();
-                        const src = el.getAttribute(`${prefix}:src`);
+                        let src = el.getAttribute(`${prefix}:src`);
                         let request;
+                        //if(src?.startsWith("#")) src = window.location.pathname + src;
                         try {
                             const json = JSON.parse(src),
                                 mode = json.mode;
@@ -110,7 +111,6 @@ async function on({el,attribute,state,root,lazui})  {
                                     content = render(el,content,{state, root:el, where:null});
                                     update({node:el, content, state, root:el, where, recurse: 1});
                                 }
-                                //if(controller) loadController({el,attribute:controller,state,root,lazui})
                             } else {
                                 render(el, string, {state, root: el, where, recurse: 1});
                                 if (controller) loadController({el, attribute: controller, state, root, lazui})
@@ -147,12 +147,7 @@ async function on({el,attribute,state,root,lazui})  {
             } else { // ??
                 //el.dispatchEvent(new CustomEvent("load", {detail: {sourceEvent: event}}));
             }
-        }
-
-    //if (element.tagName === "A") return ["click"];
-    //if (element.tagName === "FORM") return ["submit"];
-    //if (["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) return ["change", "input"];
-    //if(!triggers.find((trigger) => trigger.type==="load")) triggers.push({type:"load"});
+        };
     let loaded = false;
     triggers.forEach((trigger) => setTimeout(()=> {
         el.addEventListener(trigger.type,handler);
@@ -163,4 +158,4 @@ async function on({el,attribute,state,root,lazui})  {
     }));
 }
 
-export {on}
+export {trigger}

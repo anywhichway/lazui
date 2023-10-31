@@ -60,7 +60,6 @@ document.addEventListener("lz:loaded", async () => {
 
 ## Introduction
 
-
 `lazui` is a JavaScript library that allows you to create interactive websites and single page apps with less work.
 
 It extends the attribute space of typical HTML to provide a rich set of functionality. 
@@ -239,7 +238,10 @@ Attribute directives can be provided configuration values with another directive
 The configuration data for a specific directive is provided through a key of the same name as the directive. For instance,
 
 ```html
-<template id="person" data-lz:state="{name:'Joe',age:30}" data-lz:options="{state:{storage:'localStorage'}}"></template>
+<template id="person"
+    data-lz:state="{name:'Joe',age:30}"
+    data-lz:options="{state:{storage:'localStorage'}}"
+</template>
 ```
 
 ### Relaxed JSON Parser
@@ -286,12 +288,14 @@ to include general data.
 The `data-lz:state` attribute can be used to define a state/model. The value of the attribute is the name of the state/model. 
 The state/model is defined as a JSON object inside an element (typically a `<template>`) or [loaded from a file](#loading-content):
 
-<template data-lz:state="person" data-lz:showsource="beforeBegin">
+```!html
+<template data-lz:state="person">
 {
     name: "John",
     age: 30
 }
 </template>
+```
 
 Now you can do this:
 
@@ -329,7 +333,9 @@ Setting state at the document level can be useful with Markdown. Below is the co
 *Note*: Due to issues with some Markdown parsers, you must put the `<template>` at the end.
 
 ```html
-<div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
+<div data-lz:src="/using-state-with-markdown.md" 
+     data-lz:mode="frame" 
+     title="Lazui: Markdown Example"></div>
 ```
 
 <template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
@@ -367,11 +373,11 @@ no JavaScript level. You can take a more functional approach by using the [html]
 You can also define state inline by providing JSON as the value of the `data-lz:state` attribute. An element id will be
 generated automatically if the element does not have an id.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <div data-lz:state="{name:'John',age:30}">
 ${name} is ${age} years old.
 </div>
-</div>
+```
 
 #### State Inheritance
 
@@ -405,11 +411,11 @@ To bind form elements to state, use the `lz:bind` attribute. The value of the at
 of the property in the state. If `lz:bind` has no value, but the `name` attribute is provided, the value of the `name` 
 attribute is used as the property in the state.
 
-*Note*: Proceesing forms requires the use of a directive not yet covered, `lz:controller`. See 
+*Note*: Processing forms requires the use of a directive not yet covered, `lz:controller`. See 
 [Pre-Built Controllers](#pre-built-controllers) for more information. Forms are covered here because it is likely the next
 thing you will want to use after understanding state.
 
-##### Form With No Submit
+##### With No Submit
 
 ```html
 <div data-lz:usestate="formexamplestate">
@@ -442,7 +448,7 @@ If `lz:bind` has no value, but the `name` attribute is provided, the value of th
 
 If `lz:bind` has a value and the `name` attribute is missing, the name attribute is added to the element.
 
-##### Form With Standard Submit
+##### With Standard Submit
 
 Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
 to the form. When submitted, the event is trapped and `fetch` is used to get the response for updating the target(s) of 
@@ -453,23 +459,60 @@ The example below just returns the body it was sent.
 
 <template data-lz:url:post="/reflectbody" data-lz:mode="document"></template>
 
-<div data-lz:state="{name:'Dick',age:25}" data-lz:showsource="beforeBegin">
-   <form action="/reflectbody" data-lz:controller="/controllers/lz/form.js" data-lz:target="nextSibling" enctype="multipart/form-data">
-      <input data-lz:bind="name" type="text" placeholder="name">
-      <input data-lz:bind="age" type="number" placeholder="age">
-      <button type="submit">Submit</button><br>
+```!html
+<div data-lz:state="{name:'Dick',age:25}">
+   <form action="/reflectbody" 
+      data-lz:controller="/controllers/lz/form.js" 
+      data-lz:target="nextSibling" 
+      enctype="multipart/form-data">
+         <input data-lz:bind="name" type="text" placeholder="name">
+         <input data-lz:bind="age" type="number" placeholder="age">
+         <button type="submit">Submit</button><br>
    </form>
 </div>
+```
 
-##### Form With Templates
+##### With No Inner HTML
 
-In `lazui` supports an `enctype="application/json"` for forms to facilitate template completion and database operations on the server, in addition to the standard:
+If a form has no `innerHTML`, the `state` local to the form is used to generate one based on the types of the property values.
+
+```!html
+<template data-lz:state="formexample">
+{
+   name: "Joe",
+   age: 20
+}
+</template>
+<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample">
+</form>
+<div data-lz:usestate="formexample">
+Name: ${name} Age: ${age}
+</div>
+```
+
+Generated forms both read from and write to their state.
+
+If the form has an action, a `sumbit` button will be added.
+
+If `lz:options="{controller:{useLabels:true}}"` is set, labels will be provided.
+
+```!html
+<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample" data-lz:options="{controller:{useLabels:true,bind:'write'}}">
+</form>
+```
+
+##### With Template Responses
+
+`lazui` supports an `enctype="application/json"` for forms to facilitate template completion and database operations on 
+the server, in addition to the standard:
 
 - `application/x-www-form-urlencoded`
 - `multipart/form-data`
 - `text/plain`
 
-<div data-lz:showsource:inner="beforeBegin">
+If `lz:options` provides a template, the response is treated as JSON and the template is used to format the response.
+
+```!html
 <template id="formresponse">
     <div>Thank you for letting us know ${name}'s age, ${age}.</div>
 </template>
@@ -482,16 +525,20 @@ In `lazui` supports an `enctype="application/json"` for forms to facilitate temp
    <input data-lz:bind="age" type="number" placeholder="age">
    <button type="submit">Submit</button>
 </form>
-</div>
+```
 
-If a template is provided, then `expect:"json"` is assumed for the `lz:options` controller configuration, other expect types will throw an error.
+If a template is provided, then `expect:"json"` is assumed for the `lz:options` controller configuration, other expect 
+types will throw an error.
 
 If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
 
-If `expect:"html"` is provided, the response is parsed at HTML, scripts are not run and only the body is used.
+If `expect:"html"` is provided, the response is parsed as HTML, scripts are not run and only the body is used to place
+at the `data-lz:target` or `target`.
 
-If `expect:"template"` is provided, the HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
-Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is not updated unless `lz:bind` has been used.
+If `expect:"template"` is provided, then the server is expected to provide a template for formatting. Hence, the returned 
+HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
+Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is 
+not updated unless `lz:bind` has been used.
 
 Assume the server returns this when a `post` is made to `/form-template-example`.
 
@@ -499,7 +546,7 @@ Assume the server returns this when a `post` is made to `/form-template-example`
 <div>${name}'s age is ${age}.</div>
 </template>
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <form action="/form-template-example"  
    data-lz:state="{name:'Harry',age:22}" 
    data-lz:controller="/controllers/lz/form.js" 
@@ -509,7 +556,7 @@ Assume the server returns this when a `post` is made to `/form-template-example`
    <input data-lz:bind="age"  type="number" placeholder="age">
    <button type="submit">Submit</button>
 </form>
-</div>
+```
 
 ### Loading Content
 
@@ -521,12 +568,12 @@ By default, this will load the contents of `somefile.html` as the `innerHTML` of
 
 If the `lz:src` value starts with a `#` it is treated as an element id and the `innerHTML` of the element is used as the content.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <template id="myelement">
     Content stored in a template
 </template>
 <div data-lz:src="#myelement"></div>
-</div>
+```
 
 *Markdown Hint*: Except for your main `.md` file, you do not have to add the `lazui.js` script to your `markdown` files, 
 it will be added automatically used for any content loaded using `lz-src`.
@@ -537,14 +584,29 @@ Anything with a `src`, `action` (forms), or `data-lz:src`, attribute can have a 
 can be `beforeBegin`, `previousSibling`, `afterBegin`, `beforeEnd`, `nextSibling`, `afterEnd`, `inner`, `outer`, 
 `firstChild`, `lastChild`, `body`, `parent`, `_top`, `_blank` or a CSS selectable target.
 
-The targets `inner`, `outer`, `parent` and `body` can also have a `.<css-selector>` suffix. This means you can update multiple
+The targets are case insensitive. The camelCase is used for legibility.
+
+The targets `inner`, `outer`, `parent` and `body` can also have a `!<css-selector>` suffix. This means you can update multiple
 elements with a single anchor or form submission.
 
-- `outer.<css>` and `inner.<css>` are effectively `this.querySelectorAll(<css>)`
-- `parent.<css>` is effectively `this.parentElement.querySelectorAll(<css>)`
-- `body.<css>` is effectively `document.body.querySelectorAll(<css>)`
+- `outer!<css>` and `inner!<css>` are effectively `this.querySelectorAll(<css>)` but one replaces the inside and the other outside
+- `parent!<css>` is effectively `this.parentElement.querySelectorAll(<css>)` and replaces the innerHTML of the selected elements
+- `body!<css>` is effectively `document.body.querySelectorAll(<css>)` and replaces the innerHTML of the selected elements
 
 If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
+
+```!html
+<div id="somecontent" hidden>Hello, World!</div>
+<div id="myparent">
+   <span class="someclass"></span>
+   <span id="child2" 
+      data-lz:src="#somecontent" 
+      data-lz:target="parent!.someclass" 
+      data-lz:trigger="mouseover 
+      dispatch:load">Mouse over me!</span>
+   <span class="someclass"></span>
+</div>
+```
 
 #### State and Loaded Content
 
@@ -618,7 +680,7 @@ If the file has the same origin as the requesting document, scripts will be proc
 ignored. In the case above, they are ignored. However, if we mount a similar file locally, they
 will be executed.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <template data-lz:url:get="/element.html" data-lz:mode="document">
     <style>
         p {
@@ -634,7 +696,7 @@ will be executed.
     </script>
 </template>
 <div data-lz:src="/element.html" data-lz:mode="open"></div>
-</div>
+```
 
 **Note**: `data-lz:mode="closed"` is not supported.
 
@@ -696,7 +758,7 @@ capability is not available.
 
 The `lz:url` attribute always has a second component of `get`, `put`, `post`, or `delete` to indicate the HTTP method for
 which a response is supported. The value of the attribute is the URL of the file. The path must always be a full URL or 
-an absolute path on the current server. Relative paths are not supported.
+an absolute path on the current origin. Relative paths are not supported.
 
 The `lz:url` attribute should only be associated with a `<template>`. It will be ignored elsewhere.
 
@@ -710,7 +772,7 @@ Except for examples currently requiring server interaction, e.g. [Server Sent Ev
 
 ##### get
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <template data-lz:url:get="/path/to/somefile.html" data-lz:mode="document">
     <style>
         p {
@@ -723,17 +785,19 @@ Except for examples currently requiring server interaction, e.g. [Server Sent Ev
     </p>
 </template>
 <div data-lz:src="/path/to/somefile.html" data-lz:mode="open"></div>
-</div>
+```
 
 You can even simulate headers and status codes by adding `data-lz:header`, `data-lz:headers` and `data-lz:status`
 attributes to the source elements.
 
-<div data-lz:showsource:inner="beforeBegin">
-<template data-lz:url:get="/404.html" data-lz:status="404" data-lz:mode="document">
-Not Found
+```!html
+<template data-lz:url:get="/404.html"
+   data-lz:status="404"
+   data-lz:mode="document">
+      Not Found
 </template>
 <div data-lz:src="/404.html"></div>
-</div>
+```
 
 You can include `head` and `body` sections. Any `meta http-equiv` content in the `head` section will be treated as a 
 header and included in the router response headers.
@@ -799,14 +863,13 @@ for asynchronous updates of the page to occur.
 <template data-lz:url:post="/path/to/newelement.html"></template>
 <div data-lz:src="/path/to/newelement.html"></div>
 <div data-lz:src='{"url":"/path/to/newelement.html","method":"POST","body":"name=John","mode":"document"}'></div>
-<div data-lz:src="/path/to/newelement.html" data-lz:on="load delay:1000"></div>
+<div data-lz:src="/path/to/newelement.html" data-lz:trigger="load delay:1000"></div>
 ```
 
-<!--template data-lz:url:get="/path/to/newelement.html" data-lz:mode="document" data-lz:status="404"></template-->
 <template data-lz:url:post="/path/to/newelement.html" data-lz:mode="document"></template>
 <div data-lz:src='{url:"/path/to/newelement.html",method:"GET",mode:"document"}'></div>
 <div data-lz:src='{url:"/path/to/newelement.html",method:"POST",body:"name=John"}'></div>
-<div data-lz:src='{url:"/path/to/newelement.html",method:"GET",mode:"document"}' data-lz:on="load delay:1000"></div>
+<div data-lz:src='{url:"/path/to/newelement.html",method:"GET",mode:"document"}' data-lz:trigger="load delay:1000"></div>
 
 The `GET`, `DELETE`, `PUT`, `PATCH`, `HEAD` methods are respected:
 
@@ -820,27 +883,26 @@ The `GET`, `DELETE`, `PUT`, `PATCH`, `HEAD` methods are respected:
 - `HEAD` if the element exists, will get the `<head>` `innerHTML` if the element is a `template`; otherwise nothing. If the element does not
    exist, forwards to the server.
 
-As you can see, the basic `lazui` router is content focused not functionally focused. If you need a functional focus, then you must
+As you can see, the basic `lazui` router is content, not functionally, focused. If you need a functional focus, then you must
 work with the router at the JavaScript level.
 
 #### Handling Events
 
 In some cases, a file should only be loaded when a particular event occurs, e.g. a `click`. This can be done by adding
-the `data-lz:on` attribute to the element, e.g.
+the `data-lz:trigger` attribute to the element, e.g.
 
 ```html
-<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:on="click dispatch:load" data-lz:mode="open">Click Me</div>
+<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:trigger="click dispatch:load" data-lz:mode="open">Click Me</div>
 ``` 
 
 Try clicking on the below:
 
-<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:on="click dispatch:load" data-lz:mode="open">Click Me</div>
+<div data-lz:src="https://lazui.org/path/to/element.html" data-lz:trigger="click dispatch:load" data-lz:mode="open">Click Me</div>
 
 Note, unlike `htmx` triggers, `lazui` triggers do not automatically load content, you must dispatch a `load`
 event to get the load to occur.
 
-Events can be separated by commas, e.g. `data-lz:on="click dispatch:load, mouseover dispatch:load once"`.
-
+Events can be separated by commas, e.g. `data-lz:trigger="click dispatch:load, mouseover dispatch:load once"`.
 
 ##### User Responsiveness
 
@@ -848,30 +910,39 @@ The event modifiers `debounce:<ms>` and `throttle:<ms>` can be used to control r
 below will effectively ignore clicks at less than 2 second increments.
 
 <template data-lz:url:get="/thanks.html" data-lz:mode="document">Thanks for clicking!</template>
-<div data-lz:src="/thanks.html" data-lz:on="click debounce:2000 dispatch:load" data-lz:showsource="beforeBegin" data-lz:target="nextSibling">Click Me</div>
+```!html
+<div data-lz:src="/thanks.html"
+   data-lz:trigger="click debounce:2000 dispatch:load"
+   data-lz:target="nextSibling">
+      Click Me
+</div>
+```
 
 ##### Loading Just Once
 
 `once` can be used to process an event only the first time it occurs. `load once` is the same as having just a 
-`data-lz:src` attribute and no `data-lz:on` attribute. However, `click once call:window.alert("clicked")` will only display the 
+`data-lz:src` attribute and no `data-lz:trigger` attribute. However, `click once call:window.alert("clicked")` will only display the 
 alert once.
 
 ##### Delaying and Repeating Loads
 
 Processing of events and subsequent loading of the content can be delayed by adding `delay:<ms>` to the event, e.g.
-`data-lz:on="click dispatch:load delay:1000"`.
+`data-lz:trigger="click dispatch:load delay:1000"`.
 
-A repeating load can be established with `every`, e.g. `data-lz:on="load every:1000"` will start updating
+A repeating load can be established with `every`, e.g. `data-lz:trigger="load every:1000"` will start updating
 the content every second.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <template id="clock" data-lz:url:get="/clock" data-lz:mode="document">
     <p>
         The time is ${new Date().toLocaleTimeString()}
     </p>
 </template>
-<div data-lz:src="/clock" data-lz:on="click once delay:2000 dispatch:load placeholder:Loading clock ...,load every:1000">Click Me</div>
+<div data-lz:src="/clock"
+   data-lz:trigger="click once delay:2000 dispatch:load placeholder:Loading clock ...,load every:1000">
+      Click Me
 </div>
+```
 
 ##### Alternative Actions
 
@@ -918,7 +989,7 @@ does not render at all because `age >= 21`.
 ```
 
 
-#### forEach
+#### foreach
 
 The `lz:foreach` directive can be used to repeat content. It takes the form `lz:foreach:what:itemAlias:indexAlias:arrayAlias`.
 The `what` portion can be `value`, `key`, or `entry`. The `itemAlias` defaults to the value of `what`. 
@@ -945,7 +1016,7 @@ The `lz:show` directive can be used to conditionally show content. If works just
 the content, it sets or removes the `hidden` attribute.
 
 
-#### showsource
+#### showsource and examplify
 
 The `lz:showsource` directive can be used to show the source of any HTML element. It takes the form `lz:showsource:inner|outer?=<target>`.
 The default is `outer`.
@@ -987,8 +1058,10 @@ Here, the source is the `inner` HTML of the element:
 </template>
 </div>
 
-If you are receiving unprocessed Markdown, it can also include the [examplify](https://github.com/anywhichway/examplify)
-notation for code blocks, i.e. &grave;&grave;&grave;!html to replicate the code block content into the source.
+If you are receiving unprocessed Markdown, or the `lazui` server you can also use [examplify](https://github.com/anywhichway/examplify)
+notation for code blocks, i.e. &grave;&grave;&grave;!html to replicate the code block content into the source. This
+will preserve multi-line attribute formatting and indentation, whereas `lz:showsource` will not because it uses the `outerHTML`, 
+which is not formatted.
 
 ### Dataset Management
 
@@ -1145,7 +1218,7 @@ You could also load the state from a remote source:
 
 ### Pushed Content
 
-Although content can be polled using `lz:on="load interval:<ms>"`, it is often more efficient to use pushed content.
+Although content can be polled using `lz:trigger="load interval:<ms>"`, it is often more efficient to use pushed content.
 
 Three types of pushed content are supported:
 

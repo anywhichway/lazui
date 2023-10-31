@@ -29,9 +29,59 @@ const formToJSON = (el,JSON,includeEmpty) => {
     },{})
 }
 
-const init = async ({el,root,lazui,options})=> {
+const getInputElementHTML = (name,value,{bind,prefix}) => {
+    const type = typeof value;
+    if(type==="boolean") {
+        return `<label for="${name}">${name}:</label><input type="checkbox" name="${name}" ${value ? "checked" : ""} ${bind ? `${prefix}:bind="${name}"` : ""}>`
+    }
+    if(type==="number" || type==="bigint") {
+        return `<input type="number" name="${name}" title="${name}" placeholder="${name}" ${bind ? `${prefix}:bind="${name}"` : ""}>`
+    }
+    if(type==="string") {
+        if(value.length<=50) {
+            return `<input type="text" name="${name}" title="${name}" placeholder="${name}" ${bind ? `${prefix}:bind="${name}"` : ""}>`
+        }
+        return `<textarea name="${name}" title="${name}" placeholder="${name}"  ${bind ? `${prefix}:bind="${name}"` : ""}>${value}</textarea>`
+    }
+    if(Array.isArray(value) && value.every((item) => isPrimitive(item))) {
+        return `<input type="text" name="${name}" title="${name}" placeholder="${name}" value="${value.join(", ")}" ${bind ? `${prefix}:bind="${name}"` : ""}>`
+    }
+}
+
+const init = async ({el,root,state,lazui,options})=> {
     if(el.tagName!=="FORM") throw new TypeError("lz:form: el must be a form element");
-    const {getContext,JSON,router,render,interpolate} = lazui;
+    const {getContext,JSON,router,render,interpolate,prefix} = lazui;
+    if(el.innerHTML.trim()==="") {
+        if(el.hasAttribute("data-lz:src")) {
+            el.innerHTML = await fetch(el.getAttribute("data-lz:src")).then((response) => response.text());
+        } else {
+            if(el.state) {
+                const table = document.createElement("table");
+                Object.entries(el.state).forEach(([key,value]) => {
+                    const html = getInputElementHTML(key,value,{bind:true,prefix});
+                    if(html) {
+                        const row = document.createElement("tr"),
+                            cell = document.createElement("td");
+                        if(options.useLabels) {
+                            const label = document.createElement("label");
+                            label.setAttribute("for",key);
+                            label.innerText = key[0].toUpperCase() + key.slice(1) + ":";
+                            row.appendChild(label);
+                        }
+                        cell.innerHTML = html;
+                        row.appendChild(cell);
+                        table.appendChild(row);
+                    }
+                });
+                el.appendChild(table);
+                if(el.hasAttribute("action")) {
+                    el.insertAdjacentHTML("beforeend",`<br><button type="submit">Submit</button>`);
+                }
+            }
+        }
+        await init({el,root,state,lazui,options});
+        return;
+    }
     for(const input of el.querySelectorAll("input,select,textarea")) {
         let property = input.getAttribute("data-lz:bind:read") || input.getAttribute("data-lz:bind:write") || input.getAttribute("data-lz:bind");
         if(!property && (input.hasAttribute("data-lz:bind:read") || input.hasAttribute("data-lz:bind:write") || input.hasAttribute("data-lz:bind"))) {
@@ -41,7 +91,8 @@ const init = async ({el,root,lazui,options})=> {
             if(!input.hasAttribute("name")) input.setAttribute("name",property);
             if(input.hasAttribute("data-lz:bind:write") || input.hasAttribute("data-lz:bind")) {
                 const listener = (event) => {
-                    const context = getContext(el);
+                    const context = getContext(el),
+                        expectType = typeof context[property];
                     let value;
                     if(input.type==="select-multiple") {
                         value = [...event.target.selectedOptions].map((option) => {
@@ -58,6 +109,19 @@ const init = async ({el,root,lazui,options})=> {
                             value = JSON.parse(event.target.value);
                         } catch {
                             value = event.target.value;
+                        }
+                    }
+                    if(Array.isArray(context[property]) && context[property].every((item) => isPrimitive(item))) {
+                        value = value.split(",").map((value) => {
+                            value = value.trim()
+                            try {
+                                return JSON.parse(value);
+                            } catch {
+                                return value;
+                            }
+                        });
+                        if(!value.every((item) => isPrimitive(item))) {
+                            return;
                         }
                     }
                     context.set(property,value);

@@ -709,6 +709,7 @@
     }
 
     const update = ({node, content, state=document.documentState||window.globalState||{}, where="inner", root=document.documentElement, animator = (f) => animate(f),callback}) => {
+        if(where) where = where.toLowerCase(); // note: where can be specifically assigned null
         const mode = node.nodeType===Node.ELEMENT_NODE ? node.getAttribute(`${directiveExports.prefix}:mode`) : null;
         if(mode) {
             if(where!=="inner") throw new Error(`${mode} must use where="inner" not where="${where}"`);
@@ -717,7 +718,13 @@
         const updated = [],
              // if no content.childNodes, content is a NodeList or an error
             updater = async () => {
-                const getNodes = (content) => content.childNodes ? content.childNodes : content;
+                const getNodes = (content,clone) => {
+                    if(clone) {
+                        if(content.childNodes) return [...content.childNodes].map((node) => node.cloneNode(true) );
+                        return content.cloneNode(true);
+                    }
+                    return content.childNodes ? content.childNodes : content;
+                }
                 content = await content;
                 let childNodes = [...getNodes(content)];
                 if (where === "inner") {
@@ -746,36 +753,36 @@
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     updated.push(...getNodes(content))
                     target.replaceWith(...getNodes(content));
-                } else if (where === "previousSibling") {
+                } else if (where === "previoussibling") {
                     updated.push(...getNodes(content))
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     if(target.previousSibling) target.previousSibling.replaceWith(...getNodes(content));
                     else target.before(...getNodes(content));
-                } else if (where === "beforeBegin") {
+                } else if (where === "beforebegin") {
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     updated.push(...getNodes(content))
                     target.before(...getNodes(content));
-                } else if (where === "afterBegin") {
+                } else if (where === "afterbegin") {
                     updated.push(...content.childNodes);
                     if (node.nodeType === Node.TEXT_NODE) node.after(...getNodes(content));
                     else node.prepend(...getNodes(content));
-                } else if (where === "firstChild") {
+                } else if (where === "firstchild") {
                     updated.push(...getNodes(content));
                     if (node.firstChild) node.firstChild.replaceWith(...getNodes(content));
                     else node.append(...getNodes(content))
-                } else if (where === "lastChild") {
+                } else if (where === "lastchild") {
                     updated.push(...getNodes(content));
                     if (node.lastChild) node.lastChild.replaceWith(...getNodes(content));
                     else node.append(...getNodes(content))
-                } else if (where === "beforeEnd") {
+                } else if (where === "beforeend") {
                     updated.push(...getNodes(content))
                     if (node.nodeType === Node.TEXT_NODE) node.before(...getNodes(content));
                     else node.append(...content.childNodes);
-                } else if (where === "afterEnd") {
+                } else if (where === "afterend") {
                     updated.push(...getNodes(content))
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     target.after(...getNodes(content));
-                } else if (where === "nextSibling") {
+                } else if (where === "nextsibling") {
                     updated.push(...getNodes(content))
                     const target = root instanceof DocumentFragment && root.host ? root.host : node;
                     if(target.nextSibling) target.nextSibling.replaceWith(...getNodes(content));
@@ -800,18 +807,37 @@
                     updated.push(...childNodes);
                     root.replaceChildren(...childNodes)
                 } else {
-                    const [selector,_where]= where.startsWith("#") ? where.split(".") : [where,"inner"],
-                        target = root.querySelector(selector);
-                    if (!target) throw new Error(`Target element ${where} not found`);
-                    updated.push(target);
-                    if(_where==="inner") target.replaceChildren(...getNodes(content))
-                    else if(_where==="beforeBegin") target.before(...getNodes(content))
-                    else if(_where==="afterBegin") target.prepend(...getNodes(content))
-                    else if(_where==="beforeEnd") target.append(...getNodes(content))
-                    else if(_where==="afterEnd") target.after(...getNodes(content))
-                    else throw new Error(`Invalid where: ${where}`);
+                    let [_where,selector]= where.split("!");
+                    if(_where.startsWith("#")) {
+                        selector = _where;
+                        _where = "root"
+                    }
+                    let targets;
+                    if(selector) {
+                        if(_where==="root") {
+                            targets = root.querySelectorAll(selector);
+                        } else if(_where==="inner" || _where==="outer") {
+                            targets = node.querySelectorAll(selector);
+                        } else if(_where==="parent") {
+                            targets = node.parentElement?.querySelectorAll(selector);
+                        } else if(_where==="body") {
+                            targets = document.body.querySelectorAll(selector);
+                        } else {
+                            throw new Error(`Unable to locate target: ${where}. Invalid where: ${_where}`)
+                        }
+                    } else {
+                        throw new Error(`Invalid target: ${where}`)
+                    }
+                    if(!targets) throw new Error(`Unable to locate target: ${where}`);
+                    for(const target of targets) {
+                        updated.push(target);
+                        if(_where==="inner") {
+                            target.replaceChildren(...getNodes(content,true));
+                        } else {
+                            target.replaceWith(...getNodes(content,true));
+                        }
+                    }
                 }
-                //childNodes.forEach((node) => handleDirectives(node,state,root));
                 if (callback) setTimeout(() => callback({childNodes,root,animate}))
             };
         if (typeof animator === "function") animator(updater)

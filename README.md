@@ -54,7 +54,7 @@ Here is a short list of features, visit [lazui.org](https://lazui.org) for a gra
 <template id="goodbye">
     Goodbye ${userName}
 </template>
-<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
+<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:trigger="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 ```
@@ -94,6 +94,8 @@ render(document.currentScript,
 Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
+
+2023-10-31 v0.0.41a updated version of examplify, changed `lz:on` to `lz:trigger, fixed issues with multi-target updates, enhanced docs
 
 2023-10-30 v0.0.40a updated version of examplify
 

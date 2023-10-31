@@ -171,7 +171,7 @@ Load `lazui` from a CDN
 <template id="goodbye">
     Goodbye ${userName}
 </template>
-<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
+<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:trigger="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 ```
@@ -179,7 +179,7 @@ Load `lazui` from a CDN
 <template id="goodbye">
     Goodbye ${userName}!
 </template>
-<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:on="click dispatch:load" data-lz:target="outer">
+<div data-lz:src="#goodbye" data-lz:state='{userName:"John"}' data-lz:trigger="click dispatch:load" data-lz:target="outer">
     Hello, ${userName}. The date and time is ${new Date().toLocaleTimeString()}. Click to leave.
 </div>
 

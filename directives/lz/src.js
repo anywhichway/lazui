@@ -14,8 +14,8 @@ function src({el,attribute,root,state,lazui}) {
         return;
         // if(controller) loadController({el,attribute:controller,state,root,lazui})
     }*/
-    if(el.hasAttribute(`${prefix}:on`)) {
-        handleDirective(el.attributes[`${prefix}:on`],{state,root})
+    if(el.hasAttribute(`${prefix}:trigger`)) {
+        handleDirective(el.attributes[`${prefix}:trigger`],{state,root})
         return;
     }
     let request;
