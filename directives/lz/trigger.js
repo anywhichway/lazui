@@ -118,12 +118,16 @@ async function trigger({el,attribute,state,root,lazui})  {
                                     //if(state || el.state) {
                                     //    content = render(el,content,{state, root:el, where:null});
                                     //}
-                                    ["style","template"].forEach((tagName) => {
-                                        for(const el of content.head.querySelectorAll(tagName)) {
+                                    for(const el of content.head.querySelectorAll("style")) {
+                                        content.body.insertAdjacentElement("afterbegin",el);
+                                    }
+                                    if(new URL(request.url).origin!==location.origin) {
+                                        content = content.body;
+                                    } else {
+                                        for(const el of content.head.querySelectorAll("script")) {
                                             content.body.insertAdjacentElement("afterbegin",el);
                                         }
-                                    })
-                                    if(new URL(request.url).origin!==location.origin) content = content.body;
+                                    }
                                     content = render(el,content,{state, root:el, where:null});
                                     update({node:el, content, state, root:el, where, recurse: 1})
                                 }

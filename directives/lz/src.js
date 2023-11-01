@@ -6,14 +6,6 @@ function src({el,attribute,root,state,lazui}) {
     } else if(el.hasAttribute(`${prefix}:state`)) {
         state = el.state;
     }
-    /*if(attribute.value.startsWith("#")) {
-        const source = root.getElementById(attribute.value.slice(1)),
-            string = source.innerHTML || source.innerText,
-            where = el.getAttribute(`${prefix}:target`) || el.getAttribute("target") || undefined;
-        render(el, string, {state, root, where, recurse: 1});
-        return;
-        // if(controller) loadController({el,attribute:controller,state,root,lazui})
-    }*/
     if(el.hasAttribute(`${prefix}:trigger`)) {
         handleDirective(el.attributes[`${prefix}:trigger`],{state,root})
         return;
@@ -28,7 +20,7 @@ function src({el,attribute,root,state,lazui}) {
             Object.defineProperty(request,"mode",{value:mode});
         }
     } catch {
-        request = new Request(attribute.value);
+        request = new Request(attribute.value)
     }
     router.fetch(request).then(async (response) => {
         if(request.method==="GET" || response.status!==200) {
@@ -47,13 +39,19 @@ function src({el,attribute,root,state,lazui}) {
                 //if(state || el.state) {
                 //    content = render(el,content,{state, root:el, where:null});
                 //}
-                ["style","template"].forEach((tagName) => {
-                    for(const el of content.head.querySelectorAll(tagName)) {
+                for(const el of content.head.querySelectorAll("style")) {
+                    content.body.insertAdjacentElement("afterbegin",el);
+                }
+                if(new URL(request.url).origin!==location.origin) {
+                    content = content.body;
+                } else {
+                    for(const el of content.head.querySelectorAll("script")) {
                         content.body.insertAdjacentElement("afterbegin",el);
                     }
-                })
-                if(new URL(request.url).origin!==location.origin) content = content.body;
-                render(el,content,{state, root:el, where, recurse:1});
+                }
+                content = render(el,content,{state, root:el, where:null});
+                update({node:el, content, state, root:el, where, recurse: 1})
+                //render(el,content,{state, root:el, where, recurse:1});
                 //update({node:el, content, state, root:el, where, recurse: 1});
                 if(controller) loadController({el,attribute:controller,state,root,lazui})
             }

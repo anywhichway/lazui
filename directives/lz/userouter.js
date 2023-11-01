@@ -41,11 +41,6 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
         const url = c.req.URL = new URL(c.req.url, document.baseURI),
             method = c.req.method.toLowerCase(),
             isLocal = c.req.url.startsWith(document.location.origin);
-        if(url.protocol===lazuiProtocol) {
-            const pathname = url.pathname.slice(1),
-                src = host + pathname;
-            return window.fetch(src);
-        }
         let mode = c.req.raw.mode;
         if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
             const el = document.getElementById(url.hash.slice(1));
@@ -138,6 +133,51 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
                     node.innerHTML = "";
                     node.setAttribute(`${prefix}:status`,"404");
                     return new Response("ok", {status, headers});
+                }
+            } else if(url.protocol===lazuiProtocol) {
+                const pathname = url.pathname.slice(1),
+                    parts = pathname.split("/");
+                parts.shift();
+                if(parts[0]==="localStorage" || parts[0]==="sessionStorage" || parts[0]==="indexedDB") {
+                    const storage = globalThis[parts[0]];
+                    if(parts[1]==="!clear") {
+                        storage.clear();
+                        return new Response("ok",{status:200});
+                    } else if(method==="get") {
+                        const value = storage.getItem(parts[1]);
+                        if(value) return new Response(value,{status:200});
+                        return new Response("Not Found",{status:404});
+                    } else if(method==="post" || method==="put") {
+                        const text = await c.req.text();
+                        storage.setItem(parts[1],text);
+                        return new Response(text,{status:200});
+                    } else if(method==="delete") {
+                        storage.removeItem(parts[1]);
+                        return new Response("ok",{status:200});
+                    } else if(method==="patch") {
+                        const toPatch = storage.getItem(parts[1]);
+                        if(!toPatch) return new Response("Not Found",{status:404});
+                        if(c.req.headers.get("content-type")==="application/json") {
+                            const text = await c.req.text();
+                            let json;
+                            try {
+                                json = JSON.parse(text);
+                            } catch(e) {
+                                return new Response(`Bad Request: malformed JSON ${e}`,{status:400});
+                            }
+                            Object.assign(toPatch,JSON.parse(text));
+                            return new Response(JSON.stringify(toPatch),{status:200});
+                        } else {
+                            const text = await c.req.text();
+                            storage.setItem(parts[1],text);
+                            return new Response(text,{status:200});
+                        }
+                    }
+                } else if(parts[0]==="indexedDB") {
+
+                } else {
+                    const src = host + pathname;
+                    return window.fetch(src);
                 }
             }
         }

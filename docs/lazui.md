@@ -151,7 +151,7 @@ The above will render as:
 
 <div>Hello, the date and time is ${new Date().toLocaleTimeString()}</div>
 
-## Working With Markdown
+### Working With Markdown
 
 You can even include template literals in your Markdown.
 
@@ -359,14 +359,11 @@ Modifying a state will cause any elements using the state to be updated.
 </div>
 ```
 
-
-##### Dependency Tracking
-
-`lazui` does not use a virtual DOM, it uses direct dependency tracking. A special updating function wrapped around
-the normal browser screen refresh handler tracks state use. When a state changes, the nodes that depend on that state
-are updated. The nodes are typically text nodes, but can also be attributes. This is automatic when working at the
-no JavaScript level. You can take a more functional approach by using the [html](#html) template literal and 
-[render](#render) function if you write JavaScript.
+`lazui` does not use a virtual DOM to manage changes, it uses direct dependency tracking. A special updating function 
+wrapped around the normal browser screen refresh handler tracks state use. When a state changes, the nodes that depend 
+on that state are updated. The nodes are typically text nodes, but can also be attributes. This is automatic when working 
+at the no JavaScript level. You can take a more functional approach and manage reactivity yourself by using the [html](#html) 
+tagged template literal and [render](#render) functions if you write JavaScript.
 
 #### Inline State
 
@@ -433,7 +430,7 @@ Anything with a `src`, `action` (forms), or `data-lz:src`, attribute can have a 
 can be `beforeBegin`, `previousSibling`, `afterBegin`, `beforeEnd`, `nextSibling`, `afterEnd`, `inner`, `outer`, 
 `firstChild`, `lastChild`, `body`, `parent`, `_top`, `_blank` or a CSS selectable target.
 
-The targets are case insensitive. The camelCase is used for legibility.
+The targets are case-insensitive. The camelCase is used for legibility.
 
 If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
 
@@ -469,10 +466,11 @@ The source of `markdowntemplate.md` is:
 ${name} is ${age} years old.
 ```
 
-```!html
 <template data-lz:url:get="/markdowntemplate.md" data-lz:mode="document">
     ${name} is ${age} years old.
 </template>
+
+```!html
 <div data-lz:src="/markdowntemplate.md" data-lz:usestate="person"></div>
 ```
 
@@ -779,7 +777,7 @@ Except for examples currently requiring server interaction, e.g. [Server Sent Ev
 [Web Sockets](#web-sockets), all the examples in this document depend on files simulated by `<template>s` with a
 `lz:url` attribute and a client side router.
 
-##### get
+##### Get
 
 ```!html
 <template data-lz:url:get="/path/to/somefile.html" data-lz:mode="document">
@@ -833,7 +831,7 @@ header and included in the router response headers.
 </template>
 ```
 
-##### put and post
+##### Put and Post
 
 Elements with `lz:url:put` and `lz:url-post` are used to indicate to the router that it is should update the content 
 of the `<template>` with the corresponding `lz:url:get`. If it does not exist, the `<template>` will be created with 
@@ -842,11 +840,56 @@ then the content will used ad the response body; otherwise, the body of the requ
 
 See the next section [Enhanced Requests](#enhanced-requests) for an example.
 
-##### delete
+##### Delete
 
 Removes the content from the element with the corresponding `lz:url:get` URL and sets its `lz:status` to `404`.
 
-##### More Sophisticated Routing
+##### Remote State
+
+With a router in place you can access and store remote state. The `lz:state` attribute supports the use of `lz:src` and 
+`lz:options`.
+
+Below, it is used to store the state in `localStorage`. The state will prefer the data in the storage over
+that originally specified as part of the `innerHTML`.
+
+The below example uses some JavaScript, but that is just to show you that the state is being stored in `localStorage`.
+You can use `localStorage` without needing to write JavaScript.
+
+```!html
+<template id="someuniqueid"
+   data-lz:state
+   data-lz:src="lz://localStorage/someuniqueid"
+   data-lz:options="{state:{put:true,delete:true}}">
+{
+   name: "Johnathan",
+   "^": { }
+}
+</template>
+<div id="localstorage">localStorage: </div>
+<div id="state">inDocument: </div>
+<script>
+document.addEventListener("lz:loaded",() => {
+   const state = lazui.getState("someuniqueid");
+   state.addEventListener("state:put",() => {
+     const el = document.getElementById("localstorage");
+     el.insertAdjacentText("beforeEnd",localStorage.getItem("someuniqueid")); // {"name":"John"}
+     const el2 = document.getElementById("state");
+     el2.insertAdjacentText("beforeEnd",JSON.stringify(lazui.getState("someuniqueid"))); // {"name":"John"}
+     state.delete();
+   });
+   state.name = "John";
+})
+</script>
+```
+
+The prefix `lz://` on the src URL is a special `protocol` that tells `lazui` to handle the URL in a unique way. *Note*:
+If you chage the `lazui` namespace, `lz://` will change to the new namespace, e.g. `mynamespace://`.
+
+You can replace `lz://localStorage` with `lz://sessionStorage` to use `sessionStorage`.
+
+You can replace `lz://localStorage/someuniqueid` with `https://somedataserver.com/somepath/someuniqueid` to use a remote server.
+
+##### Advanced Routing
 
 If you wish to use more sophisticated client side routing, you can use the `lz:options` attribute to specify
 handlers that will be loaded. The value of the attribute is the path to a JavaScript file. See 
@@ -1239,7 +1282,7 @@ You could also load the state from a remote source:
 }
 </template>
 <div data-lz:showsource:inner="beforeBegin">
-<template data-lz:state="remotedonuts" data-lz:options="{state:{src:'/donuts.json'}}">
+<template id="remotedonuts" data-lz:state data-lz:src="/donuts.json">
 </template>
 <div data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="remotedonuts"></div>
 </div>
@@ -1450,97 +1493,6 @@ The model name can be followed by a space and the word `eager` to force updates 
 </div>
 ```
 
-## Advanced Use Of State
-
-The `lz:state` attribute supports the use of `lz:options`. Below, it is used to store the state in `localStorage` and treat
-the data as a string. This is useful for storing state across page loads. The state will prefer the data in the storage over
-that originally specified as part of the `innerHTML`. 
-
-<div data-lz:showsource:inner="beforeBegin">
-<template id="someuniquelocalid" data-lz:state="{name:'Johnathan'}" data-lz:options="{state:{storage:'localStorage',stringify:true}}">
-</template>
-<script>
-document.addEventListener("lz:loaded",() => {
-   const state = lazui.getState("someuniquelocalid");
-   state.name = "John";
-   console.log(localStorage.getItem("someuniquelocalid")); // {"name":"John"}
-});
-</script>
-</div>
-
-You can use `sessionStorage` in addition to `localStorage`.
-
-The `data-lz:options` attribute value can also take a `src` key and HTTP verb settings to load and manage JSON at a remote location, e.g.
-
-
-<div data-lz:showsource:inner="beforeBegin">
-<template data-lz:state="someuniqueremoteid" data-lz:options="{state:{src:'/data/someuniqueid.json',get:true,post:true,put:true,delete:true}}">
-</template>
-<script data-lz:usestate="someuniqueremoteid">
-document.addEventListener("lz:loaded",() => {
-   const state = lazui.getState("someuniqueremoteid");
-   state.name = "John";
-   state["^"].timeout = Date.now() + 1000000;
-   state["^"].mtime = Date.now() + 2000;
-});
-</script>
-</div>
-
-If `post` is true, when the state is first encountered on the page a `post` request with the state contents will be sent to the server.
-
-If `put` is true, every time the state changes, the state will be posted to the `src` URL and updated with the response. 
-
-If the state is ever deleted (by removing the element it is associated with), a `delete` request will be sent to the `src` URL.
-
-### Meta Data and Data Versioning
-
-The below explanation assumes the data requests are being sent to a server based on the basic server included with `lazui`
-
-In the above example you can see the line `state["^"].mtime = Date.now() + 2000`.
-
-The special attribute `^` is used to store metadata about the state, e.g. who created it, access controls, timeouts, etc. 
-You can store anything you wish in this attribute. `lazui` focuses on `mtime` and `timeout`.
-
-The `mtime` property is used to store the last modified time of the state. See algorithm below for how spoofing the server
-and overwriting data is prevented.
-
-`lazui` uses time based versioning where the server is the sole arbiter of the time to ensure the browser always has 
-the most recent copy of the data, even if it is being updated by multiple people. Here is the algorithm:
-
-- If the request is a `delete`
-  - retrieve the server copy of the data
-  - If there is a copy
-    - Set the `^.timeout to` the current server time (don't actually delete)
-    - Respond with 200 and nothing
-  - Else
-    - Respond with 404
-- If the request is a `get`
-  - retrieve the server copy of the data
-  - If there is a server copy
-    - If a timeout value on the server copy is less than or equal to the server time
-      - Respond with 404
-    - Else 
-      - Respond with 200 and server copy
-  - Else Respond with 404
-- Otherwise, for `put` and `post`
-  - If `timeout` from the browser copy is less than or equal to the current server time
-    - delete the `^.timeout` on the browser copy
-  - If the `mtime` received from the browser is greater than that on the server
-    - wait until server time matches the `mtime` from the browser (prevents spoofing, penalizes requestor with delay)
-  - If the `mtime` for an update is less than or equal to that on the server
-    - retrieve the server copy of the data
-    - set browser copy `mtime` to server current time
-    - If there is no current server copy
-      - create a server copy using the browser data
-    - Else
-      - update the server copy using the browser data
-    - Respond with 200 and server copy
-
-There are some security issues with the above, browser requests can completely overwrite data or make it look like it is
-gone by making delete requests, but there are limits to what can be achieved without writing JavaScript.
-
-If the above approaches do not suit your needs, see [Advanced Storage](#advanced-storage) for how to implement your own
-storage engine or modify the Basic Server.
 
 ## Using JavaScript
 
@@ -2048,7 +2000,18 @@ const handlers = {
 };
 ````
 
-### Advanced Storage
+### Advanced State
+
+States support `addEventLister`, `remoteEventListener`, `dispatchEvent`, and `delete`.
+
+When a state is created, it posts the event `state:created` with the `{detail:{state}}`.
+
+When a state is loaded from a URL, it posts the event `state:loaded` with `{detail:{state,src}}`.
+
+When a state changes, it posts the event `state:change` with `{detail:{state,property,value,oldValue,path,ancestors}}}`.
+
+When a state is deleted, in posts the event `state:deleted` with `{detail:{state}}`.
+
 
 ### Advanced Configuration
 

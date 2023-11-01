@@ -82,7 +82,7 @@
                         const oldValue = target[property];
                         if(el) {
                             let event;
-                            el.dispatchEvent(event = new CustomEvent("delete", {bubbles: true, detail: {property, oldValue,path,ancestors}}));
+                            el.dispatchEvent(event = new CustomEvent("state:delete", {bubbles: true, detail: {property, oldValue,path,ancestors}}));
                             if(event.defaultPrevented) return true;
                         }
                         delete target[property];
@@ -96,8 +96,8 @@
                         if(oldValue!==undefined && value!==undefined) target[property] = value;
                         if(el && value!==undefined) {
                             let event;
-                            if(wasIn) el.dispatchEvent(event = new CustomEvent("change", {bubbles: true, detail: {state:proxy,property, value,oldValue,path,ancestors}}));
-                            else el.dispatchEvent(event = new CustomEvent("set", {bubbles: true, detail: {state:proxy,property, value,path,ancestors}}));
+                            if(wasIn) el.dispatchEvent(event = new CustomEvent("state:change", {bubbles: true, detail: {state:proxy,property, value,oldValue,path,ancestors}}));
+                            else el.dispatchEvent(event = new CustomEvent("state:set", {bubbles: true, detail: {state:proxy,property, value,path,ancestors}}));
                             if(event.defaultPrevented) {
                                 if(oldValue===undefined) delete target[property];
                                 else target[property] = oldValue;
@@ -140,9 +140,20 @@
                         if(!el || !el.isConnected) throw new Error("addEventListener not available. State not bound to a connected element");
                         return el.addEventListener.bind(el);
                     }
+                    if(property==="dispatchEvent") {
+                        if(!el || !el.isConnected) return ()=> {};
+                        return el.dispatchEvent.bind(el);
+                    }
                     if(property==="removeEventListener") {
                         if(!el || !el.isConnected) throw new Error("removeEventListener not available. State not bound to a connected element");
                         return el.removeEventListener.bind(el);
+                    }
+                    if(property==="delete") {
+                        if(!el || !el.isConnected) return ()=> {};
+                        return () => {
+                            el.remove();
+                            el.dispatchEvent(new CustomEvent("state:deleted", {bubbles: true, detail: {state:proxy}}));
+                        }
                     }
                     if(property==="_isActivated_") return true;
                     if(typeof property=== "symbol") return value;

@@ -10,9 +10,9 @@ const patch = (target,value) => {
 };
 
 const state = async({el,attribute,root,options,window,document,lazui,args}) => {
-    const {getState,setState,JSON,router} = lazui,
-        src = options.src;
-    let id, state;
+    const {getState,setState,JSON,router,prefix} = lazui,
+        src = el.getAttribute('data-lz:src');
+    let id, state, created, loaded;
     if(attribute.value.startsWith("{")) {
         state = JSON.parse(attribute.value);
     } else {
@@ -23,24 +23,57 @@ const state = async({el,attribute,root,options,window,document,lazui,args}) => {
     }
     if(!state) state = getState(el.id,{root,options});
     if(!state) {
-        if(options.src) { //el.hasAttribute('data-lz:src')
-            const text = await router.fetch(options.src).then((response) => response.text()); //el.getAttribute('data-lz:src')
-            // should handle server errors before trying to parse
-            state = JSON.parse(text);
-        } else {
-            state = JSON.parse(el.innerText||el.innerHTML.trim())
+        if(src) {
+            const response = await router.fetch(src);
+            if(response.status===200) {
+                const text = await response.text();
+                try {
+                    state = JSON.parse(text);
+                } catch(e) {
+                    throw new Error(`${prefix}:state ${src} is not valid JSON`);
+                }
+                loaded = src;
+            } else if(response.status!==404) {
+                throw new Error(`${prefix}:state ${src} returned ${response.status}`);
+            }
+        }
+        if(!state) {
+            try {
+                state = JSON.parse(el.innerText.trim()||el.innerHTML.trim());
+                created = true;
+                if(src) {
+                    const response = await router.fetch(new Request(src,{method:"PUT",body:JSON.stringify(state),headers:{"content-type":"application/json"}}));
+                    if(response.status!==200) {
+                        throw new Error(`${prefix}:state PUT ${src} returned ${response.status}`);
+                    }
+                }
+            } catch(e) {
+                if(el.hasAttribute('data-lz:src')) {
+                    throw new Error(`${prefix}:state ${src} was not found and ${el.id} is not valid JSON ${e}`)
+                }
+                throw new Error(`${prefix}:state ${el.id} is not valid JSON ${e}`);
+            }
         }
     }
     state = setState(el,state,{root,options});
+    if(loaded) state.dispatchEvent(new CustomEvent("state:loaded",{bubbles:true,detail:{state,src:loaded}}));
+    if(created) state.dispatchEvent(new CustomEvent("state:created",{bubbles:true,detail:{state}}));
     if(options.put) {
-        state.addEventListener("change", async ({detail}) => {
-            if(detail.property==="mtime" && detail.path[detail.path.length-1]==="^") return; // prevent loops from changes on server to mtime
-            const target = detail.ancestors[0] || detail.state,
-                text = await router.fetch(new Request(src,{method:"PUT",body:JSON.stringify(target),headers:{"content-type":"application/json"}})).then((response) => {
-                  return response.text()
+        state.addEventListener("state:change", async ({detail}) => {
+            const {property,path,ancestors,state} = detail;
+            if(property==="mtime" && path[path.length-1]==="^") return; // prevent loops from changes on server to mtime
+            const data = ancestors[0] || state,
+                text = await router.fetch(new Request(src,{method:"PUT",body:JSON.stringify(data),headers:{"content-type":"application/json"}})).then((response) => {
+                    return response.text();
                 }),
                 newstate = JSON.parse(text);
-            patch(target,newstate);
+            patch(data,newstate);
+            state.dispatchEvent(new CustomEvent("state:put",{bubbles:true,detail}));
+        })
+    }
+    if(options.delete) {
+        state.addEventListener("state:deleted", () => {
+            router.fetch(new Request(src,{method:"DELETE"}));
         })
     }
     if(args[0]==="global") window.globalState = state;

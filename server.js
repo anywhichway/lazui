@@ -13,7 +13,7 @@ import * as path from "node:path"
 const md = new MarkdownIt({
     html: true,
     linkify: true,
-    typographer: true
+    typographer: false
 }).use(MarkdownItAnchor,{
     slugify(s) {
         return encodeURIComponent(String(s).trim().toLowerCase().replace(/[\s+,:+,\=+,/]/g, '-').replace(/'/g, ''))
@@ -162,6 +162,57 @@ const dateTime = (clients) => {
 
 app.get('/datetime',sse(dateTime));
 
+/*
+### Meta Data and Data Versioning - not yet implemented
+
+The below explanation assumes the data requests are being sent to a server based on the basic server included with `lazui`
+
+In the above example you can see the line `state["^"].mtime = Date.now() + 2000`.
+
+The special attribute `^` is used to store metadata about the state, e.g. who created it, access controls, timeouts, etc.
+You can store anything you wish in this attribute. `lazui` focuses on `mtime` and `timeout`.
+
+The `mtime` property is used to store the last modified time of the state. See algorithm below for how spoofing the server
+and overwriting data is prevented.
+
+`lazui` uses time based versioning where the server is the sole arbiter of the time to ensure the browser always has
+the most recent copy of the data, even if it is being updated by multiple people. Here is the algorithm:
+
+- If the request is a `delete`
+  - retrieve the server copy of the data
+  - If there is a copy
+    - Set the `^.timeout to` the current server time (don't actually delete)
+    - Respond with 200 and nothing
+  - Else
+    - Respond with 404
+- If the request is a `get`
+  - retrieve the server copy of the data
+  - If there is a server copy
+    - If a timeout value on the server copy is less than or equal to the server time
+      - Respond with 404
+    - Else
+      - Respond with 200 and server copy
+  - Else Respond with 404
+- Otherwise, for `put` and `post`
+  - If `timeout` from the browser copy is less than or equal to the current server time
+    - delete the `^.timeout` on the browser copy
+  - If the `mtime` received from the browser is greater than that on the server
+    - wait until server time matches the `mtime` from the browser (prevents spoofing, penalizes requestor with delay)
+  - If the `mtime` for an update is less than or equal to that on the server
+    - retrieve the server copy of the data
+    - set browser copy `mtime` to server current time
+    - If there is no current server copy
+      - create a server copy using the browser data
+    - Else
+      - update the server copy using the browser data
+    - Respond with 200 and server copy
+
+There are some security issues with the above, browser requests can completely overwrite data or make it look like it is
+gone by making delete requests, but there are limits to what can be achieved without writing JavaScript.
+
+If the above approaches do not suit your needs, see [Advanced Storage](#advanced-storage) for how to implement your own
+storage engine or modify the Basic Server.
+
 app.get('/data/:id.json', (req) => {
     const {id} = req.params;
     return sendFile(process.cwd() + "/data/" + id + ".json");
@@ -199,6 +250,7 @@ app.delete('/data/%id.json', async (req) => {
     await fs.unlink(process.cwd() + "/data/" + id + ".json");
     return new Response("ok",{status:200});
 })
+ */
 
 app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
