@@ -47,6 +47,11 @@ function src({el,attribute,root,state,lazui}) {
                 //if(state || el.state) {
                 //    content = render(el,content,{state, root:el, where:null});
                 //}
+                ["style","template"].forEach((tagName) => {
+                    for(const el of content.head.querySelectorAll(tagName)) {
+                        content.body.insertAdjacentElement("afterbegin",el);
+                    }
+                })
                 if(new URL(request.url).origin!==location.origin) content = content.body;
                 render(el,content,{state, root:el, where, recurse:1});
                 //update({node:el, content, state, root:el, where, recurse: 1});

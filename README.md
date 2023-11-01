@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-10-31 v0.0.42a enhanced docs, fixed issue related to styles not being applied for documents loaded via `lz:src`
+
 2023-10-31 v0.0.41a updated version of examplify, changed `lz:on` to `lz:trigger, fixed issues with multi-target updates, enhanced docs
 
 2023-10-30 v0.0.40a updated version of examplify

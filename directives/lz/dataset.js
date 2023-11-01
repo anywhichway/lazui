@@ -5,8 +5,9 @@ function dataset({el,attribute,args,lazui})  {
         for (const [key, value] of Object.entries(dataset)) el.dataset[key] = value;
     } else {
         const key = args[0];
-        return el.dataset[key] = attribute.value;
+        el.dataset[key] = attribute.value;
     }
+    el.removeAttribute(attribute.name);
 }
 
 export {dataset}

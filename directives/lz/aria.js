@@ -5,6 +5,7 @@ function aria({el,attribute,lazui})  {
         key = key.replace(/[A-Z]/g, (match, offset) => (offset > 0 ? '-' : '') + match.toLowerCase());
         el.setAttribute("aria-"+key,value)
     })
+    el.removeAttribute(attribute.name)
 }
 
 export {aria}

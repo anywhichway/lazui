@@ -122,7 +122,7 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
                             }
                         }
                         if(node.getAttribute(`${prefix}:content-type`)==="text/markdown") {
-                            value = markdown(examplify(value));
+                            value = markdown(examplify(value.trim()));
                         }
                         return new Response(value,{status, headers:response?.status===200 ? response.status.headers : headers})
                     }

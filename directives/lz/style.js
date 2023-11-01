@@ -5,6 +5,7 @@ function style({el,attribute,lazui})  {
         key = key.replace(/[A-Z]/g, (match, offset) => (offset > 0 ? '-' : '') + match.toLowerCase());
         el.style[key] = value;
     })
+    el.removeAttribute(attribute.name)
 }
 
 function styleItem({el,attribute,args,lazui})  {

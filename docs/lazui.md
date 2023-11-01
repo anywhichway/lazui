@@ -405,160 +405,7 @@ States are inherited down the DOM and shadow the values of properties with the s
     </div>
 </div>
 
-#### With Forms
-
-To bind form elements to state, use the `lz:bind` attribute. The value of the attribute is the name 
-of the property in the state. If `lz:bind` has no value, but the `name` attribute is provided, the value of the `name` 
-attribute is used as the property in the state.
-
-*Note*: Processing forms requires the use of a directive not yet covered, `lz:controller`. See 
-[Pre-Built Controllers](#pre-built-controllers) for more information. Forms are covered here because it is likely the next
-thing you will want to use after understanding state.
-
-##### With No Submit
-
-```html
-<div data-lz:usestate="formexamplestate">
-   <form data-lz:controller="/controllers/lz/form.js">
-      <input name="name" data-lz:bind type="text" placeholder="name">
-      <input name="age"data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
-   </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-```
-
-<template data-lz:state="formexamplestate">
-   {
-   name: "Tom",
-   age: 21,
-   married: false
-   }
-</template>
-<div data-lz:usestate="formexamplestate">
-   <form data-lz:controller="/controllers/lz/form.js">
-      <input name="name" data-lz:bind type="text" placeholder="name">
-      <input name="age"data-lz:bind="age" type="number" placeholder="age">
-      <input data-lz:bind="married" type="checkbox"> Married
-   </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-
-If `lz:bind` has no value, but the `name` attribute is provided, the value of the `name` attribute is used as the property in the state.
-
-If `lz:bind` has a value and the `name` attribute is missing, the name attribute is added to the element.
-
-##### With Standard Submit
-
-Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
-to the form. When submitted, the event is trapped and `fetch` is used to get the response for updating the target(s) of 
-the form. A template to format the results can be controlled via `lz:options`. Encoding and method are handled by the
-standard `enctype` and `method` attributes.
-
-The example below just returns the body it was sent.
-
-<template data-lz:url:post="/reflectbody" data-lz:mode="document"></template>
-
-```!html
-<div data-lz:state="{name:'Dick',age:25}">
-   <form action="/reflectbody" 
-      data-lz:controller="/controllers/lz/form.js" 
-      data-lz:target="nextSibling" 
-      enctype="multipart/form-data">
-         <input data-lz:bind="name" type="text" placeholder="name">
-         <input data-lz:bind="age" type="number" placeholder="age">
-         <button type="submit">Submit</button><br>
-   </form>
-</div>
-```
-
-##### With No Inner HTML
-
-If a form has no `innerHTML`, the `state` local to the form is used to generate one based on the types of the property values.
-
-```!html
-<template data-lz:state="formexample">
-{
-   name: "Joe",
-   age: 20
-}
-</template>
-<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample">
-</form>
-<div data-lz:usestate="formexample">
-Name: ${name} Age: ${age}
-</div>
-```
-
-Generated forms both read from and write to their state.
-
-If the form has an action, a `sumbit` button will be added.
-
-If `lz:options="{controller:{useLabels:true}}"` is set, labels will be provided.
-
-```!html
-<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample" data-lz:options="{controller:{useLabels:true,bind:'write'}}">
-</form>
-```
-
-##### With Template Responses
-
-`lazui` supports an `enctype="application/json"` for forms to facilitate template completion and database operations on 
-the server, in addition to the standard:
-
-- `application/x-www-form-urlencoded`
-- `multipart/form-data`
-- `text/plain`
-
-If `lz:options` provides a template, the response is treated as JSON and the template is used to format the response.
-
-```!html
-<template id="formresponse">
-    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
-</template>
-<form action="/reflectbody" enctype="application/json" 
-   data-lz:state="{name:'Harry',age:22}" 
-   data-lz:controller="/controllers/lz/form.js" 
-   data-lz:target="nextSibling" 
-   data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
-   <input data-lz:bind="name" type="text" placeholder="name">
-   <input data-lz:bind="age" type="number" placeholder="age">
-   <button type="submit">Submit</button>
-</form>
-```
-
-If a template is provided, then `expect:"json"` is assumed for the `lz:options` controller configuration, other expect 
-types will throw an error.
-
-If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
-
-If `expect:"html"` is provided, the response is parsed as HTML, scripts are not run and only the body is used to place
-at the `data-lz:target` or `target`.
-
-If `expect:"template"` is provided, then the server is expected to provide a template for formatting. Hence, the returned 
-HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
-Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is 
-not updated unless `lz:bind` has been used.
-
-Assume the server returns this when a `post` is made to `/form-template-example`.
-
-<template data-lz:url:post="/form-template-example" data-lz:mode="document" data-lz:showsource:inner="beforeBegin">
-<div>${name}'s age is ${age}.</div>
-</template>
-
-```!html
-<form action="/form-template-example"  
-   data-lz:state="{name:'Harry',age:22}" 
-   data-lz:controller="/controllers/lz/form.js" 
-   data-lz:target="nextSibling" 
-   data-lz:options="{controller:{expect:'template'}}">
-   <input data-lz:bind="name" type="text" placeholder="name">
-   <input data-lz:bind="age"  type="number" placeholder="age">
-   <button type="submit">Submit</button>
-</form>
-```
-
-### Loading Content
+### Loading and Submitting Content
 
 ```html
 <div data-lz:src="./path/to/somefile.html"></div>
@@ -566,7 +413,9 @@ Assume the server returns this when a `post` is made to `/form-template-example`
 
 By default, this will load the contents of `somefile.html` as the `innerHTML` of the `div`.
 
-If the `lz:src` value starts with a `#` it is treated as an element id and the `innerHTML` of the element is used as the content.
+So long as a [router has been enabled](#client-side-routing), if the `lz:src` value starts with a `#` it is treated as 
+an element id and the `innerHTML` of the element is used as the content. Typically, these will be `<templates>`, but they
+do not have to be.
 
 ```!html
 <template id="myelement">
@@ -586,14 +435,14 @@ can be `beforeBegin`, `previousSibling`, `afterBegin`, `beforeEnd`, `nextSibling
 
 The targets are case insensitive. The camelCase is used for legibility.
 
+If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
+
 The targets `inner`, `outer`, `parent` and `body` can also have a `!<css-selector>` suffix. This means you can update multiple
 elements with a single anchor or form submission.
 
 - `outer!<css>` and `inner!<css>` are effectively `this.querySelectorAll(<css>)` but one replaces the inside and the other outside
 - `parent!<css>` is effectively `this.parentElement.querySelectorAll(<css>)` and replaces the innerHTML of the selected elements
 - `body!<css>` is effectively `document.body.querySelectorAll(<css>)` and replaces the innerHTML of the selected elements
-
-If `data-lz:target` is missing on elements other than anchors and forms, it defaults to `inner`.
 
 ```!html
 <div id="somecontent" hidden>Hello, World!</div>
@@ -620,10 +469,12 @@ The source of `markdowntemplate.md` is:
 ${name} is ${age} years old.
 ```
 
+```!html
 <template data-lz:url:get="/markdowntemplate.md" data-lz:mode="document">
     ${name} is ${age} years old.
 </template>
-<div data-lz:src="/markdowntemplate.md" data-lz:usestate="person" data-ls:showsource="beforeBegin"></div>
+<div data-lz:src="/markdowntemplate.md" data-lz:usestate="person"></div>
+```
 
 #### Single Page Components
 
@@ -702,6 +553,164 @@ will be executed.
 
 If you are prepared to potentially write a lot JavaScript and want custom HTML tags, you can [create a custom element](#creating-custom-elements) 
 with its own tag.
+
+#### Using Forms
+
+To bind form elements to state, use the `lz:bind` attribute. The value of the attribute is the name
+of the property in the state.
+
+If `lz:bind` has no value, but the `name` attribute is provided, the value of the `name` attribute is used as the
+property in the state.
+
+If `lz:bind` has a value and the `name` attribute is missing, the name attribute is added to the element.
+
+*Note*: Processing forms requires the use of a directive not yet covered, `lz:controller`. See
+[Pre-Built Controllers](#pre-built-controllers) for more information. Forms are covered here because it is likely the next
+thing you will want to use after understanding state.
+
+##### With No Submit
+
+```html
+<div data-lz:usestate="formexamplestate">
+   <form data-lz:controller="/controllers/lz/form.js">
+      <input name="name" data-lz:bind type="text" placeholder="name">
+      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input name="married" data-lz:bind="married" type="checkbox"> Married
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+```
+
+<template data-lz:state="formexamplestate">
+   {
+   name: "Tom",
+   age: 21,
+   married: false
+   }
+</template>
+<div data-lz:usestate="formexamplestate">
+   <form data-lz:controller="/controllers/lz/form.js">
+      <input name="name" data-lz:bind type="text" placeholder="name">
+      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input data-lz:bind="married" type="checkbox"> Married
+   </form>
+   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+</div>
+
+
+##### With Standard Submit
+
+Form submissions are intercepted and processed by `lazui` if the attribute `lz:controller="/controllers/lz/form.js"` has been applied
+to the form. When submitted, the event is trapped and `fetch` is used to get the response for updating the target(s) of
+the form. A template to format the results can be controlled via `lz:options`.
+
+Encoding and method are handled by the standard `method` and `enctype` attributes.
+
+The standard `enctypes` are:
+
+- `application/x-www-form-urlencoded`
+- `multipart/form-data`
+- `text/plain`
+
+`lazui` supports an additional type for forms to facilitate template completion and database operations on the server.
+
+- `application/json`
+
+The example below just returns the body it was sent.
+
+<template data-lz:url:post="/reflectbody" data-lz:mode="document"></template>
+
+```!html
+<div data-lz:state="{name:'Dick',age:25}">
+   <form action="/reflectbody" 
+      data-lz:controller="/controllers/lz/form.js" 
+      data-lz:target="nextSibling" 
+      enctype="multipart/form-data">
+         <input data-lz:bind="name" type="text" placeholder="name">
+         <input data-lz:bind="age" type="number" placeholder="age">
+         <button type="submit">Submit</button><br>
+   </form>
+</div>
+```
+
+##### With No Inner HTML
+
+If a form has no `innerHTML`, the `state` local to the form is used to generate one based on the types of the property values.
+
+```!html
+<template data-lz:state="formexample">
+{
+   name: "Joe",
+   age: 20
+}
+</template>
+<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample">
+</form>
+<div data-lz:usestate="formexample">
+Name: ${name} Age: ${age}
+</div>
+```
+
+Generated forms both read from and write to their state.
+
+If the form has an action, a `sumbit` button will be added.
+
+If `lz:options="{controller:{useLabels:true}}"` is set, labels will be provided.
+
+```!html
+<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample" data-lz:options="{controller:{useLabels:true,bind:'write'}}">
+</form>
+```
+
+##### With Template Responses
+
+If `lz:options` provides a template, the response is treated as JSON and the template is used to format the response.
+
+```!html
+<template id="formresponse">
+    <div>Thank you for letting us know ${name}'s age, ${age}.</div>
+</template>
+<form action="/reflectbody" enctype="application/json" 
+   data-lz:state="{name:'Harry',age:22}" 
+   data-lz:controller="/controllers/lz/form.js" 
+   data-lz:target="nextSibling" 
+   data-lz:options="{controller:{format:'json',template:'#formresponse'}}">
+   <input data-lz:bind="name" type="text" placeholder="name">
+   <input data-lz:bind="age" type="number" placeholder="age">
+   <button type="submit">Submit</button>
+</form>
+```
+
+If a template is provided, then `expect:"json"` is assumed for the `lz:options` controller configuration, other expect
+types will throw an error.
+
+If no template is provided, then the response is treated as text unless `expect:"html"` or `expect:"template"` is provided in the options.
+
+If `expect:"html"` is provided, the response is parsed as HTML, scripts are not run and only the body is used to place
+at the `data-lz:target` or `target`.
+
+If `expect:"template"` is provided, then the server is expected to provide a template for formatting. Hence, the returned
+HTML is treated as a template and the state context of the form augmented by the form contents is used for resolution.
+Any scripts in the template are executed. *Note*: Although the form contents are available to the template, the state is
+not updated unless `lz:bind` has been used.
+
+Assume the server returns this when a `post` is made to `/form-template-example`.
+
+<template data-lz:url:post="/form-template-example" data-lz:mode="document" data-lz:showsource:inner="beforeBegin">
+<div>${name}'s age is ${age}.</div>
+</template>
+
+```!html
+<form action="/form-template-example"  
+   data-lz:state="{name:'Harry',age:22}" 
+   data-lz:controller="/controllers/lz/form.js" 
+   data-lz:target="nextSibling" 
+   data-lz:options="{controller:{expect:'template'}}">
+   <input data-lz:bind="name" type="text" placeholder="name">
+   <input data-lz:bind="age"  type="number" placeholder="age">
+   <button type="submit">Submit</button>
+</form>
+```
 
 #### Using Frames
 
@@ -1016,15 +1025,21 @@ The `lz:show` directive can be used to conditionally show content. If works just
 the content, it sets or removes the `hidden` attribute.
 
 
-#### showsource and examplify
+#### examplify and showsource
 
-The `lz:showsource` directive can be used to show the source of any HTML element. It takes the form `lz:showsource:inner|outer?=<target>`.
-The default is `outer`.
+&grave;&grave;&grave;!html and `lz:showsource` can be used to show the source of any HTML element. If the source
+contains a script, it will be executed.
+
+If you are receiving unprocessed Markdown, or using the `lazui` [server](#basic-server) for Markdown, you should use
+[examplify](https://github.com/anywhichway/examplify) notation for code blocks, i.e. &grave;&grave;&grave;!html to 
+replicate the code block content into the source. This will preserve multi-line attribute formatting and indentation.
+
+`lz:showsource` takes the form `lz:showsource:inner|outer?=<target>`. The default is `outer`.
 
 The target can be one of: `beforeBegin`, `afterEnd` or an element id prefixed with `#`, in which case the inner HTML is replaced.
 
-The `lz:showsource` directive is used throughout this Markdown document to show the source of the examples and ensures that the example
-content is always in sync with the execution of the example.
+The `lz:showsource` and directive and &grave;&grave;&grave;!html are used throughout this Markdown document to show the 
+source of the examples and ensure that the example content is always in sync with the execution of the example.
 
 Here the source defaults to the `outer` HTML of the element:
 
@@ -1058,21 +1073,31 @@ Here, the source is the `inner` HTML of the element:
 </template>
 </div>
 
-If you are receiving unprocessed Markdown, or the `lazui` server you can also use [examplify](https://github.com/anywhichway/examplify)
-notation for code blocks, i.e. &grave;&grave;&grave;!html to replicate the code block content into the source. This
-will preserve multi-line attribute formatting and indentation, whereas `lz:showsource` will not because it uses the `outerHTML`, 
-which is not formatted.
 
 ### Dataset Management
 
 #### dataset
 
 The `lz:dataset` directive can be used to set `data-` attributes. The value of the attribute is a JSON object with the names of
-the `data-` attributes as keys and the values as values, e.g.
+the `data-` attributes as keys, e.g.
 
-```html
-<div data-lz:dataset='{"mydata":"myvalue"}'>Has Data</div>
+```!html
+<div id="datasetexample" data-lz:dataset='{"mydata":"myvalue"}'></div>
 ```
+<script>
+(() => {
+   const script = document.currentScript||currentScript;
+   document.addEventListener("lz:loaded",function(event) {
+      setTimeout(function() {
+         const el = document.getElementById("datasetexample");
+         script.insertAdjacentText("afterEnd",el.outerHTML.replaceAll(/&quot;/g,"'"));
+      },1000);
+   });
+})();
+
+</script>
+
+Once resolved, the `lz:dataset` attribute is removed.
 
 ### Styling and Accessibility
 
@@ -1084,6 +1109,8 @@ the ARIA attributes as keys and the values as values, e.g.
 ```html
 <div data-lz:aria='{"role":"button","aria-label":"Click Me"}'>Click Me</div>
 ```
+
+Once resolved, the `lz:aria` attribute is removed.
 
 #### Code Highlighting
 
@@ -1104,6 +1131,7 @@ the `style` attributes as keys and the values as values. The keys can be in eith
 
 <div data-lz:style='{"color":"red","fontWeight":"bold"}' data-lz:showsource="beforeBegin">I am red and bold</div>
 
+Once resolved, the `lz:style` attribute is removed.
 
 ## Pre-Built Controllers
 

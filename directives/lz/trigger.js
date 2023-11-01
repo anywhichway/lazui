@@ -100,16 +100,32 @@ async function trigger({el,attribute,state,root,lazui})  {
                                 mode = el.getAttribute(`${prefix}:mode`),
                                 controller = el.attributes[`${prefix}:controller`];
                             if (state || mode==="frame" || el.state) {
-                                let content = mode==="frame" ? string : document.createDocumentFragment();
+                                //let content = mode==="frame" ? string : document.createDocumentFragment();
                                 if(mode==="frame") {
                                     update({node:el, content:string, state, root:el, where, recurse: 1});
                                 } else {
-                                    content.state = el.state;
+                                   /* content.state = el.state;
                                     const div = document.createElement("div");
                                     div.innerHTML = string;
                                     while(div.firstChild) content.appendChild(div.firstChild);
                                     content = render(el,content,{state, root:el, where:null});
-                                    update({node:el, content, state, root:el, where, recurse: 1});
+                                    update({node:el, content, state, root:el, where, recurse: 1});*/
+                                    let content = document.createElement("html");
+                                    content.innerHTML = string;
+                                    content.state = el.state;
+                                    content.head = content.firstElementChild;
+                                    content.body = content.lastElementChild;
+                                    //if(state || el.state) {
+                                    //    content = render(el,content,{state, root:el, where:null});
+                                    //}
+                                    ["style","template"].forEach((tagName) => {
+                                        for(const el of content.head.querySelectorAll(tagName)) {
+                                            content.body.insertAdjacentElement("afterbegin",el);
+                                        }
+                                    })
+                                    if(new URL(request.url).origin!==location.origin) content = content.body;
+                                    content = render(el,content,{state, root:el, where:null});
+                                    update({node:el, content, state, root:el, where, recurse: 1})
                                 }
                             } else {
                                 render(el, string, {state, root: el, where, recurse: 1});
