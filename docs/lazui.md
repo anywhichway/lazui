@@ -1,4 +1,4 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui"
+<script src="/lazui"
    data-lz:usejson="https://esm.sh/json5"
    autofocus
    data-lz:userouter="https://esm.sh/hono"
