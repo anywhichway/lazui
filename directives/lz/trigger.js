@@ -99,7 +99,7 @@ async function trigger({el,attribute,state,root,lazui})  {
                                 where = el.getAttribute(`${prefix}:target`) || el.getAttribute("target") || undefined,
                                 mode = el.getAttribute(`${prefix}:mode`),
                                 controller = el.attributes[`${prefix}:controller`];
-                            if (state || mode==="frame" || el.state) {
+                            if (state || mode==="frame" || el.__state__) {
                                 //let content = mode==="frame" ? string : document.createDocumentFragment();
                                 if(mode==="frame") {
                                     update({node:el, content:string, state, root:el, where, recurse: 1});
@@ -112,7 +112,7 @@ async function trigger({el,attribute,state,root,lazui})  {
                                     update({node:el, content, state, root:el, where, recurse: 1});*/
                                     let content = document.createElement("html");
                                     content.innerHTML = string;
-                                    content.state = el.state;
+                                    if(el.__state__) Object.defineProperty(content,"__state__",{enumerable:false,value:el.__state__})
                                     content.head = content.firstElementChild;
                                     content.body = content.lastElementChild;
                                     //if(state || el.state) {

@@ -55,7 +55,7 @@
         isInterpolation = (value) => {
             if (isObject(value) && Array.isArray(value.strings) && Array.isArray(value.values) && typeof value.raw === "function") return true;
         },
-        isHTMLScope = (value) => isObject(value) && isObject(value.state) && isObject(value.root);
+        isHTMLScope = (value) => isObject(value) && isObject(value.__state__) && isObject(value.root);
 
     const getTop = (node) => {
         while(node.parentElement) node = node.parentElement;
@@ -211,7 +211,8 @@
         //if (!isObject(el) || el.constructor.name!=="HTMLTemplateElement") throw new TypeError(`${idOrEl} is not a valid HTMLTemplateElement or element id`);
         state = activate(state,el);
         _STS_.set(el, {state,storage,stringify});
-        el.state = state;
+        Object.defineProperty(el,"__state__",{enumerable:false,configurable:true,value:state});
+        Object.defineProperty(el,"getState",{enumerable:false,configurable:true,value:() => getState(el,{root})});
         return state;
     }
 
@@ -225,8 +226,8 @@
             const state = getState(node.getAttribute(attrName))
             if(state) states.push(state);
             else console.log(`Can't find state: ${node.getAttribute(attrName)} in ${node.outerHTML}`);
-        } else if(node.state) {
-            states.push(node.state);
+        } else if(node.__state__) {
+            states.push(node.__state__);
         }
         //if(states.includes(undefined)) debugger;
         getStates(node.parentNode,states,attrName);
@@ -246,8 +247,8 @@
                                 while(parts.length>0) {
                                     const key = parts.shift();
                                     if(parts.length===0) state[key] = value;
-                                    else if(state[property]!=null || typeof state[property]!=="object") throw new TypeError(`Attempt to use ${property} to set a value but ${key} is not an object`);
-                                    else state = state[property] ||= {};
+                                    else if(state[key]!=null && typeof state[key]!=="object") throw new TypeError(`Attempt to use ${property} to set a value but ${key} is not an object`);
+                                    else state = state[key] ||= {};
                                 }
                             }
                         }
@@ -266,7 +267,7 @@
                                 if(state && typeof state!=="object") throw new TypeError(`Attempt to use ${property} to get a value but ${key} is not an object`);
                             }
                         }
-                        return target[property] = value;
+                        return target[property];
                     }
                 }
                 const value = target[property];
@@ -542,7 +543,7 @@
         return options;
     }
 
-    const getContext = (el,state=el.state) => {
+    const getContext = (el,state=el.__state__) => {
         return statesProxy(getStates(el,state ? [state] : undefined))
     }
 
@@ -747,7 +748,7 @@
                     } else {
                         if (mode === "open") {
                             const shadowRoot = node.shadowRoot || node.attachShadow({mode});
-                            shadowRoot.state = state;
+                            Object.defineProperty(shadowRoot,"__state__",{enumerable:false,value:state});
                             updated.push(...getNodes(content));
                             shadowRoot.replaceChildren(...getNodes(content));
                             const src = node.getAttribute(`${directiveExports.prefix}:src`);

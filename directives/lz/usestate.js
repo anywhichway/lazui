@@ -23,7 +23,7 @@ const usestate = async({el,attribute,root,lazui,recurse})  => {;
         state = getState(id,{root});
         if(!state) throw new Error(`Can't find state: ${id}`);
     }
-    el.state = state;
+    Object.defineProperty(el,"__state__",{enumerable:false,configurable:true,value:state});
 };
 
 export {usestate}

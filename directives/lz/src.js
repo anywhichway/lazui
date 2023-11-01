@@ -4,7 +4,7 @@ function src({el,attribute,root,state,lazui}) {
     if(el.hasAttribute(`${prefix}:usestate`)) {
         state = getState(el.getAttribute(`${prefix}:usestate`),{root});
     } else if(el.hasAttribute(`${prefix}:state`)) {
-        state = el.state;
+        state = el.__state__;
     }
     if(el.hasAttribute(`${prefix}:trigger`)) {
         handleDirective(el.attributes[`${prefix}:trigger`],{state,root})
@@ -29,11 +29,11 @@ function src({el,attribute,root,state,lazui}) {
                 mode = el.getAttribute(`${prefix}:mode`),
                 controller = el.attributes[`${prefix}:controller`];
             if(mode==="frame") {
-                update({node:el, content:string, state:state||el.state, root:el, where, recurse: 1});
+                update({node:el, content:string, state:state||el.__state__, root:el, where, recurse: 1});
             } else {
                 let content = document.createElement("html");
                 content.innerHTML = string;
-                content.state = el.state;
+                if(el.__state__) Object.defineProperty(content,"__state__",{enumerable:false,value:el.__state__});
                 content.head = content.firstElementChild;
                 content.body = content.lastElementChild;
                 //if(state || el.state) {

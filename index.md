@@ -162,7 +162,7 @@ Load `lazui` from a CDN
 ### for HTML
 
 ```!html
-<div data-lz:state="{clickCount:0}" onclick="this.state.clickCount++">
+<div data-lz:state="{clickCount:0}" onclick="this.getState().clickCount++">
     Click Count: ${clickCount}
 </div>
 ```

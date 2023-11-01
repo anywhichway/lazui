@@ -66,9 +66,13 @@ It extends the attribute space of typical HTML to provide a rich set of function
 
 It provides the JavaScript, so you don't have to.
 
-`lazui` is in the early stages of development. The first major release is functionaly complete; however it needs more 
-testing, optimization, and improved documentation. In this case, don't be lazy ... join us and help out by 
-[creating issues on GitHub](https://www.github.com/anywhichway/lazui/issues).
+`lazui` draws its inspiration from the varied capabilities of [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),
+[Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
+[Vue](https://vuejs.org/), and [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
+
+The first major release of `lazui` is feature complete; however it needs more testing, optimization, improved documentation, 
+and some functionality to round out the automatic form generation. In this case, don't be lazy ... join us and help out 
+by [creating issues on GitHub](https://www.github.com/anywhichway/lazui/issues).
 
 ## Documentation Conventions
 
@@ -166,6 +170,9 @@ Hello, the date and time is ${new Date().toLocaleTimeString()}
 </template>
 <div data-lz:src="/working-with-markdown.md" data-lz:mode="open"></div>
 
+
+### Additional Options
+
 You can also configure `lazui` to:
 - use a [relaxed JSON parser](#relaxed-json-parser),
 - highlight code [highlighter](#code-highlighting),
@@ -208,12 +215,6 @@ This gets the page to its first meaningful paint faster.
 
 ### Choose Your Development Paradigm
 
-`lazui` draws its inspiration from the varied capabilities of [htmx](https://htmx.org/), [lighterHTML](https://github.com/WebReflection/lighterhtml),
-[Turbo](https://turbo.hotwired.dev/), [Stimulus](https://stimulus.hotwired.dev/),
-[Vue](https://vuejs.org/), and [Lit](https://lit.dev). It also provides a number of features not found in these libraries.
-You are free to choose your preferred development paradigm. If it is just that of one library, you may be better off
-sticking with that library, but if you yearn for capability from more than one library, `lazui` may be for you.
-
 Although `lazui` can be used as a powerful JavaScript rendering engine, it really shines at reducing the amount of
 JavaScript required to create an interactive website or single page app. This shininess is provided through a set of
 attribute directives and JavaScript controller files.
@@ -238,10 +239,10 @@ Attribute directives can be provided configuration values with another directive
 The configuration data for a specific directive is provided through a key of the same name as the directive. For instance,
 
 ```html
-<template id="person"
-    data-lz:state="{name:'Joe',age:30}"
-    data-lz:options="{state:{storage:'localStorage'}}"
-</template>
+<div data-lz:controller="/controllers/lz/chart.js" 
+     data-lz:options="{controller:{type:'BarChart'}}" 
+     data-lz:usestate="pizza">
+</div>
 ```
 
 ### Relaxed JSON Parser
@@ -321,16 +322,14 @@ Setting state at the document level can be useful with Markdown. Below is the co
 `using-state-with-markdown.md`, followed by the `HTML` loading the file into an `<iframe>` (which is optional).
 
 ```html
-*${name}* is *${age}* years old.
 <template data-lz:state:document="person">
 {
     name: "Mary",
     age: 21
 }
 </template>
+*${name}* is *${age}* years old.
 ```
-
-*Note*: Due to issues with some Markdown parsers, you must put the `<template>` at the end.
 
 ```html
 <div data-lz:src="/using-state-with-markdown.md" 
@@ -339,13 +338,13 @@ Setting state at the document level can be useful with Markdown. Below is the co
 ```
 
 <template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
-*${name}* is *${age}* years old.
 <template data-lz:state:document="person">
 {
     "name": "Mary",
     "age": 21
 }
 </template>
+*${name}* is *${age}* years old.
 </template>
 <div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
 
@@ -354,13 +353,13 @@ Setting state at the document level can be useful with Markdown. Below is the co
 Modifying a state will cause any elements using the state to be updated.
 
 ```!html
-<div data-lz:state="{clickCount:0}" onclick="this.state.clickCount++">
+<div data-lz:state="{clickCount:0}" onclick="this.getState().clickCount++">
     Click Count: ${clickCount}
 </div>
 ```
 
 `lazui` does not use a virtual DOM to manage changes, it uses direct dependency tracking. A special updating function 
-wrapped around the normal browser screen refresh handler tracks state use. When a state changes, the nodes that depend 
+wrapped around the normal browser screen refresh handler tracks state access. When a state changes, the nodes that depend 
 on that state are updated. The nodes are typically text nodes, but can also be attributes. This is automatic when working 
 at the no JavaScript level. You can take a more functional approach and manage reactivity yourself by using the [html](#html) 
 tagged template literal and [render](#render) functions if you write JavaScript.
@@ -562,38 +561,41 @@ property in the state.
 
 If `lz:bind` has a value and the `name` attribute is missing, the name attribute is added to the element.
 
+The `lz:bind` directive supports dot notation for nested properties.
+
+The form controller will add reasonable values for the attributes `placeholder` and `title` if they are missing.
+
+By default, the state is updated on keyboard or mouse input, it can be set to `change` for when a value if fully
+changed, or 'submit' for forms that have a submit button by using `lz:options="{controller:{bind:'change'}}"`.
+
 *Note*: Processing forms requires the use of a directive not yet covered, `lz:controller`. See
 [Pre-Built Controllers](#pre-built-controllers) for more information. Forms are covered here because it is likely the next
-thing you will want to use after understanding state.
+thing you will want to use after understanding the above.
 
 ##### With No Submit
 
-```html
-<div data-lz:usestate="formexamplestate">
-   <form data-lz:controller="/controllers/lz/form.js">
-      <input name="name" data-lz:bind type="text" placeholder="name">
-      <input name="age"data-lz:bind="age" type="number" placeholder="age">
-      <input name="married" data-lz:bind="married" type="checkbox"> Married
-   </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
-</div>
-```
-
+```!html
 <template data-lz:state="formexamplestate">
-   {
+{
    name: "Tom",
    age: 21,
-   married: false
+   married: false,
+   address: {
+      city: "New York",
+      state: "NY"
    }
+}
 </template>
 <div data-lz:usestate="formexamplestate">
-   <form data-lz:controller="/controllers/lz/form.js">
+   <form data-lz:controller="/controllers/lz/form.js" data-lz:options="{controller:{bind:'change'}}">
       <input name="name" data-lz:bind type="text" placeholder="name">
-      <input name="age"data-lz:bind="age" type="number" placeholder="age">
+      <input name="age"data-lz:bind="age" type="number" title="user age">
+      <input name="city" data-lz:bind="address.city" type="text" placeholder="city">
       <input data-lz:bind="married" type="checkbox"> Married
    </form>
-   <div>${name}'s age is ${age}${married ? " and married" :""}.</div>
+   <div>${name}'s age is ${age}${married ? ", married, " :""} and lives in ${address.city}.</div>
 </div>
+```
 
 
 ##### With Standard Submit
@@ -620,10 +622,12 @@ The example below just returns the body it was sent.
 
 ```!html
 <div data-lz:state="{name:'Dick',age:25}">
+   Name: ${name} Age: ${age}
    <form action="/reflectbody" 
       data-lz:controller="/controllers/lz/form.js" 
       data-lz:target="nextSibling" 
-      enctype="multipart/form-data">
+      enctype="multipart/form-data"
+      data-lz:options="{controller:{bind:'submit'}}">
          <input data-lz:bind="name" type="text" placeholder="name">
          <input data-lz:bind="age" type="number" placeholder="age">
          <button type="submit">Submit</button><br>
@@ -639,13 +643,17 @@ If a form has no `innerHTML`, the `state` local to the form is used to generate 
 <template data-lz:state="formexample">
 {
    name: "Joe",
-   age: 20
+   age: 20,
+   address: {
+      city: "Seattle",
+      state: "WA"
+   }
 }
 </template>
 <form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample">
 </form>
 <div data-lz:usestate="formexample">
-Name: ${name} Age: ${age}
+Name: ${name} Age: ${age} City: ${address.city} State: ${address.state}
 </div>
 ```
 
@@ -656,7 +664,7 @@ If the form has an action, a `sumbit` button will be added.
 If `lz:options="{controller:{useLabels:true}}"` is set, labels will be provided.
 
 ```!html
-<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample" data-lz:options="{controller:{useLabels:true,bind:'write'}}">
+<form data-lz:controller="/controllers/lz/form.js" data-lz:usestate="formexample" data-lz:options="{controller:{useLabels:true}}">
 </form>
 ```
 
@@ -1076,6 +1084,24 @@ contains a script, it will be executed.
 If you are receiving unprocessed Markdown, or using the `lazui` [server](#basic-server) for Markdown, you should use
 [examplify](https://github.com/anywhichway/examplify) notation for code blocks, i.e. &grave;&grave;&grave;!html to 
 replicate the code block content into the source. This will preserve multi-line attribute formatting and indentation.
+
+<pre class="hljs">
+&grave;&grave;&grave;!html
+&lt;form&gt;
+   &lt;input
+      type="text"
+      value="Hello, World!"&gt;
+&lt;/form&gt;
+&grave;&grave;&grave;
+</pre>
+
+```!html
+<form>
+   <input
+      type="text" 
+      value="Hello, World!">
+</form>
+```
 
 `lz:showsource` takes the form `lz:showsource:inner|outer?=<target>`. The default is `outer`.
 
