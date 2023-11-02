@@ -1,6 +1,6 @@
 {
   "name": "@anywhichway/lazui",
-  "version": "0.0.45-a",
+  "version": "0.0.46-a",
   "description": "Single page apps and lazy loading sites with minimal JavaScript or client build processes.",
   "main": "lazui.js",
   "type": "module",

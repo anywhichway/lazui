@@ -128,7 +128,7 @@ async function trigger({el,attribute,state,root,lazui})  {
                                             content.body.insertAdjacentElement("afterbegin",el);
                                         }
                                     }
-                                    content = render(el,content,{state, root:el, where:null});
+                                    //content = render(el,content,{state, root:el, where:null});
                                     update({node:el, content, state, root:el, where, recurse: 1})
                                 }
                             } else {

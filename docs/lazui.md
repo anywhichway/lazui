@@ -1,4 +1,4 @@
-<script src="/lazui" data-lz:usedefaults></script>
+<script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults></script>
 <script>
 document.addEventListener("lz:loaded", async () => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
@@ -141,10 +141,10 @@ Hello, the date and time is ${new Date().toLocaleTimeString()}
 
 renders as:
 
-<template data-lz:url:get="/working-with-markdown.md" data-lz:mode="document">
+<template data-lz:url:get="./working-with-markdown.md" data-lz:mode="document">
 Hello, the date and time is ${new Date().toLocaleTimeString()}
 </template>
-<div data-lz:src="/working-with-markdown.md" data-lz:mode="open"></div>
+<div data-lz:src="./working-with-markdown.md" data-lz:mode="open"></div>
 
 
 ### Additional Options
@@ -314,7 +314,7 @@ Due to issues with some Markdown parsers, you MUST put state template at the end
      title="Lazui: Markdown Example"></div>
 ```
 
-<template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
+<template data-lz:url:get="./using-state-with-markdown.md" data-lz:mode="document">
 *${name}* is *${age}* years old.
 <template data-lz:state:document="person">
 {
@@ -323,7 +323,7 @@ Due to issues with some Markdown parsers, you MUST put state template at the end
 }
 </template>
 </template>
-<div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
+<div data-lz:src="./using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
 
 #### Reactive State
 
@@ -442,12 +442,12 @@ The source of `markdowntemplate.md` is:
 ${name} is ${age} years old.
 ```
 
-<template data-lz:url:get="/markdowntemplate.md" data-lz:mode="document">
+<template data-lz:url:get="./markdowntemplate.md" data-lz:mode="document">
     ${name} is ${age} years old.
 </template>
 
 ```!html
-<div data-lz:src="/markdowntemplate.md" data-lz:usestate="person"></div>
+<div data-lz:src="./markdowntemplate.md" data-lz:usestate="person"></div>
 ```
 
 #### Single Page Components
@@ -506,7 +506,7 @@ ignored. In the case above, they are ignored. However, if we mount a similar fil
 will be executed.
 
 ```!html
-<template data-lz:url:get="/element.html" data-lz:mode="document">
+<template data-lz:url:get="./element.html" data-lz:mode="document">
     <style>
         p {
             color: red;
@@ -520,7 +520,7 @@ will be executed.
         (document.currentScript||currentScript).insertAdjacentText("afterEnd","This was inserted by a script")
     </script>
 </template>
-<div data-lz:src="/element.html" data-lz:mode="open"></div>
+<div data-lz:src="./element.html" data-lz:mode="open"></div>
 ```
 
 **Note**: `data-lz:mode="closed"` is not supported.
@@ -765,7 +765,7 @@ Except for examples currently requiring server interaction, e.g. [Server Sent Ev
 ##### Get
 
 ```!html
-<template data-lz:url:get="/path/to/somefile.html" data-lz:mode="document">
+<template data-lz:url:get="./path/to/somefile.html" data-lz:mode="document">
     <style>
         p {
             color: red;
@@ -776,7 +776,7 @@ Except for examples currently requiring server interaction, e.g. [Server Sent Ev
         element.html contents  
     </p>
 </template>
-<div data-lz:src="/path/to/somefile.html" data-lz:mode="open"></div>
+<div data-lz:src="./path/to/somefile.html" data-lz:mode="open"></div>
 ```
 
 You can even simulate headers and status codes by adding `data-lz:header`, `data-lz:headers` and `data-lz:status`
@@ -946,13 +946,14 @@ Events can be separated by commas, e.g. `data-lz:trigger="click dispatch:load, m
 The event modifiers `debounce:<ms>` and `throttle:<ms>` can be used to control responsiveness to user interaction. The
 below will effectively ignore clicks at less than 2 second increments.
 
-<template data-lz:url:get="/thanks.html" data-lz:mode="document">Thanks for clicking!</template>
+<template data-lz:url:get="./thanks.html" data-lz:mode="document">Thanks for clicking!</template>
 ```!html
-<div data-lz:src="/thanks.html"
+<div data-lz:src="./thanks.html"
    data-lz:trigger="click debounce:2000 dispatch:load"
    data-lz:target="nextSibling">
       Click Me
 </div>
+<div></div>
 ```
 
 ##### Loading Just Once
@@ -1053,14 +1054,13 @@ The `lz:show` directive can be used to conditionally show content. If works just
 the content, it sets or removes the `hidden` attribute.
 
 
-#### examplify and showsource
+#### examplify 
 
-&grave;&grave;&grave;!html and `lz:showsource` can be used to show the source of any HTML element. If the source
-contains a script, it will be executed.
+If you have applied `lz:usedefault`, `lz:userouter` to your `lazui` script, are using a server based on the
+`lazui` [basic server](#basic-server), or have custom integrated server using [examplify](https://github.com/anywhichway/examplify)
+you can use three &grave; followed by !html to replicate the content of a code block into the source. 
 
-If you are receiving unprocessed Markdown, or using the `lazui` [server](#basic-server) for Markdown, you should use
-[examplify](https://github.com/anywhichway/examplify) notation for code blocks, i.e. &grave;&grave;&grave;!html to 
-replicate the code block content into the source. This will preserve multi-line attribute formatting and indentation.
+This ensures that the example content is always in sync with the execution of the example.
 
 <pre class="hljs">
 &grave;&grave;&grave;!html
@@ -1079,45 +1079,6 @@ replicate the code block content into the source. This will preserve multi-line 
       value="Hello, World!">
 </form>
 ```
-
-`lz:showsource` takes the form `lz:showsource:inner|outer?=<target>`. The default is `outer`.
-
-The target can be one of: `beforeBegin`, `afterEnd` or an element id prefixed with `#`, in which case the inner HTML is replaced.
-
-The `lz:showsource` and directive and &grave;&grave;&grave;!html are used throughout this Markdown document to show the 
-source of the examples and ensure that the example content is always in sync with the execution of the example.
-
-Here the source defaults to the `outer` HTML of the element:
-
-```html
-<div data-lz:showsource="beforeBegin">
-<template id="myelement">
-    Content stored in a template
-</template>
-</div>
-```
-
-<div data-lz:showsource="beforeBegin">
-<template id="myelement">
-    Content stored in a template
-</template>
-</div>
-
-Here, the source is the `inner` HTML of the element:
-
-```html
-<div data-lz:showsource:inner="beforeBegin">
-<template id="myelement">
-    Content stored in a template
-</template>
-</div>
-```
-
-<div data-lz:showsource:inner="beforeBegin">
-<template id="myelement">
-    Content stored in a template
-</template>
-</div>
 
 
 ### Dataset Management
@@ -1266,7 +1227,7 @@ You can optionally provide a `type` to the controller options to override the ch
 
 You could also load the state from a remote source:
 
-<template data-lz:url:get="/donuts.json" data-lz:header="{'content-type':'application/json'}" data-lz:mode="document">
+<template data-lz:url:get="./donuts.json" data-lz:header="{'content-type':'application/json'}" data-lz:mode="document">
 {
     type: 'PieChart',
     options:{
@@ -1284,11 +1245,12 @@ You could also load the state from a remote source:
     ]
 }
 </template>
-<div data-lz:showsource:inner="beforeBegin">
-<template id="remotedonuts" data-lz:state data-lz:src="/donuts.json">
+
+```!html
+<template id="remotedonuts" data-lz:state data-lz:src="./donuts.json">
 </template>
 <div data-lz:controller="/controllers/lz/chart.js" data-lz:usestate="remotedonuts"></div>
-</div>
+```
 
 ### Pushed Content
 
@@ -1314,7 +1276,7 @@ A template with a `{message}` block can also be provided to format the messages.
 For convenience, elements enhanced with a `pubsub` controller have `subscribe`and `unsubscribe`  methods added that can be called from
 JavaScript and also respond to `subscribe` and `unsubscribe` events.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <div id="pubsub-example" data-lz:controller="/controllers/lz/pubsub" data-lz:options="{controller:{src:'/docs/hello-pubsub.js',channel:'#joe',target:'beforeEnd',subscribe:true}}">
   <template><div>${message}</div></template>
 </div>
@@ -1329,7 +1291,7 @@ document.addEventListener("lz:loaded", () => {
     }, 10000);
 })
 </script>
-</div>
+```
 
 
 The service should expose `subscribe` and `unsubscribe` methods that accept an element as an argument. In should publish
@@ -1358,7 +1320,7 @@ a `message` block. If the `message` was parsable as `JSON`, nested properties wi
 For convenience, elements with an `sse` controller have `subscribe`and `unsubscribe`  methods added that can be called from
 JavaScript and also respond to `subscribe` and `unsubscribe` events.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <div id="sse-example" data-lz:controller="/controllers/lz/sse.js" data-lz:options="{controller:{src:'/datetime'}}" data-lz:target="beforeEnd">
   <template><div>${message}</div></template>
 </div>
@@ -1370,7 +1332,7 @@ document.addEventListener("lz:loaded", () => {
   }, 10000);
 });
 </script>
-</div>
+```
 
 
 #### Web Sockets
@@ -1381,7 +1343,8 @@ JavaScript and also respond to `publish` and `subscribe` events.
 *Note*: The directive will automatically detect and adjust for connecting with a secure protocol, i.e. `wss`, if the
 page hosting it is served over `https`.
 
-<div data-lz:controller="/controllers/lz/ws.js" data-lz:showsource="beforeBegin" data-lz:target="beforeEnd">
+```!html
+<div data-lz:controller="/controllers/lz/ws.js" data-lz:target="beforeEnd">
   <template><div>${(new Date()).toLocaleTimeString()}: ${message}</div></template>
   <div>Peter
     <div id="peter"></div>
@@ -1390,6 +1353,7 @@ page hosting it is served over `https`.
     <div id="paul"></div>
   </div>
 </div>
+```
 
 <form id="form" action="">
 <table>
@@ -1812,7 +1776,7 @@ render(document.getElementById('classic-render'), html`<div onclick=${clicked}>C
 
 Custom Elements are just templates with the directive `lz:tagname`.
 
-<div data-lz:showsource:inner="beforeBegin">
+```!html
 <template data-lz:tagname="my-custom-element">
     <style>
         p {
@@ -1839,7 +1803,7 @@ document.addEventListener("lz:loaded",() => { // Note: if you are using a custom
    document.getElementById("custom-element").setAttribute("title","My Title");
  });
 </script>
-</div>
+```
 
 You can provide an `lz:src` attribute and keep the contents in a separate file without the `<template>` wrapper.
 

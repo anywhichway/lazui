@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-11-02 v0.0.46a removed `lz:showsource` in favor of `examplify`, added reltive pathing to embedded routes, enhanced docs
+
 2023-11-01 v0.0.45a added `lz:usedefaults` option, optimized initial load, enhanced docs
 
 2023-11-01 v0.0.44a fixed issue with setting state properties that use dot notation, enhanced docs

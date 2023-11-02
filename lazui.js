@@ -168,25 +168,12 @@
         return proxy;
     }
     const getState = (idOrEl, {root = document,options={},throws}={}) => {
-        let {storage,stringify} = options;
         if (!isObject(idOrEl) || !(idOrEl instanceof HTMLElement)) idOrEl = getTop(root).getElementById(idOrEl);
         const _state = _STS_.get(idOrEl);
-        if(storage||=_state?.storage) {
-            let state = globalThis[storage||_state?.storage].getItem(idOrEl.id);
-            if(state) {
-                state = activate((stringify||=_state.stringify) ? JSON.parse(state) : state,idOrEl);
-                _STS_.set(idOrEl, {state,storage,stringify});
-                state.addEventListener("change",({detail}) => {
-                    globalThis[storage||_state.storage].setItem(idOrEl.id,stringify ? JSON.stringify(detail.state) : detail.state);
-                })
-                return state;
-            }
-        }
         if(!_state && throws) throw new Error(`Can't find state: ${idOrEl.id}`);
         return _state?.state;
     }
     const setState = (idOrEl,state, {root = document,options={}}) => {
-        let {storage,stringify} = options;
         let el = idOrEl;
         if(typeof idOrEl === "string") {
             el = getTop(root).getElementById(el);
@@ -197,15 +184,9 @@
                 else root.append(el);
             }
         }
-        if(!storage) {
-            const _state = (getState(el)||{});
-            storage = _state.storage;
-            stringify = _state.stringify;
-        }
-        if(storage) globalThis[storage].setItem(el.id,stringify ? JSON.stringify(state) : state);
         //if (!isObject(el) || el.constructor.name!=="HTMLTemplateElement") throw new TypeError(`${idOrEl} is not a valid HTMLTemplateElement or element id`);
         state = activate(state,el);
-        _STS_.set(el, {state,storage,stringify});
+        _STS_.set(el, {state});
         Object.defineProperty(el,"__state__",{enumerable:false,configurable:true,value:state});
         Object.defineProperty(el,"getState",{enumerable:false,configurable:true,value:() => getState(el,{root})});
         return state;
@@ -317,7 +298,7 @@
     const handleHook = async (node,value) => {
         let {hook,placeholder,delay,interval,where="inner"} = value;
         placeholder = typeof placeholder === "function" ? placeholder() : placeholder||node.value||node.data||"...";
-        let toreplace = node.nodeType===Node.ATTRIBUTE_NODE ? [] : await render(node,placeholder,{where});
+        let toreplace = node.nodeType===Node.ATTRIBUTE_NODE ? [] : await render(node,await placeholder,{where});
         (interval ? setInterval : setTimeout)(async () => {
             const node = toreplace[0];
             let content = await hook(node);
@@ -672,7 +653,12 @@
             observeNodes({nodes:[node],observe:["*"],root,string,state},() => content = interpolate(string,state,root).toDocumentFragment())
         } else {
             if(isObject(content) && content.toDocumentFragment) content = content.toDocumentFragment();
-            if(!content) (content = node.cloneNode(true))
+            if(!content) (content = node.cloneNode(true));
+            (content.forEach ? content : [content]).forEach((node) => {
+                for(const pre of node.querySelectorAll("pre")) {
+                    pre.innerHTML = pre.innerHTML.replaceAll(/\$\{/g, "&dollar;{");
+                }
+            })
             if(state!==null) {
                 if(!(content instanceof DocumentFragment) && !(content instanceof NodeList)) {
                     // ? node.html rathet thna content.html
@@ -724,7 +710,7 @@
         }
         const updated = [],
              // if no content.childNodes, content is a NodeList or an error
-            updater = async () => {
+            updater = () => {
                 const getNodes = (content,clone) => {
                     if(clone) {
                         if(content.childNodes) return [...content.childNodes].map((node) => node.cloneNode(true) );
@@ -732,7 +718,6 @@
                     }
                     return content.childNodes ? content.childNodes : content;
                 }
-                content = await content;
                 let childNodes = [...getNodes(content)];
                 if (where === "inner") {
                     if (node.nodeType === Node.TEXT_NODE) {

@@ -49,7 +49,14 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
         if(isLocal || allowRemote) {
             let node;
             if (isLocal) {
-                node = root.querySelector(`template[${prefix}\\:url\\:${method}="${c.req.url}"],template[${prefix}\\:url\\:${method}="${url.pathname}"]`);
+                const nodes = root.querySelectorAll(`template[${prefix}\\:url\\:${method}$="${url.pathname.split("/").pop()}"]`);
+                for(const candidate of nodes) {
+                    const candidateURL = new URL(candidate.getAttribute(`${prefix}:url:${method}`),window.location);
+                    if(candidateURL.href===url.href) {
+                        node = candidate;
+                        break;
+                    }
+                }
             } else if (allowRemote && /^(http|https):/i.test(c.req.url)) {
                 node = root.querySelector(`template[${prefix}\\:url\\:${method}="${c.req.url}"]`);
             }
@@ -57,7 +64,7 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
                 if(node.hasAttribute(`${prefix}:options`)) {
                     const options = JSON.parse(node.getAttribute(`${prefix}:options`));
                     if(options?.url?.handlers) {
-                        const handlers = globalThis[options?.url?.handlers] || (await import(new URL(options.url.handlers,document.baseURI).href)).default;
+                        const handlers = globalThis[options?.url?.handlers] || (await import(new URL(options.url.handlers,window.location).href)).default;
                         ["get","post","put","delete","head","patch","options"].forEach((key) => {
                             if(typeof handlers[key] === "function") node[key] = handlers[key];
                         })
@@ -83,7 +90,15 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
 
                         }
                     }
-                    let target = root.querySelector(`[${prefix}\\:url\\:get="${c.req.url}"],[${prefix}\\:url\\:get="${url.pathname}"]`);
+                    let target;
+                    const targets = root.querySelectorAll(`[${prefix}\\:url\\:get="${url.pathname.split("/").pop()}"]`);
+                    for(const candidate of targets) {
+                        const candidateURL = new URL(candidate.getAttribute(`${prefix}:url:get`),window.location);
+                        if(candidateURL.href===url.href) {
+                            target = candidate;
+                            break;
+                        }
+                    }
                     if(!target) {
                         target = document.createElement("template");
                         target.setAttribute(`${prefix}:url:get`,c.req.url);
