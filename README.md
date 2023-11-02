@@ -95,7 +95,9 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
-2023-11-01 v0.0.44a fixed issue with setting state properties that use dot notation, ehanced docs
+2023-11-01 v0.0.45a added `lz:usedefaults` option, optimized initial load, enhanced docs
+
+2023-11-01 v0.0.44a fixed issue with setting state properties that use dot notation, enhanced docs
 
 2023-10-31 v0.0.43a removed remote data sync for now, changed remote state to use router, added state lifecycle events,
 enhanced docs

@@ -2,7 +2,7 @@
     "use strict"
     if(document?.currentScript && !window.lazuiLoaded) {
         const url = new URL(document.currentScript.src),
-            autofocus = document.currentScript.hasAttribute("autofocus");
+            script = document.currentScript;
         document.addEventListener("DOMContentLoaded",async (event) => {
             if(window.lazuiLoaded ||!document.body) return;
             window.lazuiLoaded = true;
@@ -10,13 +10,9 @@
             lazui.url.hash = "";
             lazui.url.search = "";
             directiveExports.url = lazui.url;
-            const usejson = document.querySelector(`[${directiveExports.prefix}\\:usejson]`);
-            if(usejson) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usejson`]);
-            const userouter = document.querySelector(`[${directiveExports.prefix}\\:userouter]`);
-            if(userouter) {
-                const attribute = userouter.attributes[`${directiveExports.prefix}:userouter`];
-                await handleDirective(attribute);
-            }
+            if(script.hasAttribute(`${directiveExports.prefix}:usedefaults`)) await handleDirective(script.attributes[`${directiveExports.prefix}:usedefaults`]);
+            if(script.hasAttribute(`${directiveExports.prefix}:usejson`)) await handleDirective(script.attributes[`${directiveExports.prefix}:usejson`]);
+            if(script.hasAttribute(`${directiveExports.prefix}:userouter`)) await handleDirective(script.attributes[`${directiveExports.prefix}:userouter`]);
             for (const state of [...document.querySelectorAll(`[${directiveExports.prefix}\\:state],[${directiveExports.prefix}\\:state\\:global],[${directiveExports.prefix}\\:state\\:document]`)]) {
                 for (const attr of [...state.attributes]) {
                     if (attr.name.startsWith(`${directiveExports.prefix}:state`)) await handleDirective(attr)
@@ -25,9 +21,8 @@
             for(const customElement of [...document.querySelectorAll(`[${directiveExports.prefix}\\:tagname]`)]) {
                 await handleDirective(customElement.attributes[`${directiveExports.prefix}:tagname`]);
             }
-            const usehighlighter = document.querySelector(`[${directiveExports.prefix}\\:usehighlighter]`);
-            if(usehighlighter) await handleDirective(usejson.attributes[`${directiveExports.prefix}:usehighlighter`]);
-            if(autofocus) await resolve(document.body,{root:document,state:{}});
+            if(script.hasAttribute(`${directiveExports.prefix}:usehighlighter`)) await handleDirective(script.attributes[`${directiveExports.prefix}:usehighlighter`]);
+            if(script.hasAttribute("autofocus")) await resolve(document.body,{root:document,state:{}});
             document.documentElement.removeAttribute("hidden");
             if(typeof resizeFrame !== "undefined") setTimeout(() => resizeFrame(document));
             const namespace = directiveExports.prefix.split("-").pop();

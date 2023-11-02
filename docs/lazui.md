@@ -1,28 +1,4 @@
-<script src="/lazui"
-   data-lz:usejson="https://esm.sh/json5"
-   autofocus
-   data-lz:userouter="https://esm.sh/hono"
-   data-lz:usehighlighter="https://esm.sh/highlight.js"
-   data-lz:options="{
-      userouter: {
-         importName:'Hono',
-         isClass:true,
-         allowRemote:true,
-         markdownProcessor: {
-            src:'https://esm.sh/markdown-it',
-            call:'render',
-            isClass:true,
-            options: {
-               html:true,
-               linkify:true
-            }
-         }
-      },
-      usehighlighter:{
-         style:'/styles/default.css'
-      }
-   }">
-</script>
+<script src="/lazui" data-lz:usedefaults></script>
 <script>
 document.addEventListener("lz:loaded", async () => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
@@ -206,12 +182,11 @@ You can also configure `lazui` to:
 </script>
 ```
 
-### Lazy Loading
+A bit overwhelming? Use this shorthand:
 
-Unless a [custom bundle is created](#creating-a-custom-bundle), all the attribute directive functionality provided by
-`lazui` is loaded on demand. The functionality of each attribute is in its own file. Some attributes are loaded in a
-non-blocking manner when a page first loads and some are loaded just the first time the attribute is found in the HTML.
-This gets the page to its first meaningful paint faster.
+```html
+<script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults></script>
+```
 
 ### Choose Your Development Paradigm
 
@@ -322,14 +297,16 @@ Setting state at the document level can be useful with Markdown. Below is the co
 `using-state-with-markdown.md`, followed by the `HTML` loading the file into an `<iframe>` (which is optional).
 
 ```html
+*${name}* is *${age}* years old.
 <template data-lz:state:document="person">
 {
     name: "Mary",
     age: 21
 }
 </template>
-*${name}* is *${age}* years old.
 ```
+
+Due to issues with some Markdown parsers, you MUST put state template at the end.
 
 ```html
 <div data-lz:src="/using-state-with-markdown.md" 
@@ -338,13 +315,13 @@ Setting state at the document level can be useful with Markdown. Below is the co
 ```
 
 <template data-lz:url:get="/using-state-with-markdown.md" data-lz:mode="document">
+*${name}* is *${age}* years old.
 <template data-lz:state:document="person">
 {
     "name": "Mary",
     "age": 21
 }
 </template>
-*${name}* is *${age}* years old.
 </template>
 <div data-lz:src="/using-state-with-markdown.md" data-lz:mode="frame" title="Lazui: Markdown Example"></div>
 

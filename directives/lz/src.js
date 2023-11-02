@@ -49,10 +49,7 @@ function src({el,attribute,root,state,lazui}) {
                         content.body.insertAdjacentElement("afterbegin",el);
                     }
                 }
-                content = render(el,content,{state, root:el, where:null});
-                update({node:el, content, state, root:el, where, recurse: 1})
-                //render(el,content,{state, root:el, where, recurse:1});
-                //update({node:el, content, state, root:el, where, recurse: 1});
+                await render(el,content,{state, root:el, where,recurse:1});
                 if(controller) loadController({el,attribute:controller,state,root,lazui})
             }
         }
