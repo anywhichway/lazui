@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-11-04 v0.0.50a final attempt to fix websocket CSP issue before CSPs are removed
+
 2023-11-04 v0.0.49a another attempt to fix websocket CSP issue
 
 2023-11-04 v0.0.48a attempt to fix websocket CSP issue
