@@ -18,7 +18,7 @@ async function userouter({attribute,lazui,options}) {
         } else if(markdown && markdownProcessor.call) {
             markdown = markdown[markdownProcessor.call].bind(markdown);
         }
-        router.io = io(`ws://${location.hostname}:${location.port}`);
+        router.io = io(`${location.protocol==="https://" ? "wss" : "ws"}://${location.hostname}:${location.port}`);
         router.remote = window.location.host;
         lazui.useRouter(router, {allowRemote,prefix,JSON,markdown,lazuiProtocol,host});
     })
