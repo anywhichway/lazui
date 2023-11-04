@@ -36,6 +36,7 @@
 <div id="header" style="font-weight:bold;margin-top:0px">
     &nbsp;<span id="open-button">&gt;&gt;</span><span id="close-button">&lt;&lt;</span>
 </div>
+<datalist id="keyword"></datalist>
 <div class="toc" style="border:1px solid grey;margin-right:5px;border-radius:5px;overflow-x:hidden;overflow-y:auto;background:whitesmoke">
 </div>
 <script>
@@ -70,7 +71,8 @@
         this.setAttribute("style","position:fixed;top:2em;left:10px;max-height:97%;height:97%;opacity:1;background:white")
         const toc = this.shadowRoot.querySelector(".toc");
         if(!toc) return;
-        toc.innerHTML = generateLinkMarkup(document.body);
+        toc.innerHTML = '<input id="search" list="keyword" type="text" placeholder="Search" style="width: 150px; margin-left: 10px; margin-top: 5px; margin-bottom: 10px;"><br>'+generateLinkMarkup(document.body);
+        const search = toc.querySelector("#search");
         document.body.style = "overflow:hidden;height:100%;max-height:100%;margin-top:0px"
         const content = document.createElement("div");
         content.setAttribute("style","float:right;padding-top:0px;max-height:100vh;overflow:auto;opacity:1");
@@ -162,6 +164,50 @@
                 history.pushState({contentPosition: {scrollLeft:content.scrollLeft,scrollTop:content.scrollTop}}, "");
             }
         });
+        function xpathPrepare(xpath, searchString) {
+            return xpath.replace("$u", searchString.toUpperCase())
+                .replace("$l", searchString.toLowerCase())
+                .replace("$s", searchString.toLowerCase());
+        }
+        search.addEventListener("keyup",(event) => {
+            const datalist = this.shadowRoot.getElementById("keyword");
+            search.oldValue = event.target.value;
+            if([...datalist.children].some(option => option.value===event.target.value)) return;
+            datalist.innerHTML = "";
+            const words = new Set(event.target.value.split(" "));
+            for(const word of words) {
+                const xpathResult = document.evaluate(
+                    xpathPrepare("//text()[contains(translate(., '$u', '$l'), '$s')]", word),
+                    document.body,
+                    null,
+                    XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+                    null),
+                    options = new Map();
+                for (let i = 0; i < xpathResult.snapshotLength; i++) {
+                    const item = xpathResult.snapshotItem(i);
+                    if (["SCRIPT", "STYLE", "TEMPLATE","DATALIST","OPTION"].includes(item.parentElement.tagName)) continue;
+                    const option = options.get(item) || new Option(item.textContent);
+                    option.node = item;
+                    option.count = (option.count || 0) + 1;
+                    options.set(item, option);
+
+                    //if(i===0) item.parentElement.scrollIntoView({behavior:"smooth"});
+                }
+                datalist.append(...[...options.values()].sort((a, b) => b.count - a.count));
+            }
+        });
+        search.addEventListener("change",(event)=> {
+            const datalist = this.shadowRoot.getElementById("keyword"),
+                option = [...datalist.children].find(option => option.value===event.target.value);
+            if(option) {
+                search.blur();
+                setTimeout(() => {
+                    option.node.parentElement.scrollIntoView({behavior:"instant"});
+                    option.node.parentElement.focus();
+                })
+            }
+            search.value = search.oldValue;
+        })
         window.addEventListener("popstate", (event) => {
             const contentPosition = event.state?.contentPosition;
             if(contentPosition) content.scrollLeft = contentPosition.scrollLeft, content.scrollTop = contentPosition.scrollTop;

@@ -1,6 +1,6 @@
 <script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults></script>
 <script>
-document.addEventListener("lz:loaded", async () => {
+document.addEventListener("lz:loaded", async (lazui) => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
    issues.filter((issue) => issue.assignee).forEach((issue) => {
       const parts = issue.body ? issue.body.split(" ") : [],
@@ -13,7 +13,7 @@ document.addEventListener("lz:loaded", async () => {
             el.after(ref);
          }
       });
-   })
+   });
 });
 </script>
 

@@ -18,6 +18,8 @@ async function userouter({attribute,lazui,options}) {
         } else if(markdown && markdownProcessor.call) {
             markdown = markdown[markdownProcessor.call].bind(markdown);
         }
+        router.io = io(`ws://${location.hostname}:${location.port}`);
+        router.remote = window.location.host;
         lazui.useRouter(router, {allowRemote,prefix,JSON,markdown,lazuiProtocol,host});
     })
 }
@@ -44,7 +46,7 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
         let mode = c.req.raw.mode;
         if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
             const el = document.getElementById(url.hash.slice(1));
-            return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
+            if(el) return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
         }
         if(isLocal || allowRemote) {
             let node;

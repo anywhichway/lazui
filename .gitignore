@@ -1,3 +1,6 @@
+# keys and such
+.credentials.*
+
 # Logs
 logs
 *.log

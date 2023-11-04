@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+Welcome to flexroute-test.html
+<script type="module">
+    import {flexroute} from "./flexroute.js";
+    import {io} from "https://www.unpkg.com/socket.io-client/dist/socket.io.esm.min.js";
+    const router = flexroute()
+        .withSockets(io(`ws://${location.hostname}:${location.port}`))
+        .withRemote("http://localhost:8081");
+    document.addEventListener("click",async (event) => {
+        if(event.target.tagName==="A") {
+            event.preventDefault();
+            const response = await router.fetch(new URL(event.target.href).href);
+            if(response) console.log(await response.text())
+        }
+    });
+</script>
+<a href="http://localhost:8081/test">Home</a>
+</body>
+</html>

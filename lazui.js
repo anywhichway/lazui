@@ -1,5 +1,51 @@
 (async () => {
+    const responseOrRequestAsObject = async (value) => {
+        if(typeof value === "string") value = new Request(value);
+        else value = value.clone();
+        const object = {};
+        for(const key in value) {
+            if(typeof value[key] === "function" || key==="signal") continue;
+            if(key==="headers") {
+                object.headers = {};
+                value.headers.forEach((value,key)=> {
+                    object.headers[key] = value;
+                });
+            } else if(!key.startsWith("body")) {
+                object[key] = value[key];
+            }
+        }
+        if(!["GET","HEAD","DELETE"].includes(value.method)) object.body = await value.text();
+        return object;
+    }
     "use strict"
+    const _fetch = window.fetch.bind(window),
+        encoder = new TextEncoder(),
+        decoder = new TextDecoder();
+    let socket = location.port ? new WebSocket(`ws://${location.hostname}:${parseInt(location.port)+1}`) : undefined;
+    window.fetch = async (request) => {
+        const promises = [],
+            url = typeof request === "string" ? new URL(request,window.location) : new URL(request.url,window.location);
+        if(socket && url.host===location.host) {
+            if(socket.readyState!==1) {
+                socket = new WebSocket(`ws://${location.hostname}:${parseInt(location.port)+1}`);
+            } else {
+                promises.push(new Promise(async (resolve, reject) => {
+                    const listener = (event) => {
+                        const {body, ...rest} = JSON.parse(event.data);
+                        resolve(new Response(body, rest));
+                        socket.removeEventListener("message", listener);
+                    }
+                    socket.addEventListener("message", listener);
+                    const string = JSON.stringify(await responseOrRequestAsObject(request)),
+                        message = encoder.encode(string);
+                    socket.send(string);
+                }));
+            }
+        }
+        if(promises.length===0) promises.push(_fetch(request));
+        return Promise.race(promises);
+    }
+
     if(document?.currentScript && !window.lazuiLoaded) {
         const url = new URL(document.currentScript.src),
             script = document.currentScript;

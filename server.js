@@ -1,9 +1,11 @@
 let MODE = "development"; //production, development
 import JSON5 from 'json5';
+import {TextDecoder} from "util";
 import { createServerAdapter } from '@whatwg-node/server'
 import { createServer } from 'http'
 import { error, json, html, text, jpeg, png, webp, Router } from 'itty-router'
 import {Server as socketIO} from "socket.io";
+import {App as uWS} from "uWebSockets.js";
 import {default as MarkdownIt} from "markdown-it";
 import {default as MarkdownItAnchor} from "markdown-it-anchor";
 import {default as MarkdownItDeflist} from "markdown-it-deflist";
@@ -54,7 +56,7 @@ const contentTypes = {
     ".ico": {type:"image/x-icon"},
     ".txt": {encoding:"utf8",type:"text/plain"}
 }
-async function sendFile(pathname,{mangle=true}={}) {
+async function sendFile(pathname,{mangle=true,skipCompress}={}) {
     const headers = {},
         options = {};
     try {
@@ -67,7 +69,7 @@ async function sendFile(pathname,{mangle=true}={}) {
         if(options.encoding==="utf8") headers["content-encoding"] = "br";
         const content = await fs.readFile(pathname,options),
             data = MODE==="production" && headers["content-type"].includes("javascript") ? (await minify(content,{mangle})).code : content,
-            response = new Response(typeof data === "string" ? compress(Buffer.from(data)) : toArrayBuffer(data),{headers});
+            response = new Response(typeof data === "string" ? (skipCompress ? data : compress(Buffer.from(data))) : toArrayBuffer(data),{headers});
         return response;
     } catch(e) {
         console.log(e)
@@ -81,7 +83,7 @@ const serveStatic = ({root}) => {
         const url = new URL(req.url),
             filePath = `${root}${url.pathname}`;
         //console.log(filePath);
-        return sendFile(path.join(process.cwd(),filePath));
+        return sendFile(path.join(process.cwd(),filePath),{skipCompress:req.skipCompress});
     }
 }
 
@@ -99,31 +101,31 @@ app.get("/lazui.js", (c) => {//"application/javascript
  */
 
 app.get("/lazui", (req) => {
-    return sendFile(process.cwd() + "/lazui.js");
+    return sendFile(process.cwd() + "/lazui.js",{skipCompress:req.skipCompress});
 })
 
 app.get("/lazui/*", (req) => {
     const pathname = req.URL.pathname.replace("/lazui",""),
         fname = pathname.split("/").pop().split(".").shift();
-    return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
+    return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]},skipCompress:req.skipCompress});
 })
 
 // as a convenience, provide local copies of itty and Hono for browser use
 app.get("/itty-router.js", (req) => {
-    return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs');
+    return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs',{skipCompress:req.skipCompress});
 });
 app.get("/hono/*", (req) => {
-    return sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5));
+    return sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5),{skipCompress:req.skipCompress});
 });
 
 // as a convenience, provide JSON5 for browser use
 app.get("/json5.js", (req) => {
-    return sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs');
+    return sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs',{skipCompress:req.skipCompress});
 });
 
 // as a convenience, provide highlight-js for browser use
 app.get('/highlight-js/*', (req) => {
-    return sendFile(process.cwd() + req.URL.pathname);
+    return sendFile(process.cwd() + req.URL.pathname,{skipCompress:req.skipCompress});
 });
 
 
@@ -278,13 +280,14 @@ app.get("*", async (req) => {
                         <meta charset="UTF-8">
                         <link rel="preconnect" href="https://esm.sh">`;
             }
+            if(req.skipCompress) return html(`<!DOCTYPE html>${markedDOM}`);
             return html(compress(Buffer.from(`<!DOCTYPE html>${markedDOM}`)),{headers:{"content-encoding":"br"}});
         } catch(e) {
             console.log(e);
             throw e;
         }
    } else {
-        return sendFile(path.join(process.cwd(),req.URL.pathname));
+        return sendFile(path.join(process.cwd(),req.URL.pathname),{skipCompress:req.skipCompress});
     }
 })
 app.get('*', () => error(404));
@@ -294,6 +297,10 @@ const CSP = {
         "'self'",
         "'unsafe-inline'",
         "'unsafe-eval'",
+        "ws://localhost:*",
+        "wss://localhost:*",
+        "ws://lazui.org:*",
+        "wss://lazui.org:*",
         "https://lazui.org",
         "https://www.gstatic.com",
         "https://img.shields.io",
@@ -336,12 +343,57 @@ const ittyServer = createServerAdapter(
 const httpServer = createServer(ittyServer)
 httpServer.listen(3000);
 
+const responseOrRequestAsObject = async (value) => {
+    if(typeof value === "string") value = new Request(value);
+    else value = value.clone();
+    const object = {};
+    for(const key in value) {
+        if(typeof value[key] === "function" || key==="signal") continue;
+        if(key==="headers") {
+            object.headers = {};
+            value.headers.forEach((value,key)=> {
+                object.headers[key] = value;
+            });
+        } else if(!key.startsWith("body")) {
+            object[key] = value[key];
+        }
+    }
+    if(!["GET","HEAD","DELETE"].includes(value.method)) object.body = await value.text();
+    return object;
+}
+
+const encoder = new TextEncoder(),
+    decoder = new TextDecoder();
+uWS().ws("/*",{
+    message: async (ws, message, isBinary) => {
+        /* You can do app.publish('sensors/home/temperature', '22C') kind of pub/sub as well */
+        const {url,...rest} = JSON5.parse(decoder.decode(message)),
+            request = new Request(url,rest);
+        request.skipCompress = true;
+        const response = await ittyServer.fetch(request),
+            string = JSON.stringify(await responseOrRequestAsObject(response));
+        ws.send(encoder.encode(string))
+        /* Here we echo the message back, using compression if available */
+        //let ok = ws.send(message, isBinary, true);
+    }
+}).listen(3001, (listenSocket) => {
+    if (listenSocket) {
+        console.log('uWebSockets Listening to port ' + 3001);
+    }
+})
+
 const io = new socketIO(httpServer);
 io.on('connection', (socket) => {
     //console.log('a user connected');
     socket.on('disconnect', () => {
         //console.log('user disconnected');
     });
+    socket.on('request', async (msg) => {
+        const {url,...rest} = JSON.parse(msg),
+            request = new Request(url,rest),
+            response = await router.fetch(request);
+        io.emit(`response:${url}`,await responseOrRequestAsObject(response))
+    })
     socket.onAny((event,msg) => {
         console.log(event,msg);
         if(["connection","disconnect"].includes(event)) return;
