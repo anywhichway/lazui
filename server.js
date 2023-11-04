@@ -301,6 +301,7 @@ const CSP = {
         "wss://localhost:*",
         "ws://lazui.org:*",
         "wss://lazui.org:*",
+        "http://lazui.org",
         "https://lazui.org",
         "https://www.gstatic.com",
         "https://img.shields.io",
