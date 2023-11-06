@@ -91,7 +91,7 @@ render(document.currentScript,
 </script>
 ```
 
-Ok, now it's time to [dive in](/docs/lazui.md)!
+Ok, now it's time to [dive in](https://lazui.org/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
