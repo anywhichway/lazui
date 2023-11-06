@@ -10,6 +10,8 @@
 
 <p style="width:100%;text-align:center;font-size:20px">The lazy UI framework. Get lazui ... do less ... deliver more.</p>
 
+<p style="width:100%;text-align:center;font-size:20px">Currently in early development.</p>
+
 <p style="width:100%;text-align:center"><a href="#quick-start">Quick Start</a> or <a href="/docs/lazui.md">Dive In</a></p>
 
 <div style="margin:auto;width:70%">
