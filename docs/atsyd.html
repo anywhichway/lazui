@@ -243,11 +243,25 @@
     </form>
 </section>
 <script>
+    function getVoices() {
+        return new Promise(
+            function (resolve, reject) {
+                let synth = window.speechSynthesis;
+                let id;
+
+                id = setInterval(() => {
+                    if (synth.getVoices().length !== 0) {
+                        resolve(synth.getVoices());
+                        clearInterval(id);
+                    }
+                }, 10);
+            }
+        )
+    }
     let voice;
-    document.addEventListener("DOMContentLoaded",() => {
-        setTimeout(() => {
+    document.addEventListener("DOMContentLoaded",async () => {
             const synth = window.speechSynthesis;
-            voice = synth.getVoices().find((voice) => voice.name==="Google UK English Female");
+            voice = (await getVoices()).find((voice) => voice.name==="Google UK English Female");
             const msgerForm = get(".msger-inputarea");
             const msgerInput = get(".msger-input");
             const msgerChat = get(".msger-chat");
@@ -258,7 +272,6 @@
                 "Sorry if my answers are not relevant. :))",
                 "I feel sleepy! :("
             ];
-debugger;
             // Icons made by Freepik from www.flaticon.com
             const BOT_IMG = "https://image.flaticon.com/icons/svg/327/327779.svg";
             const PERSON_IMG = "https://image.flaticon.com/icons/svg/145/145867.svg";
@@ -344,7 +357,6 @@ debugger;
             function random(min, max) {
                 return Math.floor(Math.random() * (max - min) + min);
             }
-        },5000)
     });
 </script>
 <!-- DEMO -->
