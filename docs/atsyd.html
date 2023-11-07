@@ -243,10 +243,11 @@
     </form>
 </section>
 <script>
+    let voice;
     document.addEventListener("DOMContentLoaded",() => {
         setTimeout(() => {
             const synth = window.speechSynthesis;
-            const voice = synth.getVoices().find((voice) => voice.name==="Google UK English Female");
+            voice = synth.getVoices().find((voice) => voice.name==="Google UK English Female");
             const msgerForm = get(".msger-inputarea");
             const msgerInput = get(".msger-input");
             const msgerChat = get(".msger-chat");
@@ -257,7 +258,7 @@
                 "Sorry if my answers are not relevant. :))",
                 "I feel sleepy! :("
             ];
-
+debugger;
             // Icons made by Freepik from www.flaticon.com
             const BOT_IMG = "https://image.flaticon.com/icons/svg/327/327779.svg";
             const PERSON_IMG = "https://image.flaticon.com/icons/svg/145/145867.svg";
@@ -343,7 +344,7 @@
             function random(min, max) {
                 return Math.floor(Math.random() * (max - min) + min);
             }
-        },2000)
+        },3000)
     });
 </script>
 <!-- DEMO -->
