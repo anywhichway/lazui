@@ -246,11 +246,11 @@
     document.addEventListener("DOMContentLoaded",() => {
         setTimeout(() => {
             const synth = window.speechSynthesis;
-            const voice = synth.getVoices().find((name) => name.toUpperCase().includes("US ENGLISH"));
+            const voice = synth.getVoices().find((name) => voice.name==="Google UK English Female");
             const msgerForm = get(".msger-inputarea");
             const msgerInput = get(".msger-input");
             const msgerChat = get(".msger-chat");
-
+debugger;
             const BOT_MSGS = [
                 "Hi, how are you?",
                 "Ohh... I can't understand what you trying to say. Sorry!",
