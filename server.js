@@ -322,11 +322,11 @@ const ittyServer = createServerAdapter(
         .then((response) => {
             if(!response?.headersSent && response?.headers) {
                 const wsSrc = req.URL.origin.replace(req.URL.protocol,"ws:");
-                if(!CSP["default-src"].includes(wsSrc)) CSP["default-src"].push(wsSrc);
+               /* if(!CSP["default-src"].includes(wsSrc)) CSP["default-src"].push(wsSrc);
                 //return json(response); // do not remove, will get error if json not processed
                 Object.entries(CSP).forEach(([csp,values]) => {
                     response.headers.append("Content-Security-Policy",[csp,...values].join(" "));
-                });
+                });*/
                 response.headers.append("Access-Control-Allow-Origin","*");
                 //response.headers.append("Content-Security-Policy","object-src 'none'");
                 //response.headers.append("Content-Security-Policy",`default-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://img.shields.io ${req.URL.origin.replace(req.URL.protocol,"ws:")}`);
