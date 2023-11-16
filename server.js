@@ -434,7 +434,7 @@ const flexServer = (req, env) => {
         return router.fetch(req).then((res) => responseHandler(res,env.res||env));
     };
 
-const port = 3000;
+const port = 10000;
 const httpServer = createServer(flexServer)
 httpServer.listen(port,"localhost",port, () => console.log(`http server listening on port ${port}`));
 
