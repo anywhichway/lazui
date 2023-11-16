@@ -5,7 +5,7 @@ function usedefaults({el,rawValue,lazui}) {
     if(config.autofocus!==false) el.setAttribute("autofocus","");
     if(config.json!==false) el.setAttribute(`${prefix}:usejson`,"https://esm.sh/json5");
     if(config.userouter!==false) {
-        el.setAttribute(`${prefix}:userouter`,"@anywhichway/lazui/flexrouter.js");
+        el.setAttribute(`${prefix}:userouter`,"https://unpkg.com/@anywhichway/lazui/flexrouter.js");
         options.userouter = {
             importName:'flexrouter',
                 isClass:false,
