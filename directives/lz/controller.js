@@ -21,6 +21,9 @@ const loadController = async ({el,attribute,state,options,root,lazui}) => {
         if(el.init) {
             el.init({el,state,root,options,lazui})
         }
+    }).catch((e) => {
+        console.error(e);
+        throw e;
     });
 }
 async function controller({el,attribute,state,root,options,lazui})  {

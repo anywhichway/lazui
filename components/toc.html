@@ -185,12 +185,20 @@
                     options = new Map();
                 for (let i = 0; i < xpathResult.snapshotLength; i++) {
                     const item = xpathResult.snapshotItem(i);
+                    let textContent = item.textContent;
+                    if(item.nextSibling) {
+                        if(item.nextSibling?.nodeType===Node.TEXT_NODE) textContent += item.nextSibling.textContent;
+                        else if(item.nextSibling?.nodeType===Node.ELEMENT_NODE && ["TEMPLATE","LINK","SRC"]!==item.nextSibling.tagName) textContent += item.nextSibling.innerText;
+                    }
                     if (["SCRIPT", "STYLE", "TEMPLATE","DATALIST","OPTION"].includes(item.parentElement.tagName)) continue;
-                    const option = options.get(item) || new Option(item.textContent);
-                    option.node = item;
-                    option.count = (option.count || 0) + 1;
-                    options.set(item, option);
-
+                    const target = event.target.value.endsWith(" ") ? event.target.value : event.target.value + " ";
+                        text = (textContent.match(new RegExp(`.{0,30}${target}.{0,30}`,"gi"))||[])[0];
+                    if(text) {
+                        const option = options.get(item) || new Option(text.slice(text.indexOf(" "),text.lastIndexOf(" ")));
+                        option.node = item;
+                        option.count = (option.count || 0) + 1;
+                        options.set(item, option);
+                    }
                     //if(i===0) item.parentElement.scrollIntoView({behavior:"smooth"});
                 }
                 datalist.append(...[...options.values()].sort((a, b) => b.count - a.count));

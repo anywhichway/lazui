@@ -616,6 +616,8 @@ The example below just returns the body it was sent.
 
 If a form has no `innerHTML`, the `state` local to the form is used to generate one based on the types of the property values.
 
+*Note*: The state must be local to the forms. Forms do not support inherited state.
+
 ```!html
 <template data-lz:state="formexample">
 {
@@ -1362,28 +1364,24 @@ page hosting it is served over `https`.
   <tr><td></td><td> <button type="submit">Send</button></td></tr>
 </table>
 </form>
-<script src="/socket.io/socket.io.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(() => {
-    const socket = io();
+ setTimeout(() => {
+    const socket = new WebSocket(`ws://${window.location.hostname}:3001`);
     const form = document.getElementById('form');
     const to = document.getElementById('to');
     const input = document.getElementById('message');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (input.value) {
-            to.value.toLowerCase().split(",").forEach((recipient) => {
-                socket.emit(recipient, input.value);
+            to.value.toLowerCase().split(",").forEach((topic) => {
+                socket.send(JSON.stringify({topic,message:input.value}));
             });
             input.value = '';
         }
     });
-    socket.on('chat_message', (msg) => {
-        const item = document.createElement('li');
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+    socket.addEventListener('message', (event) => {
+        //console.log(event)
     });
   },1000);
 });

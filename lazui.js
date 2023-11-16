@@ -17,34 +17,6 @@
         if(!["GET","HEAD","DELETE"].includes(value.method)) object.body = await value.text();
         return object;
     }
-    "use strict"
-    const _fetch = window.fetch.bind(window),
-        encoder = new TextEncoder(),
-        decoder = new TextDecoder();
-    let socket = location.port ? new WebSocket(`ws://${location.hostname}:${parseInt(location.port)+1}`) : undefined;
-    window.fetch = async (request) => {
-        const promises = [],
-            url = typeof request === "string" ? new URL(request,window.location) : new URL(request.url,window.location);
-        if(socket && url.host===location.host) {
-            if(socket.readyState!==1) {
-                socket = new WebSocket(`ws://${location.hostname}:${parseInt(location.port)+1}`);
-            } else {
-                promises.push(new Promise(async (resolve, reject) => {
-                    const listener = (event) => {
-                        const {body, ...rest} = JSON.parse(event.data);
-                        resolve(new Response(body, rest));
-                        socket.removeEventListener("message", listener);
-                    }
-                    socket.addEventListener("message", listener);
-                    const string = JSON.stringify(await responseOrRequestAsObject(request)),
-                        message = encoder.encode(string);
-                    socket.send(string);
-                }));
-            }
-        }
-        if(promises.length===0) promises.push(_fetch(request));
-        return Promise.race(promises);
-    }
 
     if(document?.currentScript && !window.lazuiLoaded) {
         const url = new URL(document.currentScript.src),
@@ -246,8 +218,11 @@
         }
         if(node.nodeType===Node.ELEMENT_NODE && node.hasAttribute(attrName)) {
             const state = getState(node.getAttribute(attrName))
-            if(state) states.push(state);
-            else console.log(`Can't find state: ${node.getAttribute(attrName)} in ${node.outerHTML}`);
+            if(!state) {
+                console.log(`Can't find state: ${node.getAttribute(attrName)} in ${node.outerHTML}`);
+            } else if(!states.includes(state)) {
+                states.push(state);
+            }
         } else if(node.__state__) {
             states.push(node.__state__);
         }
@@ -386,7 +361,7 @@
         if (node.nodeType == Node.TEXT_NODE) {
             if (callback) await callback(node, level, root);
         } else {
-            if (node.nodeType == Node.ELEMENT_NODE) for (const attr of [...node.attributes]) !callback || callback(attr, level, root)
+            if (node.nodeType == Node.ELEMENT_NODE) for (const attr of [...node.attributes]) !callback || await callback(attr, level, root)
             if(node.tagName!=="SCRIPT" && node.tagName!=="CODE") {
                 if (callback) callback(node, level, root);
                 const nodes = [...(node.childNodes ? node.childNodes : node)];
@@ -519,8 +494,9 @@
     html.toString = (strings, ...values) => html(strings, ...values).toString();
     html.documentFragment = (strings, ...values) => html(strings, ...values).toDocumentFragment();
     const compile = (escaped, root,all) => {
-        const unescaped = all ? escaped.replaceAll(/&gt;/g, ">").replaceAll(/&lt;/g, "<").replaceAll(/&amp;/g, "&").replaceAll(/&quot;/g, '""').replaceAll(/&apos;/g, "'")
+        let unescaped = all ? escaped.replaceAll(/&gt;/g, ">").replaceAll(/&lt;/g, "<").replaceAll(/&amp;/g, "&").replaceAll(/&quot;/g, '""').replaceAll(/&apos;/g, "'")
             : replaceBetween(escaped, "${", "}", (text) => text.replaceAll(/&gt;/g, ">").replaceAll(/&lt;/g, "<").replaceAll(/&amp;/g, "&").replaceAll(/&quot;/g, '""').replaceAll(/&apos;/g, "'"));
+        if(unescaped.startsWith("${") && !unescaped.includes("}")) unescaped += "}"
         return Function("html", "root", "return (state) => { with(state) { return html`" + unescaped + "`}}")(html, root); // html.bind({state,root});
     }
 

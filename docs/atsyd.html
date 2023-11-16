@@ -258,7 +258,8 @@
             }
         )
     }
-    let voice;
+    let voice,
+        hasSpoken;
     document.addEventListener("DOMContentLoaded",async () => {
             const synth = window.speechSynthesis;
             voice = (await getVoices()).find((voice) => voice.name==="Google UK English Female");
@@ -337,7 +338,8 @@
                 const delay = msgText.split(" ").length * 100;
 
                 setTimeout(() => {
-                    speak("    " + msgText);
+                    speak((hasSpoken ? "\n" : "\nAh," ) + msgText);
+                    hasSpoken = true;
                     appendMessage(BOT_NAME, BOT_IMG, "left", msgText);
                 }, delay);
             }

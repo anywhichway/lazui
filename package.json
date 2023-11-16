@@ -1,6 +1,6 @@
 {
   "name": "@anywhichway/lazui",
-  "version": "0.0.50-a",
+  "version": "0.0.51-a",
   "description": "Single page apps and lazy loading sites with minimal JavaScript or client build processes.",
   "main": "lazui.js",
   "type": "module",
@@ -32,7 +32,6 @@
   },
   "homepage": "https://github.com/anywhichway/lazui#readme",
   "dependencies": {
-    "@whatwg-node/server": "^0.9.14",
     "brotli-wasm": "^2.0.1",
     "examplify": "^1.0.3",
     "highlight.js": "^11.8.0",

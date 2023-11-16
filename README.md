@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](https://lazui.org/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-11-16 v0.0.51 switched to using `flexrouter`. documentation forthcoming.
+
 2023-11-04 v0.0.50a final attempt to fix websocket CSP issue before CSPs are removed
 
 2023-11-04 v0.0.49a another attempt to fix websocket CSP issue

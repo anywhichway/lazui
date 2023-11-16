@@ -7,10 +7,14 @@ const init = async ({el,root,options,lazui})=> {
         {render,prefix,JSON} = lazui,
         t = template ? root.querySelector(template) : el.querySelector("template"),
         src = options.src;
-    let events;
+    let events, subscribed;
     el.addEventListener("subscribe",(event) => {
         events = new EventSource(new URL(src,document.baseURI).href)
         events.onmessage = async (event) => {
+            if(!subscribed) {
+                events.close();
+                return;
+            }
             let value = event.data;
             try {
                 value = JSON.parse(value);
@@ -23,11 +27,12 @@ const init = async ({el,root,options,lazui})=> {
             event.src = (new URL(src,window.location)).href;
             render(el,content,{state,root,recurse:true,where});
         };
-        el.subscribed = true;
-    });
-    el.addEventListener("unsubscribe",(event) => {
-        if(events) events.close();
-        el.subscribed = false;
+        subscribed = true;
+        el.addEventListener("unsubscribe",(event) => {
+            subscribed = false;
+            if(events) events.close();
+            events.onmessage = () => {};
+        });
     });
     el.subscribe = function() {
         el.dispatchEvent(new CustomEvent("subscribe",{detail:(new URL(src,document.baseURI)).href,bubbles:true,cancelable:false,composed:true}));

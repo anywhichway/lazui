@@ -5,11 +5,17 @@ function usedefaults({el,rawValue,lazui}) {
     if(config.autofocus!==false) el.setAttribute("autofocus","");
     if(config.json!==false) el.setAttribute(`${prefix}:usejson`,"https://esm.sh/json5");
     if(config.userouter!==false) {
-        el.setAttribute(`${prefix}:userouter`,"https://esm.sh/hono");
+        el.setAttribute(`${prefix}:userouter`,"/flexrouter.js");
         options.userouter = {
-            importName:'Hono',
-                isClass:true,
+            importName:'flexrouter',
+                isClass:false,
                 allowRemote:true,
+                options: {
+                    servers: [
+                        `ws://${window.location.hostname}:${parseInt(window.location.port)+1}`,
+                        `${window.location.protocol}${window.location.host}`
+                    ]
+                },
                 markdownProcessor: {
                 src:'https://esm.sh/markdown-it',
                     call:'render',

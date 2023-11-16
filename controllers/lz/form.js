@@ -106,21 +106,24 @@ const addInputs = (table,object,options,prefix,path=[]) => {
 
 const init = async ({el,root,state,lazui,options})=> {
     if(el.tagName!=="FORM") throw new TypeError("lz:form: el must be a form element");
-    const {getContext,JSON,router,render,interpolate,prefix} = lazui;
+    const {getContext,JSON,router,render,interpolate,prefix,handleDirective} = lazui;
     if(el.innerHTML.trim()==="") {
-        if(el.hasAttribute("data-lz:src")) {
+        if(!el.__state__ && el.hasAttribute(`${prefix}:usestate`)) {
+            await handleDirective(el.attributes[`${prefix}:usestate`],{state,root})
+        }
+        //const context = getContext(el); // does not work, can't iterate over keys for some reason
+        const context = el.__state__;
+        if(el.hasAttribute(`${prefix}:src`)) {
             el.innerHTML = await fetch(el.getAttribute("data-lz:src")).then((response) => response.text());
         } else {
-            if(el.__state__) {
-                const table = document.createElement("table");
-                addInputs(table,el.__state__,options,prefix);
-                el.appendChild(table);
-                if(el.hasAttribute("action")) {
-                    el.insertAdjacentHTML("beforeend",`<br><button type="submit">Submit</button>`);
-                }
+            const table = document.createElement("table");
+            addInputs(table,context,options,prefix);
+            el.appendChild(table);
+            if(el.hasAttribute("action")) {
+                el.insertAdjacentHTML("beforeend",`<br><button type="submit">Submit</button>`);
             }
         }
-        await init({el,root,state,lazui,options});
+        await init({el,root,state:context,lazui,options});
         return;
     }
     for(const input of el.querySelectorAll("input,select,textarea")) {

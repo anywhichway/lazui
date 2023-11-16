@@ -1,10 +1,11 @@
 let MODE = "development"; //production, development
 import JSON5 from 'json5';
-//import { createServerAdapter } from '@whatwg-node/server'
-import { createServer } from 'node:http'
+import {TextDecoder} from "util";
+import { createServerAdapter } from '@whatwg-node/server'
+import { createServer } from 'http'
+import { error, json, html, text, jpeg, png, webp, Router } from 'itty-router'
+import {Server as socketIO} from "socket.io";
 import {App as uWS} from "uWebSockets.js";
-import {flexroute} from "./flexroute.js"
-import {TextDecoder,TextEncoder} from "util";
 import {default as MarkdownIt} from "markdown-it";
 import {default as MarkdownItAnchor} from "markdown-it-anchor";
 import {default as MarkdownItDeflist} from "markdown-it-deflist";
@@ -27,11 +28,7 @@ import { minify } from "terser";
 import brotli from './brotli.cjs';
 const {compress} = brotli;
 
-const sleep = (ms) => {
-    return new Promise(resolve => setTimeout(() => {
-        resolve()
-    }, ms));
-}
+const sleep = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function toArrayBuffer(buffer) {
     const arrayBuffer = new ArrayBuffer(buffer.length);
@@ -59,46 +56,7 @@ const contentTypes = {
     ".ico": {type:"image/x-icon"},
     ".txt": {encoding:"utf8",type:"text/plain"}
 }
-
-const sse = (handler) =>  async (req) => {
-    const res = req.rawResponse, // add rawResponse
-         headers = {
-            'Content-Type': 'text/event-stream',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache'
-        };
-    let closed;
-    if(WebSocket && res instanceof WebSocket) {
-        res.send(encoder.encode(JSON.stringify({headers})));
-        const _send = res.send.bind(res);
-        res.send = (value) => {
-            if (res.status === 1 || res.status === undefined) {
-                try {
-                    _send(encoder.encode(JSON.stringify({url:req.url, data: value})));
-                } catch {
-                   clearInterval(interval);
-                }
-            } else {
-                clearInterval(interval)
-            }
-        }
-    } else {
-        res.on('close', () => {
-            clearInterval(interval);
-        });
-        Object.entries(headers).forEach(([key, value]) => {
-            res.setHeader(key, value);
-        });
-        res.flushHeaders();
-        res.send = (value) => {
-            res.write(`data: ${JSON.stringify(value)}\n\n`);
-        }
-    }
-    const interval = handler(req,res);
-    return res;
-}
-async function sendFile(pathname,{mangle=true}={}) {
-    console.log(pathname);
+async function sendFile(pathname,{mangle=true,skipCompress}={}) {
     const headers = {},
         options = {};
     try {
@@ -108,9 +66,10 @@ async function sendFile(pathname,{mangle=true}={}) {
                 if(encoding) options.encoding = encoding;
             }
         });
+        if(options.encoding==="utf8") headers["content-encoding"] = "br";
         const content = await fs.readFile(pathname,options),
             data = MODE==="production" && headers["content-type"].includes("javascript") ? (await minify(content,{mangle})).code : content,
-            response = new Response(typeof data === "string" ? data : toArrayBuffer(data),{headers});
+            response = new Response(typeof data === "string" ? (skipCompress ? data : compress(Buffer.from(data))) : toArrayBuffer(data),{headers});
         return response;
     } catch(e) {
         console.log(e)
@@ -124,13 +83,15 @@ const serveStatic = ({root}) => {
         const url = new URL(req.url),
             filePath = `${root}${url.pathname}`;
         //console.log(filePath);
-        return sendFile(path.join(process.cwd(),filePath));
+        return sendFile(path.join(process.cwd(),filePath),{skipCompress:req.skipCompress});
     }
 }
 
-const router = flexroute();
-router.all("*", (req) => {
+const app = Router();
+app.all("*", (req) => {
+    req.URL = new URL(req.url);
     if(!["127.0.0.1","localhost"].includes(req.URL.hostname)) MODE = "production"
+    if(!req.url.includes("datetime")) console.log(req.method,req.url)
 });
 
 /*
@@ -139,46 +100,69 @@ app.get("/lazui.js", (c) => {//"application/javascript
 });
  */
 
-router.get("/lazui", (req) => {
-    return sendFile(process.cwd() + "/lazui.js");
+app.get("/lazui", (req) => {
+    return sendFile(process.cwd() + "/lazui.js",{skipCompress:req.skipCompress});
 })
 
-router.get("/lazui/*", (req) => {
+app.get("/lazui/*", (req) => {
     const pathname = req.URL.pathname.replace("/lazui",""),
         fname = pathname.split("/").pop().split(".").shift();
-    return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
+    return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]},skipCompress:req.skipCompress});
 })
 
-//router.get("/flexrouter.js", (req) => {
-    //return sendFile(process.cwd() + '/flexrouter.js',{skipCompress:req.skipCompress});
-//});
-
 // as a convenience, provide local copies of itty and Hono for browser use
-router.get("/itty-router.js", (req) => {
-    return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs');
+app.get("/itty-router.js", (req) => {
+    return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs',{skipCompress:req.skipCompress});
 });
-router.get("/hono/*", (req) => {
-    return sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5));
+app.get("/hono/*", (req) => {
+    return sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5),{skipCompress:req.skipCompress});
 });
 
 // as a convenience, provide JSON5 for browser use
-router.get("/json5.js", (req) => {
-    return sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs');
+app.get("/json5.js", (req) => {
+    return sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs',{skipCompress:req.skipCompress});
 });
 
 // as a convenience, provide highlight-js for browser use
-router.get('/highlight-js/*', (req) => {
-    return sendFile(process.cwd() + req.URL.pathname);
+app.get('/highlight-js/*', (req) => {
+    return sendFile(process.cwd() + req.URL.pathname,{skipCompress:req.skipCompress});
 });
 
-// a sample sse event generator that just writes the date/time to all clients every second
-const dateTime = function (req,res) {
-    return setInterval(() => {
-        res.send(`${new Date()}`);
-    },1000);
+
+
+// middleware for producing server side event generators
+const sse = (eventGenerator,clients=[]) => async (req,res) => {
+    const entries = Object.entries({
+        'Content-Type': 'text/event-stream',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache'
+    }).forEach(([key,value]) => {
+        res.setHeader(key,value)
+    });
+    // necessary because the whatwg server adapter does not know how to handle headers on a native response
+    // and sse requires using a native response so we can keep it open and remove from client list when closed
+    // so we act like there are no headers with respect to whatwg
+    res.headers = new Headers();
+    clients.push(res);
+    eventGenerator(clients);
+    res.on('close', () => {
+        clients.splice(clients.findIndex((client) => client= res),1);
+    });
+    return res;
 }
 
-router.get('/datetime',sse(dateTime));
+// a sample sse event generator that just writes the date/time to all clients every second
+const dateTime = (clients) => {
+    if(!dateTime.interval) {
+        dateTime.interval = setInterval(() => {
+            clients.forEach(res => res.write(`data: ${new Date()}\n\n`));
+        },1000);
+    }
+    clients[clients.length-1].write(`data: ${new Date()}\n\n`);
+}
+
+
+app.get('/datetime',sse(dateTime));
 
 /*
 ### Meta Data and Data Versioning - not yet implemented
@@ -270,7 +254,7 @@ app.delete('/data/%id.json', async (req) => {
 })
  */
 
-router.get("*", async (req) => {
+app.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
         try {
@@ -296,20 +280,17 @@ router.get("*", async (req) => {
                         <meta charset="UTF-8">
                         <link rel="preconnect" href="https://esm.sh">`;
             }
-            //if(req.skipCompress) return html(`<!DOCTYPE html>${markedDOM}`);
-            //return new Response(compress(`<!DOCTYPE html>${markedDOM}`),{headers:{"content-encoding":"br"}});
-            return new Response(`<!DOCTYPE html>${markedDOM}`,{headers:{"content-type":"text/html"}});
+            if(req.skipCompress) return html(`<!DOCTYPE html>${markedDOM}`);
+            return html(compress(Buffer.from(`<!DOCTYPE html>${markedDOM}`)),{headers:{"content-encoding":"br"}});
         } catch(e) {
             console.log(e);
             throw e;
         }
    } else {
-        const [_1,...path] = req.URL.pathname.split("/");
-        if(path[0]!=="docs" && path.length>1) path.shift();
-        return sendFile(process.cwd() + "/" + path.join("/"),{skipCompress:req.skipCompress});
+        return sendFile(path.join(process.cwd(),req.URL.pathname),{skipCompress:req.skipCompress});
     }
 })
-router.get('*', () => new Response("Not Found",{status:404}));
+app.get('*', () => error(404));
 
 const CSP = {
     "default-src": [
@@ -335,108 +316,36 @@ const CSP = {
 
 
 
-/*const headerProxy = (headers,nodeResponse) => {
-    const _headers = {};
-    for(let i =0;i<headers.length;i=i+2) {
-        _headers[headers[i]] = headers[i+1];
-    }
-    headers = new Headers(_headers);
-    if(!nodeResponse) return headers;
-    return new Proxy(headers,{
-        get(target,prop) {
-            if(prop==="set") {
-                return (key,value) => {
-                    nodeResponse.setHeader(key,value);
-                    target.set(key,value)
-                }
+const ittyServer = createServerAdapter(
+    (req, env) => app
+        .handle(req, env.res)
+        .then((response) => {
+            if(!response?.headersSent && response?.headers) {
+                const wsSrc = req.URL.origin.replace(req.URL.protocol,"ws:");
+               /* if(!CSP["default-src"].includes(wsSrc)) CSP["default-src"].push(wsSrc);
+                //return json(response); // do not remove, will get error if json not processed
+                Object.entries(CSP).forEach(([csp,values]) => {
+                    response.headers.append("Content-Security-Policy",[csp,...values].join(" "));
+                });*/
+                response.headers.append("Access-Control-Allow-Origin","*");
+                //response.headers.append("Content-Security-Policy","object-src 'none'");
+                //response.headers.append("Content-Security-Policy",`default-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://img.shields.io ${req.URL.origin.replace(req.URL.protocol,"ws:")}`);
             }
-            if(prop==="append") {
-                return (key,value) => {
-                    nodeResponse.setHeader(key,nodeResponse.getHeader(key)||"" + "," + value);
-                    target.append(key,value)
-                }
-            }
-            return target[prop];
-        }
-    })
-}
-const responseProxy = (nodeResponse) => {
-    const res = new Response(null,{headers:nodeResponse ? nodeResponse.headers : {}});
-    if(!nodeResponse) return res;
-    return new Proxy(res,{
-        get(target,prop) {
-            if(prop==="write") {
-                return (value) => {
-                    if(typeof value === "string") {
-                        nodeResponse.write(value);
-                    } else {
-                        nodeResponse.write(JSON.stringify(value));
-                    }
-                }
-            }
-            if(prop==="end") {
-                return () => {
-                    nodeResponse.end();
-                }
-            }
-            if(prop==="headers") {
-                return headerProxy(target.headers,nodeResponse);
-            }
-            if(prop==="on") {
-                return nodeResponse?.on
-            }
-            return target[prop];
-        },
-        set(target,prop,value) {
-            if(prop==="status") {
-                target[prop] = value;
-                nodeResponse.statusCode = value;
-            } else {
-                target[prop] = value;
-            }
-            return true;
-        }
-    })
-}*/
-
-const responseHandler = async (res,nativeResponse) => {
-    if(res===nativeResponse) {
-        return nativeResponse
-    }
-    if(res instanceof Response && nativeResponse) {
-        [...res.headers?.entries()].forEach(([key,value]) => {
-            nativeResponse.setHeader(key,value);
+            return response;
         })
-        nativeResponse.statusCode = res.status;
-        nativeResponse.statusMessage = res.statusText;
-        //for await (const chunk of res.body) {
-        //    nativeResponse.write(chunk);
-        //}
-        const text = await res.text();
-        nativeResponse.end(text);
-    }
-    return nativeResponse || res;
-}
+        .catch((err) => {
+            console.log(err);
+            error(err);
+        })
+)
 
-
-const flexServer = (req, env) => {
-        const {url,headers,method} = req,
-            protocol = req.socket?.encrypted ? "https://" : "http://",
-            options = {headers,method};
-        if(!["GET","HEAD","DELETE","OPTIONS"].includes(method)) options.body = req;
-        req = new Request(`${protocol}${headers.host}${url}`,options);
-        Object.defineProperty(req,"waitUntil",{enumerable:false,value:env.waitUntil});
-        Object.defineProperty(req,"rawResponse",{enumerable:false,value:env.res||env});
-        Object.defineProperty(req,"URL",{enumerable:false,value:new URL(req.url)});
-        return router.fetch(req).then((res) => responseHandler(res,env.res||env));
-    };
-
-const port = 3000;
-const httpServer = createServer(flexServer)
-httpServer.listen(port,"localhost",port, () => console.log(`http server listening on port ${port}`));
+// Then use it in any environment
+const httpServer = createServer(ittyServer)
+httpServer.listen(3000);
 
 const responseOrRequestAsObject = async (value) => {
-    value = value.clone();
+    if(typeof value === "string") value = new Request(value);
+    else value = value.clone();
     const object = {};
     for(const key in value) {
         if(typeof value[key] === "function" || key==="signal") continue;
@@ -449,43 +358,45 @@ const responseOrRequestAsObject = async (value) => {
             object[key] = value[key];
         }
     }
-    if(!["GET","HEAD","DELETE","OPTIONS"].includes(value.method)) {
-        object.body = await value.text();
-    }
+    if(!["GET","HEAD","DELETE"].includes(value.method)) object.body = await value.text();
     return object;
 }
 
-
 const encoder = new TextEncoder(),
-    decoder = new TextDecoder(),
-    wsApp = uWS();
-let WebSocket;
-wsApp.ws("/*",{
+    decoder = new TextDecoder();
+uWS().ws("/*",{
     message: async (ws, message, isBinary) => {
-        WebSocket = ws.constructor;
-        const decoded = decoder.decode(message),
-            {url,topic,...rest} = JSON.parse(decoded);
-        if(url) {
-            const request = new Request(url,rest);
-            Object.defineProperty(request,"rawResponse",{enumerable:false,value:ws});
-            request.skipCompress = true;
-            const response = await router.fetch(request),
-                object = await responseOrRequestAsObject(response);
-            object.url = url;
-            const string = JSON.stringify(object);
-            //console.log(url,string);
-            ws.send(encoder.encode(string))
-        } else {
-            ws.subscribe("general");
-            if(topic==="subscribe") {
-                ws.subscribe(rest.message);
-            } else {
-                wsApp.publish("general",decoded);
-            }
-        }
+        /* You can do app.publish('sensors/home/temperature', '22C') kind of pub/sub as well */
+        const {url,...rest} = JSON5.parse(decoder.decode(message)),
+            request = new Request(url,rest);
+        request.skipCompress = true;
+        const response = await ittyServer.fetch(request),
+            string = JSON.stringify(await responseOrRequestAsObject(response));
+        ws.send(encoder.encode(string))
+        /* Here we echo the message back, using compression if available */
+        //let ok = ws.send(message, isBinary, true);
     }
-}).listen(port+1, (listenSocket) => {
+}).listen(3001, (listenSocket) => {
     if (listenSocket) {
-        console.log('uWebSockets Listening to port ' + (port+1));
+        console.log('uWebSockets Listening to port ' + 3001);
     }
 })
+
+const io = new socketIO(httpServer);
+io.on('connection', (socket) => {
+    //console.log('a user connected');
+    socket.on('disconnect', () => {
+        //console.log('user disconnected');
+    });
+    socket.on('request', async (msg) => {
+        const {url,...rest} = JSON.parse(msg),
+            request = new Request(url,rest),
+            response = await router.fetch(request);
+        io.emit(`response:${url}`,await responseOrRequestAsObject(response))
+    })
+    socket.onAny((event,msg) => {
+        console.log(event,msg);
+        if(["connection","disconnect"].includes(event)) return;
+        io.emit(event, msg);
+    });
+});

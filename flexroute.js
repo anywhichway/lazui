@@ -1,15 +1,27 @@
 const toFunction = (test) => {
     const type = typeof test;
     if(type==="function") return test;
-    if(type==="string") return (req) => {
-        return test==="*" || req.URL.pathname === test;
+    if(type==="string") {
+        const handler = (req) => {
+            return test==="*" || req.URL.pathname === test;
+        }
+        handler.condition = test;
+        return handler;
     }
     if(type==="object") {
-        if(test instanceof RegExp) return (req) => {
-            return test.test(req.url);
+        if(test instanceof RegExp) {
+            const handler = (req) => {
+                return test.test(req.url);
+            }
+            handler.condition = test;
+            return handler;
         }
-        if(test instanceof Request) return (req) => {
-            return req.url === test.url;
+        if(test instanceof Request) {
+            const handler = (req) => {
+                return req.url === test.url;
+            }
+            handler.condition === test.url;
+            return handler;
         }
         if(typeof test.fetch === "function")  return test.fetch.bind(test);
         if(test instanceof Route) {
@@ -45,8 +57,8 @@ const responseOrRequestAsObject = async (value) => {
             object[key] = value[key];
         }
     }
-    if(!["GET","HEAD","DELETE"].includes(value.method)) object.body = await value.text();
-    return JSON.stringify(object);
+    if(!["GET","HEAD","DELETE","OPTIONS"].includes(value.method)) object.body = await value.text();
+    return object;
 }
 
 
@@ -70,9 +82,34 @@ class Route {
         this.handler = handler;
     }
 }
+
+const handleSocket = async (server,req) => {
+    if (server.server.readyState === 1) {
+        return new Promise(async (resolve, reject) => {
+            const listener = (event) => {
+                const {body, url,...rest} = JSON.parse(event.data);
+                if (rest.headers?.Connection === "keep-alive") {
+                    if (resolve) {
+                        resolve(server.server);
+                        resolve = null;
+                    }
+                } else if(resolve) {
+                    server.server.removeEventListener("message", listener);
+                    resolve(new Response(body, rest));
+                }
+            }
+            server.server.addEventListener("message", listener);
+            const message = new TextEncoder().encode(JSON.stringify(await responseOrRequestAsObject(req)));
+            server.server.send(message);
+        });
+    } else if (server.server.readyState !== 0) {
+        server.server = new WebSocket(server.url.href);
+    }
+}
 function flexroute(test,...rest) {
     if(!this || typeof this!=="object" || !(this instanceof flexroute)) return new flexroute(test,...rest);
     if(test) this.push([toFunction(test),...rest]);
+    this.remotes = [];
     return this;
 };
 flexroute.prototype = [];
@@ -89,7 +126,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
         if(typeof route.fetch === "function") {
             const result = await route.fetch(req,...rest);
             if(result) {
-                if(typeof result === "object" &&  result instanceof Response) {
+                if(typeof result === "object" &&  (result instanceof Response || result instanceof WebSocket)) {
                     res = result;
                     break;
                 }
@@ -104,7 +141,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
         const [test,...steps] = route,
             result = await test(req,[...rest,()=>{}]);
         if(result) {
-            if(typeof result === "object" && result instanceof Response) {
+            if(typeof result === "object" && (result instanceof Response || result instanceof WebSocket)) {
                 res = result;
                 break;
             }
@@ -116,7 +153,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
             for(const step of steps) {
                 const result = await step(req,...rest);
                 if(!result) break;
-                if(typeof result === "object" && result instanceof Response) {
+                if(typeof result === "object" && (result instanceof Response || result.constructor.name==="WebSocket" || result.constructor.name==="ServerResponse")) {
                     res = result;
                     break;
                 }
@@ -124,29 +161,77 @@ flexroute.prototype.fetch = async function(req,...rest) {
             if(res) break;
         }
     }
-    if(req.nativeResponse?.headersSent) return req.env.res;
     if(res) return res;
-    const promises = [];
-    if(this.io) {
-        const {io} = this;
-        io.emit("request",await responseOrRequestAsObject(req));
-        promises.push(new Promise((resolve,reject) => {
-            const to = setTimeout(() => reject(new Error("timeout")),5000);
-            io.once(`response:${req.url}`,async (res) => {
-                clearTimeout(to);
-                res = JSON.parse(res);
-                const body = res.body;
-                delete res.body;
-                resolve(new Response(body,res));
+    const racers = [],
+        race = this.remotes.filter((remote) => remote.race),
+        serial = this.remotes.filter((remote) => !remote.race);
+    race.forEach((server) => {
+        const clone = req.clone(),
+            type = typeof server.server;
+        server.requestCount++;
+        const startTime = Date.now();
+        let promise;
+        if(type==="string") {
+            racers.push(promise = fetch(server.url,clone));
+        } else if(type === "object" && server.server instanceof WebSocket) {
+            promise = handleSocket(server,clone);
+            if(promise) racers.push(promise);
+        }
+        if(promise) {
+            promise.then((response) => {
+                server.responseCount++;
+                server.totalResponseTime += Date.now() - startTime;
+                return response;
+            })
+            .catch((e) => {
+                server.errors.push(e);
+                throw e;
             });
-        }).catch((e) => console.log(e)));
+        } else {
+            throw new TypeError(`unexpected server type ${type} ${server.server?.constructor?.name||""}`);
+        }
+    });
+    const errors = [];
+    if(racers.length>0) {
+        try {
+            const result = await Promise.race(racers);
+            if(result instanceof WebSocket || result.status<500) return result;
+        } catch(e) {
+            errors.unshift(e);
+        }
     }
-    if(this.remote) {
-        const {remote} = this;
-        promises.push(fetch(req).catch((e) => console.log(e)));
+    const responses = await Promise.allSettled(racers);
+    for(const response of responses) {
+        if(response.status<500) return response;
+        else errors.unshift(response);
     }
-    if(promises.length>0) {
-        return Promise.race(promises);
+    for(const server of serial) {
+        const clone = req.clone(),
+            type = typeof server.server;
+        if(type==="string") {
+            try {
+                const response = await fetch(new URL(req.url,server.url).href,clone);
+                if(response.status<500) return response;
+                else errors.unshift(response);
+            } catch(e) {
+                errors.unshift(e)
+            }
+            continue;
+        }
+        if(type === "object" && server.server instanceof WebSocket) {
+            try {
+                return await handleSocket(server, clone);
+            } catch(e) {
+                errors.unshift(e)
+            }
+        }
+        if(errors.length>0) {
+            for(const error of errors) {
+                if(error.status>=500) return error;
+            }
+            return new Response("Internal Server Error",{status:500});
+        }
+        throw new TypeError(`unexpected server type ${type} ${server.server?.constructor?.name||""}`);
     }
     return new Response("Not Found",{status:404});
 };
@@ -165,13 +250,27 @@ Object.assign(flexroute.prototype,{
         this.push(...args);
         return this;
     },
-    withSockets(io) {
-        if(!io || typeof io!=="object") throw new TypeError("io must be a socket instance");
-        this.io = io;
-        return this;
-    },
-    withRemote(remote) {
-        this.remote = remote;
+    withServers({balance}={},...servers) {
+        servers = servers.map((item) => {
+            if(typeof item === "string") item = {url:new URL(item)};
+            if(item && typeof item ==="object") {
+                item = {...item};
+                item.requestCount = 0;
+                item.totalResponseTime = 0;
+                item.responseCount = 0;
+                item.errors = [];
+                Object.defineProperty(item,"avgResponseTime",{get() { return this.totalResponseTime / this.requestCount }});
+                Object.defineProperty(item,"errorRate",{get() { return this.errors.length / this.requestCount }});
+                if(typeof item.url === "string") item.url = new URL(item.url);
+                if(!item.url || typeof item.url !== "object") throw new TypeError(`flexroute expects a string or URL for url property ${typeof item}`);
+            } else {
+                throw new TypeError(`flexroute only supports string and object for server specs not ${typeof item}`);
+            }
+            if(item.url.protocol==="http:" || item.url.protocol==="https") { item.server = item.url.href; return item; }
+            if(item.url.protocol==="ws:" || item.url.protocol==="wss:") { item.server = new WebSocket(item.url.href); return item; }
+            throw new TypeError(`flexroute only supports http, https, ws, and wss protocols not ${item.url.protocol}`);
+        })
+        this.remotes.push(...servers);
         return this;
     }
 })

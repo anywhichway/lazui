@@ -7,7 +7,7 @@ async function userouter({attribute,lazui,options}) {
         {importName="default",isClass,allowRemote,markdownProcessor} = options;
     await import(attribute.value).then(async (module) => {
         const Router = module[importName],
-            router = isClass ? new Router(options) : Router(options),
+            router = isClass ? new Router(options.options) : Router(options.options),
             parts = prefix.split("-"),
             lazuiProtocol = (parts[0]==="data" ? parts[1] : parts[0]) + ":",
             host = url.href;
@@ -18,20 +18,18 @@ async function userouter({attribute,lazui,options}) {
         } else if(markdown && markdownProcessor.call) {
             markdown = markdown[markdownProcessor.call].bind(markdown);
         }
-        router.io = io(`${location.protocol==="https:" ? "wss" : "ws"}://${location.hostname}:${location.port}`);
-        router.remote = window.location.host;
         lazui.useRouter(router, {allowRemote,prefix,JSON,markdown,lazuiProtocol,host});
     })
 }
 
-function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(c) => {
-    if(c.req.raw.mode==="document") {
+function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.JSON,root = document.documentElement,allowRemote,all=(req) => {
+    if(req.mode==="document") {
         return new Response("Not Found",{status:404})
     }
-    if(c.req.URL.pathname.endsWith(".md")) {
-        c.req.raw.headers.set("Accept-Include","true");
+    if(req.URL.pathname.endsWith(".md")) {
+        req.headers.set("Accept-Include","true");
     }
-    return globalThis.fetch(c.req.raw);
+    //return globalThis.fetch(req);
 }}={}) {
     // (req,resp)
     // (req,resp,next)
@@ -43,7 +41,7 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
         const url = c.req.URL = new URL(c.req.url, document.baseURI),
             method = c.req.method.toLowerCase(),
             isLocal = c.req.url.startsWith(document.location.origin);
-        let mode = c.req.raw.mode;
+        let mode = c.req.mode || c.req.raw.mode;
         if(url.href.replace(url.hash,"")===document.location.href.replace(document.location.hash,"")) {
             const el = document.getElementById(url.hash.slice(1));
             if(el) return new Response(el.innerHTML,{headers:{"content-type":"text/html"}});
@@ -198,13 +196,13 @@ function useRouter(router,{prefix,lazuiProtocol,host,markdown,JSON = globalThis.
                 }
             }
         }
-        if(c.req.raw.mode==="document") {
+        if(mode==="document") {
             return new Response("Not Found",{status: 404});
         }
         if(next) await next();
     });
     if (all) router.all("*", all);
-    const fetch = router.fetch;
+    const fetch = router.fetch.bind(router);
     router.fetch = async (request) => {
         if(typeof request === "string") {
             if(request.startsWith("{")) {

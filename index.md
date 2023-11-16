@@ -1,10 +1,5 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui"
-   data-lz:usejson="https://esm.sh/json5"
-   autofocus
-   data-lz:userouter="https://esm.sh/hono"
-   data-lz:usehighlighter="https://esm.sh/highlight.js"
-   data-lz:options="{userouter:{importName:'Hono',isClass:true,allowRemote:true},usehighlighter:{style:'/styles/default.css'}}">
-</script>
+<!-- script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults -->
+<script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults></script>
 <title>lazui: Web UI's with less work</title>
 <div style="min-height:2em;width:500px;margin:auto" data-lz:src="./docs/header.html"></div>
 
@@ -12,7 +7,7 @@
 
 <p style="width:100%;text-align:center;font-size:20px">Currently in early development.</p>
 
-<p style="width:100%;text-align:center"><a href="#quick-start">Quick Start</a> or <a href="/docs/lazui.md">Dive In</a></p>
+<p style="width:100%;text-align:center"><a href="#quick-start">Quick Start</a> or <a href="./docs/lazui.md">Dive In</a></p>
 
 <div style="margin:auto;width:70%">
 
@@ -53,7 +48,7 @@
         ['lazui features attributes for event management'],
         ['lazui features attributes for content loading and targeting'],
         ['lazui features attributes for content control'],
-        ['lazui features without writing JavaScript ${templates in HTML}'],
+        ['lazui features without writing JavaScript $&lcub;templates in HTML}'],
         ['lazui features without writing JavaScript server sent events'],
         ['lazui features without writing JavaScript web sockets'],
         ['lazui features without writing JavaScript form processing'],
@@ -249,5 +244,6 @@ render(document.currentScript,
 
 Ok, now it's time to [dive in](/docs/lazui.md)!
 
-<div style="width:100%;text-align:center" data-lz:src="/docs/footer.html"></div>
+<div style="width:100%;text-align:center" data-lz:src="./docs/footer.html"></div>
 </div>
+
