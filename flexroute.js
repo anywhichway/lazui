@@ -115,7 +115,7 @@ function flexroute(test,...rest) {
 flexroute.prototype = [];
 flexroute.prototype.constructor = flexroute;
 flexroute.prototype.fetch = async function(req,...rest) {
-    console.log(req);
+    //console.log(req);
     const type = typeof req;
     if(!req || !["string","object"].includes(type)) throw new TypeError(`req must be a string or object not ${type}`);
     if(type === "string") req = new Request(req);
@@ -127,7 +127,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
         if(typeof route.fetch === "function") {
             const result = await route.fetch(req,...rest);
             if(result) {
-                console.log("result",result);
+               // console.log("result",result);
                 if(typeof result === "object" &&  (result instanceof Response || result instanceof WebSocket)) {
                     res = result;
                     break;
@@ -143,7 +143,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
         const [test,...steps] = route,
             result = await test(req,[...rest,()=>{}]);
         if(result) {
-            console.log("result",result);
+           // console.log("result",result);
             if(typeof result === "object" && (result instanceof Response || result instanceof WebSocket)) {
                 res = result;
                 break;

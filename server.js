@@ -111,7 +111,7 @@ async function sendFile(pathname,{mangle=true}={}) {
         const content = await fs.readFile(pathname,options),
             data = MODE==="production" && headers["content-type"].includes("javascript") ? (await minify(content,{mangle})).code : content,
             response = new Response(typeof data === "string" ? data : toArrayBuffer(data),{headers});
-        console.log("ok",pathname)
+        //console.log("ok",pathname)
         return response;
     } catch(e) {
         console.log(e)
@@ -274,7 +274,7 @@ app.delete('/data/%id.json', async (req) => {
 router.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
-        console.log("MD",req.URL.pathname);
+        //console.log("MD",req.URL.pathname);
         try {
             const data = await fs.readFile(process.cwd() + req.URL.pathname),
                 replacementCallback = (text) => {
@@ -402,7 +402,7 @@ const responseProxy = (nodeResponse) => {
 }*/
 
 const responseHandler = async (res,nativeResponse) => {
-    console.log(res,nativeResponse)
+   // console.log(res,nativeResponse)
     if(res===nativeResponse) {
         return nativeResponse
     }
@@ -421,18 +421,52 @@ const responseHandler = async (res,nativeResponse) => {
     return nativeResponse || res;
 }
 
-
+const encoder = new TextEncoder(),
+    decoder = new TextDecoder(),
+    wsApp = uWS();
+let WebSocket;
 const flexServer = (req, env) => {
-        const {url,headers,method} = req,
-            protocol = req.socket?.encrypted ? "https://" : "http://",
-            options = {headers,method};
-        if(!["GET","HEAD","DELETE","OPTIONS"].includes(method)) options.body = req;
-        req = new Request(`${protocol}${headers.host}${url}`,options);
-        Object.defineProperty(req,"waitUntil",{enumerable:false,value:env.waitUntil});
-        Object.defineProperty(req,"rawResponse",{enumerable:false,value:env.res||env});
-        Object.defineProperty(req,"URL",{enumerable:false,value:new URL(req.url)});
-        return router.fetch(req).then((res) => responseHandler(res,env.res||env));
-    };
+   /*Lif(!WebSocket) {
+        wsApp.ws("/*", {
+            message: async (ws, message, isBinary) => {
+                WebSocket = ws.constructor;
+                const decoded = decoder.decode(message),
+                    {url, topic, ...rest} = JSON.parse(decoded);
+                if (url) {
+                    const request = new Request(url, rest);
+                    Object.defineProperty(request, "rawResponse", {enumerable: false, value: ws});
+                    request.skipCompress = true;
+                    const response = await router.fetch(request),
+                        object = await responseOrRequestAsObject(response);
+                    object.url = url;
+                    const string = JSON.stringify(object);
+                    //console.log(url,string);
+                    ws.send(encoder.encode(string))
+                } else {
+                    ws.subscribe("general");
+                    if (topic === "subscribe") {
+                        ws.subscribe(rest.message);
+                    } else {
+                        wsApp.publish("general", decoded);
+                    }
+                }
+            }
+        }).listen(port + 1, (listenSocket) => {
+            if (listenSocket) {
+                console.log('uWebSockets Listening to port ' + (port + 1));
+            }
+        })
+    }*/
+    const {url,headers,method} = req,
+        protocol = req.socket?.encrypted ? "https://" : "http://",
+        options = {headers,method};
+    if(!["GET","HEAD","DELETE","OPTIONS"].includes(method)) options.body = req;
+    req = new Request(`${protocol}${headers.host}${url}`,options);
+    Object.defineProperty(req,"waitUntil",{enumerable:false,value:env.waitUntil});
+    Object.defineProperty(req,"rawResponse",{enumerable:false,value:env.res||env});
+    Object.defineProperty(req,"URL",{enumerable:false,value:new URL(req.url)});
+    return router.fetch(req).then((res) => responseHandler(res,env.res||env));
+};
 
 const port = 10000;
 const httpServer = createServer(flexServer)
@@ -457,38 +491,3 @@ const responseOrRequestAsObject = async (value) => {
     }
     return object;
 }
-
-
-/*const encoder = new TextEncoder(),
-    decoder = new TextDecoder(),
-    wsApp = uWS();
-let WebSocket;
-wsApp.ws("/*",{
-    message: async (ws, message, isBinary) => {
-        WebSocket = ws.constructor;
-        const decoded = decoder.decode(message),
-            {url,topic,...rest} = JSON.parse(decoded);
-        if(url) {
-            const request = new Request(url,rest);
-            Object.defineProperty(request,"rawResponse",{enumerable:false,value:ws});
-            request.skipCompress = true;
-            const response = await router.fetch(request),
-                object = await responseOrRequestAsObject(response);
-            object.url = url;
-            const string = JSON.stringify(object);
-            //console.log(url,string);
-            ws.send(encoder.encode(string))
-        } else {
-            ws.subscribe("general");
-            if(topic==="subscribe") {
-                ws.subscribe(rest.message);
-            } else {
-                wsApp.publish("general",decoded);
-            }
-        }
-    }
-}).listen(port+1, (listenSocket) => {
-    if (listenSocket) {
-        console.log('uWebSockets Listening to port ' + (port+1));
-    }
-})*/
