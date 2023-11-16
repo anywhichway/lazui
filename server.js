@@ -402,6 +402,7 @@ const responseProxy = (nodeResponse) => {
 }*/
 
 const responseHandler = async (res,nativeResponse) => {
+    console.log(res,nativeResponse)
     if(res===nativeResponse) {
         return nativeResponse
     }
