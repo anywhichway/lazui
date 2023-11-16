@@ -115,6 +115,7 @@ function flexroute(test,...rest) {
 flexroute.prototype = [];
 flexroute.prototype.constructor = flexroute;
 flexroute.prototype.fetch = async function(req,...rest) {
+    console.log(req);
     const type = typeof req;
     if(!req || !["string","object"].includes(type)) throw new TypeError(`req must be a string or object not ${type}`);
     if(type === "string") req = new Request(req);
