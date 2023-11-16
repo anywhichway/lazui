@@ -68,7 +68,7 @@ const sse = (handler) =>  async (req) => {
             'Cache-Control': 'no-cache'
         };
     let closed;
-    if(WebSocket && res instanceof WebSocket) {
+    /*if(WebSocket && res instanceof WebSocket) {
         res.send(encoder.encode(JSON.stringify({headers})));
         const _send = res.send.bind(res);
         res.send = (value) => {
@@ -82,7 +82,7 @@ const sse = (handler) =>  async (req) => {
                 clearInterval(interval)
             }
         }
-    } else {
+    } else { */
         res.on('close', () => {
             clearInterval(interval);
         });
@@ -93,7 +93,7 @@ const sse = (handler) =>  async (req) => {
         res.send = (value) => {
             res.write(`data: ${JSON.stringify(value)}\n\n`);
         }
-    }
+   // }
     const interval = handler(req,res);
     return res;
 }
