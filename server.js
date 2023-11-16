@@ -459,7 +459,7 @@ const responseOrRequestAsObject = async (value) => {
 }
 
 
-const encoder = new TextEncoder(),
+/*const encoder = new TextEncoder(),
     decoder = new TextDecoder(),
     wsApp = uWS();
 let WebSocket;
@@ -491,4 +491,4 @@ wsApp.ws("/*",{
     if (listenSocket) {
         console.log('uWebSockets Listening to port ' + (port+1));
     }
-})
+})*/
