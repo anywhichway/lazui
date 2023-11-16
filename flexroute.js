@@ -126,8 +126,8 @@ flexroute.prototype.fetch = async function(req,...rest) {
         if(typeof route.fetch === "function") {
             const result = await route.fetch(req,...rest);
             if(result) {
+                console.log("result",result);
                 if(typeof result === "object" &&  (result instanceof Response || result instanceof WebSocket)) {
-                    console.log("result",result);
                     res = result;
                     break;
                 }
@@ -142,6 +142,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
         const [test,...steps] = route,
             result = await test(req,[...rest,()=>{}]);
         if(result) {
+            console.log("result",result);
             if(typeof result === "object" && (result instanceof Response || result instanceof WebSocket)) {
                 res = result;
                 break;
