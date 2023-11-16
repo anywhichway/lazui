@@ -111,6 +111,7 @@ async function sendFile(pathname,{mangle=true}={}) {
         const content = await fs.readFile(pathname,options),
             data = MODE==="production" && headers["content-type"].includes("javascript") ? (await minify(content,{mangle})).code : content,
             response = new Response(typeof data === "string" ? data : toArrayBuffer(data),{headers});
+        console.log("ok",pathname)
         return response;
     } catch(e) {
         console.log(e)
@@ -273,6 +274,7 @@ app.delete('/data/%id.json', async (req) => {
 router.get("*", async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
+        console.log("MD",req.URL.pathname);
         try {
             const data = await fs.readFile(process.cwd() + req.URL.pathname),
                 replacementCallback = (text) => {

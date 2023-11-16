@@ -118,7 +118,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
     const type = typeof req;
     if(!req || !["string","object"].includes(type)) throw new TypeError(`req must be a string or object not ${type}`);
     if(type === "string") req = new Request(req);
-    else if(!["Request","PonyfillRequest"].includes(req.constructor.name)) req = new Request(req.url,req);
+    else if(!["Request"].includes(req.constructor.name)) req = new Request(req.url,req);
     if(!req.URL) req.URL = new URL(req.url);
     const routes = [...this];
     let res;
@@ -127,6 +127,7 @@ flexroute.prototype.fetch = async function(req,...rest) {
             const result = await route.fetch(req,...rest);
             if(result) {
                 if(typeof result === "object" &&  (result instanceof Response || result instanceof WebSocket)) {
+                    console.log("result",result);
                     res = result;
                     break;
                 }
