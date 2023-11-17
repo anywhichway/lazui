@@ -12,8 +12,8 @@ function usedefaults({el,rawValue,lazui}) {
                 allowRemote:true,
                 options: {
                     servers: [
-                        `ws://${window.location.hostname}:${parseInt(window.location.port)+1}`,
-                        `${window.location.protocol}${window.location.host}`
+                        `ws://${window.location.hostname}${window.location.port ? `:${parseInt(window.location.port)+1}` : ""}`,
+                        `${window.location.protocol}//${window.location.host}`
                     ]
                 },
                 markdownProcessor: {

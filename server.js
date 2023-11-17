@@ -426,37 +426,6 @@ const encoder = new TextEncoder(),
     wsApp = uWS();
 let WebSocket;
 const flexServer = (req, env) => {
-   /*Lif(!WebSocket) {
-        wsApp.ws("/*", {
-            message: async (ws, message, isBinary) => {
-                WebSocket = ws.constructor;
-                const decoded = decoder.decode(message),
-                    {url, topic, ...rest} = JSON.parse(decoded);
-                if (url) {
-                    const request = new Request(url, rest);
-                    Object.defineProperty(request, "rawResponse", {enumerable: false, value: ws});
-                    request.skipCompress = true;
-                    const response = await router.fetch(request),
-                        object = await responseOrRequestAsObject(response);
-                    object.url = url;
-                    const string = JSON.stringify(object);
-                    //console.log(url,string);
-                    ws.send(encoder.encode(string))
-                } else {
-                    ws.subscribe("general");
-                    if (topic === "subscribe") {
-                        ws.subscribe(rest.message);
-                    } else {
-                        wsApp.publish("general", decoded);
-                    }
-                }
-            }
-        }).listen(port + 1, (listenSocket) => {
-            if (listenSocket) {
-                console.log('uWebSockets Listening to port ' + (port + 1));
-            }
-        })
-    }*/
     const {url,headers,method} = req,
         protocol = req.socket?.encrypted ? "https://" : "http://",
         options = {headers,method};
@@ -492,3 +461,33 @@ const responseOrRequestAsObject = async (value) => {
     }
     return object;
 }
+
+wsApp.ws("/*", {
+    message: async (ws, message, isBinary) => {
+        WebSocket = ws.constructor;
+        const decoded = decoder.decode(message),
+            {url, topic, ...rest} = JSON.parse(decoded);
+        if (url) {
+            const request = new Request(url, rest);
+            Object.defineProperty(request, "rawResponse", {enumerable: false, value: ws});
+            request.skipCompress = true;
+            const response = await router.fetch(request),
+                object = await responseOrRequestAsObject(response);
+            object.url = url;
+            const string = JSON.stringify(object);
+            //console.log(url,string);
+            ws.send(encoder.encode(string))
+        } else {
+            ws.subscribe("general");
+            if (topic === "subscribe") {
+                ws.subscribe(rest.message);
+            } else {
+                wsApp.publish("general", decoded);
+            }
+        }
+    }
+}).listen(port + 1, (listenSocket) => {
+    if (listenSocket) {
+        console.log('uWebSockets Listening to port ' + (port + 1));
+    }
+})
