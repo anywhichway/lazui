@@ -468,9 +468,10 @@ const flexServer = (req, env) => {
     return router.fetch(req).then((res) => responseHandler(res,env.res||env));
 };
 
-const port = 10000;
+const port = 10000,
+    host = process.env.HOST || "localhost";
 const httpServer = createServer(flexServer)
-httpServer.listen(port,"127.0.0.1",port, () => console.log(`http server listening on port ${port}`));
+httpServer.listen(port,host,port, () => console.log(`http server listening on port ${port}`));
 
 const responseOrRequestAsObject = async (value) => {
     value = value.clone();
