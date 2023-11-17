@@ -1,4 +1,4 @@
-<script src="https://www.unpkg.com/@anywhichway/" data-lz:usedefaults></script>
+<script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults></script>
 <script>
 document.addEventListener("lz:loaded", async (lazui) => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
