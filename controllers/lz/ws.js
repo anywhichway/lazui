@@ -12,7 +12,7 @@ const init = async ({el,root,options,lazui})=> {
         srcUrl.protocol = srcUrl.protocol==="http:" ? srcUrl.protocol = "ws" : "wss";
         srcUrl.pathname = "/";
         srcUrl.hash = "";
-        srcUrl.port = parseInt(srcUrl.port) + 1;
+        srcUrl.port = parseInt(srcUrl.port);
         src = srcUrl.href;
     } else {
         src = new URL(src,document.baseURI).href;

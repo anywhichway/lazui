@@ -87,7 +87,7 @@ const handleSocket = async (server,req) => {
     if (server.server.readyState === 1) {
         return new Promise(async (resolve, reject) => {
             const listener = async (event) => {
-                const text = await event.data.text(),
+                const text = typeof event.data.text === "function" ? await event.data.text() : event.data,
                     {body, url,...rest} = JSON.parse(text);
                 if (rest.headers?.Connection === "keep-alive") {
                     if (resolve) {
