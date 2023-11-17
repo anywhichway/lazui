@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](https://lazui.org/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-11-16 v0.0.60a corrected flexrouter path in defaults.
+
 2023-11-16 v0.0.59a final changes to support `ws` in place of `websockets`.
 
 2023-11-16 v0.0.52-58a production router port and host management.
