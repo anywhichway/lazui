@@ -1367,7 +1367,7 @@ page hosting it is served over `https`.
 <script>
 document.addEventListener("DOMContentLoaded", () => {
  setTimeout(() => {
-    const socket = new WebSocket(`ws://${window.location.hostname}:3001`);
+    const socket = new WebSocket(`ws${window.location.protocol==="https:" ? "s" : ""}://${window.location.hostname}:3001`);
     const form = document.getElementById('form');
     const to = document.getElementById('to');
     const input = document.getElementById('message');
