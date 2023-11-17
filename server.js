@@ -2,7 +2,7 @@ let MODE = "development"; //production, development
 import JSON5 from 'json5';
 //import { createServerAdapter } from '@whatwg-node/server'
 import { createServer } from 'node:http'
-import {App as uWS} from "uWebSockets.js";
+import WebSocket, { WebSocketServer } from 'ws';
 import {flexroute} from "./flexroute.js"
 import {TextDecoder,TextEncoder} from "util";
 import {default as MarkdownIt} from "markdown-it";
@@ -422,9 +422,7 @@ const responseHandler = async (res,nativeResponse) => {
 }
 
 const encoder = new TextEncoder(),
-    decoder = new TextDecoder(),
-    wsApp = uWS();
-let WebSocket;
+    decoder = new TextDecoder();
 const flexServer = (req, env) => {
     const {url,headers,method} = req,
         protocol = req.socket?.encrypted ? "https://" : "http://",
@@ -436,11 +434,6 @@ const flexServer = (req, env) => {
     Object.defineProperty(req,"URL",{enumerable:false,value:new URL(req.url)});
     return router.fetch(req).then((res) => responseHandler(res,env.res||env));
 };
-
-const port = 10000,
-    host = process.env.HOST || "localhost";
-const httpServer = createServer(flexServer)
-httpServer.listen(port,host,port, () => console.log(`http server listening on port ${port}`));
 
 const responseOrRequestAsObject = async (value) => {
     value = value.clone();
@@ -462,9 +455,16 @@ const responseOrRequestAsObject = async (value) => {
     return object;
 }
 
-wsApp.ws("/*", {
-    message: async (ws, message, isBinary) => {
-        WebSocket = ws.constructor;
+const port = 10000,
+    host = process.env.HOST || "localhost";
+const httpServer = createServer(flexServer);
+httpServer.listen(port,host,port, () => console.log(`http server listening on port ${port}`));
+
+const wss = new WebSocketServer({server:httpServer});
+
+wss.on("connection", (ws) => {
+    ws.on("error",console.error);
+    ws.on("message", async (message) => {
         const decoded = decoder.decode(message),
             {url, topic, ...rest} = JSON.parse(decoded);
         if (url) {
@@ -478,16 +478,21 @@ wsApp.ws("/*", {
             //console.log(url,string);
             ws.send(encoder.encode(string))
         } else {
-            ws.subscribe("general");
-            if (topic === "subscribe") {
-                ws.subscribe(rest.message);
-            } else {
-                wsApp.publish("general", decoded);
-            }
+            wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(decoded);
+                }
+            });
         }
+    })
+})
+/*wsApp.ws("/*", {
+    message: async (ws, message, isBinary) => {
+        WebSocket = ws.constructor;
+
     }
 }).listen(port + 1, (listenSocket) => {
     if (listenSocket) {
         console.log('uWebSockets Listening to port ' + (port + 1));
     }
-})
+})*/

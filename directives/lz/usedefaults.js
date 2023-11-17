@@ -12,7 +12,7 @@ function usedefaults({el,rawValue,lazui}) {
                 allowRemote:true,
                 options: {
                     servers: [
-                        `ws${window.location.protocol==="https:" ? "s" : ""}://${window.location.hostname}${window.location.port ? `:${parseInt(window.location.port)+1}` : ""}`,
+                        `ws${window.location.protocol==="https:" ? "s" : ""}://${window.location.hostname}${window.location.port ? `:${window.location.port}` : ""}`,
                         `${window.location.protocol}//${window.location.host}`
                     ]
                 },

@@ -95,7 +95,7 @@ Ok, now it's time to [dive in](https://lazui.org/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
-2023-11-16 v0.0.52-57 production router port and host management.
+2023-11-16 v0.0.52-58 production router port and host management.
 
 2023-11-16 v0.0.51 switched to using `flexrouter`. documentation forthcoming.
 

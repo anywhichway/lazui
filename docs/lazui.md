@@ -1,4 +1,4 @@
-<script src="https://www.unpkg.com/@anywhichway/lazui" data-lz:usedefaults></script>
+<script src="https://www.unpkg.com/@anywhichway/" data-lz:usedefaults></script>
 <script>
 document.addEventListener("lz:loaded", async (lazui) => {
    const issues = await fetch("https://api.github.com/repos/anywhichway/lazui/issues").then(r => r.json());
@@ -1367,7 +1367,7 @@ page hosting it is served over `https`.
 <script>
 document.addEventListener("DOMContentLoaded", () => {
  setTimeout(() => {
-    const socket = new WebSocket(`ws${window.location.protocol==="https:" ? "s" : ""}://${window.location.hostname}:3001`);
+    const socket = new WebSocket(`ws${window.location.protocol==="https:" ? "s" : ""}://${window.location.hostname}${window.location.port ? `:${window.location.port}` : ""}`);
     const form = document.getElementById('form');
     const to = document.getElementById('to');
     const input = document.getElementById('message');

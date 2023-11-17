@@ -1,6 +1,6 @@
 {
   "name": "@anywhichway/lazui",
-  "version": "0.0.57-a",
+  "version": "0.0.58-a",
   "description": "Single page apps and lazy loading sites with minimal JavaScript or client build processes.",
   "main": "lazui.js",
   "type": "module",
@@ -44,7 +44,7 @@
     "node-html-parser": "^6.1.10",
     "socket.io": "^4.7.2",
     "terser": "^5.22.0",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.33.0"
+    "ws": "^8.14.2"
   },
   "devDependencies": {
     "markdown-it-cli": "^1.0.0",

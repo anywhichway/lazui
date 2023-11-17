@@ -86,8 +86,9 @@ class Route {
 const handleSocket = async (server,req) => {
     if (server.server.readyState === 1) {
         return new Promise(async (resolve, reject) => {
-            const listener = (event) => {
-                const {body, url,...rest} = JSON.parse(event.data);
+            const listener = async (event) => {
+                const text = await event.data.text(),
+                    {body, url,...rest} = JSON.parse(text);
                 if (rest.headers?.Connection === "keep-alive") {
                     if (resolve) {
                         resolve(server.server);
