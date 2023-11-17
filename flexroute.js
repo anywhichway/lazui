@@ -269,7 +269,7 @@ Object.assign(flexroute.prototype,{
             } else {
                 throw new TypeError(`flexroute only supports string and object for server specs not ${typeof item}`);
             }
-            if(item.url.protocol==="http:" || item.url.protocol==="https") { item.server = item.url.href; return item; }
+            if(item.url.protocol==="http:" || item.url.protocol==="https:") { item.server = item.url.href; return item; }
             if(item.url.protocol==="ws:" || item.url.protocol==="wss:") { item.server = new WebSocket(item.url.href); return item; }
             throw new TypeError(`flexroute only supports http, https, ws, and wss protocols not ${item.url.protocol}`);
         })
