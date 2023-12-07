@@ -3,7 +3,10 @@ import JSON5 from 'json5';
 //import { createServerAdapter } from '@whatwg-node/server'
 import { createServer } from 'node:http'
 import WebSocket, { WebSocketServer } from 'ws';
-import {flexroute} from "./flexroute.js"
+import {flexroute} from "flexroute";
+import adapter from "flexroute/adapters/whatwg.js";
+import createFlexServer from "flexroute/util/create-flex-server.js";
+import {sse} from "flexroute/middleware/server/sse.js";
 import {TextDecoder,TextEncoder} from "util";
 import {default as MarkdownIt} from "markdown-it";
 import {default as MarkdownItAnchor} from "markdown-it-anchor";
@@ -60,66 +63,6 @@ const contentTypes = {
     ".txt": {encoding:"utf8",type:"text/plain"}
 }
 
-const sse = (handler) =>  async (req) => {
-    const res = req.rawResponse, // add rawResponse
-         headers = {
-            'Content-Type': 'text/event-stream',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache'
-        };
-    let closed;
-    /*if(WebSocket && res instanceof WebSocket) {
-        res.send(encoder.encode(JSON.stringify({headers})));
-        const _send = res.send.bind(res);
-        res.send = (value) => {
-            if (res.status === 1 || res.status === undefined) {
-                try {
-                    _send(encoder.encode(JSON.stringify({url:req.url, data: value})));
-                } catch {
-                   clearInterval(interval);
-                }
-            } else {
-                clearInterval(interval)
-            }
-        }
-    } else { */
-        res.on('close', () => {
-            clearInterval(interval);
-        });
-        Object.entries(headers).forEach(([key, value]) => {
-            res.setHeader(key, value);
-        });
-        res.flushHeaders();
-        res.send = (value) => {
-            res.write(`data: ${JSON.stringify(value)}\n\n`);
-        }
-   // }
-    const interval = handler(req,res);
-    return res;
-}
-async function sendFile(pathname,{mangle=true}={}) {
-    console.log(pathname);
-    const headers = {},
-        options = {};
-    try {
-        Object.entries(contentTypes).forEach(([key, {encoding,type}]) => {
-            if(pathname.endsWith(key)) {
-                headers["content-type"] = type;
-                if(encoding) options.encoding = encoding;
-            }
-        });
-        const content = await fs.readFile(pathname,options),
-            data = MODE==="production" && headers["content-type"].includes("javascript") ? (await minify(content,{mangle})).code : content,
-            response = new Response(typeof data === "string" ? data : toArrayBuffer(data),{headers});
-        //console.log("ok",pathname)
-        return response;
-    } catch(e) {
-        console.log(e)
-        if(e.code==="ENOENT") return;
-        return new Response(500, {body:e.code}); //pathname+" "+e+""
-    }
-}
-
 const serveStatic = ({root}) => {
     return async (req) => {
         const url = new URL(req.url),
@@ -129,8 +72,8 @@ const serveStatic = ({root}) => {
     }
 }
 
-const router = flexroute();
-router.all("*", (req) => {
+const flexServer = createFlexServer(flexroute(),adapter);
+flexServer.all(()=>true, (req) => {
     if(!["127.0.0.1","localhost"].includes(req.URL.hostname)) MODE = "production"
 });
 
@@ -140,11 +83,11 @@ app.get("/lazui.js", (c) => {//"application/javascript
 });
  */
 
-router.get("/lazui", (req) => {
+flexServer.get("/lazui", (req) => {
     return sendFile(process.cwd() + "/lazui.js");
 })
 
-router.get("/lazui/*", (req) => {
+flexServer.get("/lazui/*", (req) => {
     const pathname = req.URL.pathname.replace("/lazui",""),
         fname = pathname.split("/").pop().split(".").shift();
     return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
@@ -155,20 +98,20 @@ router.get("/lazui/*", (req) => {
 //});
 
 // as a convenience, provide local copies of itty and Hono for browser use
-router.get("/itty-router.js", (req) => {
+flexServer.get("/itty-router.js", (req) => {
     return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs');
 });
-router.get("/hono/*", (req) => {
+flexServer.get("/hono/*", (req) => {
     return sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5));
 });
 
 // as a convenience, provide JSON5 for browser use
-router.get("/json5.js", (req) => {
+flexServer.get("/json5.js", (req) => {
     return sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs');
 });
 
 // as a convenience, provide highlight-js for browser use
-router.get('/highlight-js/*', (req) => {
+flexServer.get('/highlight-js/*', (req) => {
     return sendFile(process.cwd() + req.URL.pathname);
 });
 
@@ -179,7 +122,7 @@ const dateTime = function (req,res) {
     },1000);
 }
 
-router.get('/datetime',sse(dateTime));
+flexServer.get('/datetime',sse(dateTime));
 
 /*
 ### Meta Data and Data Versioning - not yet implemented
@@ -271,7 +214,7 @@ app.delete('/data/%id.json', async (req) => {
 })
  */
 
-router.get("*", async (req) => {
+flexServer.get(()=>true, async (req) => {
     if(req.URL.pathname==="/") req.URL.pathname = "/index.md";
     if(req.URL.pathname.endsWith(".md")) { // handle Markdown transpilation
         //console.log("MD",req.URL.pathname);
@@ -308,10 +251,10 @@ router.get("*", async (req) => {
    } else {
         const [_1,...path] = req.URL.pathname.split("/");
         if(path[0]!=="docs" && path.length>1) path.shift();
-        return sendFile(process.cwd() + "/" + path.join("/"),{skipCompress:req.skipCompress});
+        return req.rawResponse.sendFile(process.cwd() + "/" + path.join("/"),{skipCompress:req.skipCompress});
     }
 })
-router.get('*', () => new Response("Not Found",{status:404}));
+flexServer.get(()=>true, () => new Response("Not Found",{status:404}));
 
 const CSP = {
     "default-src": [
@@ -401,67 +344,21 @@ const responseProxy = (nodeResponse) => {
     })
 }*/
 
-const responseHandler = async (res,nativeResponse) => {
-   // console.log(res,nativeResponse)
-    if(res===nativeResponse) {
-        return nativeResponse
-    }
-    if(res instanceof Response && nativeResponse) {
-        [...res.headers?.entries()].forEach(([key,value]) => {
-            nativeResponse.setHeader(key,value);
-        })
-        nativeResponse.statusCode = res.status;
-        nativeResponse.statusMessage = res.statusText;
-        //for await (const chunk of res.body) {
-        //    nativeResponse.write(chunk);
-        //}
-        const text = await res.text();
-        nativeResponse.end(text);
-    }
-    return nativeResponse || res;
-}
-
-const encoder = new TextEncoder(),
-    decoder = new TextDecoder();
-const flexServer = (req, env) => {
-    const {url,headers,method} = req,
-        protocol = req.socket?.encrypted ? "https://" : "http://",
-        options = {headers,method};
-    if(!["GET","HEAD","DELETE","OPTIONS"].includes(method)) options.body = req;
-    req = new Request(`${protocol}${headers.host}${url}`,options);
-    Object.defineProperty(req,"waitUntil",{enumerable:false,value:env.waitUntil});
-    Object.defineProperty(req,"rawResponse",{enumerable:false,value:env.res||env});
-    Object.defineProperty(req,"URL",{enumerable:false,value:new URL(req.url)});
-    return router.fetch(req).then((res) => responseHandler(res,env.res||env));
-};
-
-const responseOrRequestAsObject = async (value) => {
-    value = value.clone();
-    const object = {};
-    for(const key in value) {
-        if(typeof value[key] === "function" || key==="signal") continue;
-        if(key==="headers") {
-            object.headers = {};
-            value.headers.forEach((value,key)=> {
-                object.headers[key] = value;
-            });
-        } else if(!key.startsWith("body")) {
-            object[key] = value[key];
-        }
-    }
-    if(!["GET","HEAD","DELETE","OPTIONS"].includes(value.method)) {
-        object.body = await value.text();
-    }
-    return object;
-}
-
 const port = 10000,
     host = process.env.HOST || "localhost";
 const httpServer = createServer(flexServer);
-httpServer.listen(port,host,port, () => console.log(`http server listening on port ${port}`));
+flexServer.withSockets(httpServer,{host,port});
 
-const wss = new WebSocketServer({server:httpServer});
+import stream from "flexroute/util/stream-response.js";
+httpServer.listen(port,host,port, async () => {
+    console.log(`http server listening on port ${port}`);
+    //const response = await fetch(`http://${host}:${port}/datetime`);
+    //stream.call(response,console.log);
+});
 
+/*const encoder = new TextEncoder(),
+    decoder = new TextDecoder(),
+    wss = new WebSocketServer({server:httpServer});
 wss.on("connection", (ws) => {
     ws.on("error",console.error);
     ws.on("message", async (message) => {
@@ -471,7 +368,7 @@ wss.on("connection", (ws) => {
             const request = new Request(url, rest);
             Object.defineProperty(request, "rawResponse", {enumerable: false, value: ws});
             request.skipCompress = true;
-            const response = await router.fetch(request),
+            const response = await flexServer.handle(request),
                 object = await responseOrRequestAsObject(response);
             object.url = url;
             const string = JSON.stringify(object);
@@ -485,14 +382,4 @@ wss.on("connection", (ws) => {
             });
         }
     })
-})
-/*wsApp.ws("/*", {
-    message: async (ws, message, isBinary) => {
-        WebSocket = ws.constructor;
-
-    }
-}).listen(port + 1, (listenSocket) => {
-    if (listenSocket) {
-        console.log('uWebSockets Listening to port ' + (port + 1));
-    }
 })*/

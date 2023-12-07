@@ -1381,8 +1381,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     socket.addEventListener('message', (event) => {
-        //console.log(event)
+        const json = JSON.parse(event.data),
+            el = document.getElementById(json.topic);
+         if(el) el.insertAdjacentText("beforeEnd",json.message);
     });
+   socket.addEventListener("open", () => {
+      socket.send(JSON.stringify({topic:"peter",message:"subscribe"}));
+      socket.send(JSON.stringify({topic:"paul",message:"subscribe"}));
+   })
   },1000);
 });
 </script>
