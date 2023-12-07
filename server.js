@@ -63,14 +63,6 @@ const contentTypes = {
     ".txt": {encoding:"utf8",type:"text/plain"}
 }
 
-const serveStatic = ({root}) => {
-    return async (req) => {
-        const url = new URL(req.url),
-            filePath = `${root}${url.pathname}`;
-        //console.log(filePath);
-        return sendFile(path.join(process.cwd(),filePath));
-    }
-}
 
 const flexServer = createFlexServer(flexroute(),adapter);
 flexServer.all(()=>true, (req) => {
@@ -84,13 +76,15 @@ app.get("/lazui.js", (c) => {//"application/javascript
  */
 
 flexServer.get("/lazui", (req) => {
-    return sendFile(process.cwd() + "/lazui.js");
+    req.rawResponse.sendFile(process.cwd() + "/lazui.js");
+    return req.rawResponse;
 })
 
 flexServer.get("/lazui/*", (req) => {
     const pathname = req.URL.pathname.replace("/lazui",""),
         fname = pathname.split("/").pop().split(".").shift();
-    return sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
+    req.rawResponse.sendFile(process.cwd() + pathname,{mangle: {reserved:[fname]}});
+    return req.rawResponse;
 })
 
 //router.get("/flexrouter.js", (req) => {
@@ -99,20 +93,24 @@ flexServer.get("/lazui/*", (req) => {
 
 // as a convenience, provide local copies of itty and Hono for browser use
 flexServer.get("/itty-router.js", (req) => {
-    return sendFile(process.cwd() + '/node_modules/itty-router/index.mjs');
+    req.rawResponse.sendFile(process.cwd() + '/node_modules/itty-router/index.mjs');
+    return req.rawResponse;
 });
 flexServer.get("/hono/*", (req) => {
-    return sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5));
+    req.rawResponse.sendFile(process.cwd() + '/node_modules/hono/dist' + req.URL.pathname.slice(5));
+    return req.rawResponse;
 });
 
 // as a convenience, provide JSON5 for browser use
 flexServer.get("/json5.js", (req) => {
-    return sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs');
+    req.rawResponse.sendFile(process.cwd() + '/node_modules/json5/dist/index.min.mjs');
+    return req.rawResponse;
 });
 
 // as a convenience, provide highlight-js for browser use
 flexServer.get('/highlight-js/*', (req) => {
-    return sendFile(process.cwd() + req.URL.pathname);
+    req.rawResponse.sendFile(process.cwd() + req.URL.pathname);
+    return req.rawResponse;
 });
 
 // a sample sse event generator that just writes the date/time to all clients every second
@@ -251,7 +249,8 @@ flexServer.get(()=>true, async (req) => {
    } else {
         const [_1,...path] = req.URL.pathname.split("/");
         if(path[0]!=="docs" && path.length>1) path.shift();
-        return req.rawResponse.sendFile(process.cwd() + "/" + path.join("/"),{skipCompress:req.skipCompress});
+        req.rawResponse.sendFile(process.cwd() + "/" + path.join("/"),{skipCompress:req.skipCompress});
+        return req.rawResponse;
     }
 })
 flexServer.get(()=>true, () => new Response("Not Found",{status:404}));
