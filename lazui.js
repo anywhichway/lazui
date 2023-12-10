@@ -101,6 +101,7 @@
                         delete target[property];
                         proxy[property] = undefined; // forces re-render
                     }
+                    return true;
                 },
                 set(target,property,value) {
                     const oldValue = target[property],

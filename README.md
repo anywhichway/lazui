@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](https://lazui.org/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-12-09 v0.0.63-a fixed issue with delete property on state proxy not returning true
+
 2023-12-09 v0.0.62-a fixed issue with setState not having default 3rd argument,  fixed issue with state updating on nested objects when oldValue was undefined
 
 2023-12-07 v0.0.61-a completed upgrade to separate flexrouter package
