@@ -106,7 +106,9 @@
                     const oldValue = target[property],
                         wasIn = property in target;
                     if(oldValue!==value) {
-                        if(oldValue!==undefined && value!==undefined) target[property] = value;
+                        if(value===undefined) delete target[property];
+                        else target[property] = value;
+                       // if(oldValue!==undefined && value!==undefined) target[property] = value;
                         if(el && value!==undefined) {
                             let event;
                             if(wasIn) el.dispatchEvent(event = new CustomEvent("state:change", {bubbles: true, detail: {state:proxy,property, value,oldValue,path,ancestors}}));
@@ -191,7 +193,7 @@
         if(!_state && throws) throw new Error(`Can't find state: ${idOrEl.id}`);
         return _state?.state;
     }
-    const setState = (idOrEl,state, {root = document,options={}}) => {
+    const setState = (idOrEl,state, {root = document,options={}}={}) => {
         let el = idOrEl;
         if(typeof idOrEl === "string") {
             el = getTop(root).getElementById(el);
