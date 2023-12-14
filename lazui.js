@@ -637,8 +637,12 @@
                     observeNodes({nodes:[node],observe:["*"],root,string:node.value,state:stateProxy},() => {
                         const value = interpolate(node.value,stateProxy,root);
                         if(node.name.startsWith("on") || node.name.includes("on:")) handleOnAttribute(node,value.values[0]);
-                        else if(isHook(value)) handleHook(node,value);
-                        else if(value.values[0]!==undefined) {
+                        else if(isHook(value)) {
+                            handleHook(node,value);
+                        } else if (isBoolAttribute(name)) {
+                            if (!!value) node.value = "";
+                            else node.removeAttribute(node.name);
+                        } else if(value.values[0]!==undefined) {
                             node.rawValue = value.values[0];
                             node.value = value.values[0].toString();
                         }
