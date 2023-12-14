@@ -416,6 +416,7 @@
                         if (value.startsWith(locator)) {
                             const index = parseInt(value.substring(locator.length));
                             value = values[index];
+                            node.rawValue = value;
                             if (isObject(value)) {
                                 node.value = value instanceof Date ? value + "" : JSON.stringify(value);
                             } else if (typeof value === "function") {
@@ -637,7 +638,10 @@
                         const value = interpolate(node.value,stateProxy,root);
                         if(node.name.startsWith("on") || node.name.includes("on:")) handleOnAttribute(node,value.values[0]);
                         else if(isHook(value)) handleHook(node,value);
-                        else if(value.values[0]) node.value = value.values[0].toString();
+                        else if(value.values[0]!==undefined) {
+                            node.rawValue = value.values[0];
+                            node.value = value.values[0].toString();
+                        }
                         //else if(node.name.startsWith("on")) node.ownerElement.removeAttribute(node.name);
                     });
                 } else if(node.name.startsWith("on")) {

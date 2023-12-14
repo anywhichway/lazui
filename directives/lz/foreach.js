@@ -12,15 +12,18 @@ function foreach({el,attribute,root,state,args,lazui}) {
     const iterationType = iterationTypes[what],
         template = __TEMPLATE_CONTENT__.get(el) || el.firstElementChild.innerHTML || el.firstElementChild.innerText;
     __TEMPLATE_CONTENT__.set(el,template);
-    let data = attribute.value;
-    if(data[0]==="#") {
-        const property = value.split(".")[1];
-        data = getState(value.slice(1))[property];
-    } else {
-        try {
-            data = JSON.parse(data);
-        } catch {
+    let data = attribute.rawValue;
+    if(data===undefined) {
+        data = attribute.value;
+        if(data[0]==="#") {
+            const property = value.split(".")[1];
+            data = getState(value.slice(1))[property];
+        } else {
+            try {
+                data = JSON.parse(data);
+            } catch {
 
+            }
         }
     }
     while(el.firstChild) el.removeChild(el.firstChild);

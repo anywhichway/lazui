@@ -1050,6 +1050,16 @@ cloned element.
 <div data-lz:foreach:entry='["Peter","Paul","Mary"]'><template><p>${parseInt(entry[0])+1}: Hello, ${entry[1]}!</p></template></div>
 ```
 
+As with other directives, the value between `${}` can also be a literal.
+
+```!html
+<script>
+var peterPaulMary = ["Peter","Paul","Mary"];
+</script>
+<div data-lz:foreach:value:name:i='${peterPaulMary}'><template><p>${i+1}: Hello, ${name}!</p></template></div>
+```
+
+
 #### render
 
 The `lz:render` directive can be used to render content. It takes the form `lz:render:fname`. The `fname` should be a
