@@ -1050,6 +1050,29 @@ cloned element.
 <div data-lz:foreach:entry='["Peter","Paul","Mary"]'><template><p>${parseInt(entry[0])+1}: Hello, ${entry[1]}!</p></template></div>
 ```
 
+#### render
+
+The `lz:render` directive can be used to render content. It takes the form `lz:render:fname`. The `fname` should be a
+method available on the state or the `window` object. The `innerHTML` can optionally contain a `<template>`. The
+`fname` will be called as `fname({el,template,state,lazui})` where `el` is the element and is expected to modify or populate
+the `innerHTML` of `el`. The `template` and `state` arguments can be ignored if not needed.
+
+```!html
+<script>
+   var myRenderData = ["Peter","Paul","Mary"];
+
+   var myRender = function({el,template,state,lazui}) {
+      const {html} = lazui;
+      while(el.lastChild) { el.removeChild(el.lastChild); };
+        myRenderData.forEach(function(name,i) {
+             const content = html`<p>${i+1}: Hello, ${name}!</p>`.nodes();
+             el.append(...content);
+        });
+   }
+</script>
+<div data-lz:render="myRender"></div>
+```
+
 #### show
 
 The `lz:show` directive can be used to conditionally show content. If works just like `lz:if`, but instead of removing

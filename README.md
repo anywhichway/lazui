@@ -95,6 +95,8 @@ Ok, now it's time to [dive in](https://lazui.org/docs/lazui.md)!
 
 ## Change History (Reverse Chronological Order)
 
+2023-12-14 v0.0.65-a added `lz:render` attribute directive
+
 2023-12-11 v0.0.64-a added specialized flexroute and flexrouter back for client side use
 
 2023-12-09 v0.0.63-a fixed issue with delete property on state proxy not returning true
